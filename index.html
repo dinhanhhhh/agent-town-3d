@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta content="web_standard" name="shell-type" />
+    <title>Agent Town 3D - Multi-Agent DevOps Diorama</title>
+
+    <!-- Google Fonts & Material Symbols -->
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css" />
+
+    <!-- Tailwind CSS & Theme Config -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/tailwind-config.js"></script>
+  </head>
+
+  <body
+    class="bg-surface font-body-md text-on-surface min-h-screen relative overflow-x-hidden selection:bg-primary-fixed selection:text-on-primary-fixed"
+  >
+    <!-- Header Navigation -->
+    <header class="fixed top-0 left-0 right-0 z-50 pointer-events-none">
+      <div class="w-full px-gutter-desktop pt-space-sm">
+        <div
+          class="h-16 w-full bg-surface-container-lowest/90 backdrop-blur-md rounded-full shadow-[0_4px_0_rgba(45,55,72,0.08),0_12px_24px_-4px_rgba(124,45,55,0.08)] px-gutter-desktop flex items-center justify-between pointer-events-auto"
+        >
+          <div class="flex items-center gap-space-sm">
+            <div
+              class="w-10 h-10 rounded-xl bg-primary-container text-on-primary flex items-center justify-center shadow-[0_2px_0_#541d24]"
+            >
+              <span class="material-symbols-outlined text-[22px]">cottage</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="font-headline-md text-headline-md text-primary leading-tight"
+                >Agent Town 3D</span
+              >
+              <span class="font-label-code text-label-code text-on-surface-variant leading-none"
+                >Multi-Agent DevOps Diorama</span
+              >
+            </div>
+          </div>
+
+          <nav
+            class="hidden lg:flex items-center gap-space-xs bg-surface-container-low px-space-xs py-space-xs rounded-full shadow-[inset_0_2px_4px_rgba(45,55,72,0.06)]"
+            data-active-classes="bg-primary-container text-on-primary shadow-[0_3px_0_#541d24]"
+          >
+            <a
+              aria-current="page"
+              class="font-body-sm px-space-md py-space-xs rounded-full transition-all bg-primary-container text-on-primary shadow-[0_3px_0_#541d24]"
+              data-path="diorama-view"
+              href="#"
+              >Dừng xoay</a
+            >
+            <a
+              class="font-body-sm text-body-sm px-space-md py-space-xs rounded-full text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+              data-path="node-inspector"
+              href="#"
+              >Tên</a
+            >
+            <a
+              class="font-body-sm text-body-sm px-space-md py-space-xs rounded-full text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+              data-path="bubble-prompts"
+              href="#"
+              >Bong bóng</a
+            >
+            <a
+              class="font-body-sm text-body-sm px-space-md py-space-xs rounded-full text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+              data-path="panoramic-view"
+              href="#"
+              >Toàn cảnh</a
+            >
+            <a
+              class="font-body-sm text-body-sm px-space-md py-space-xs rounded-full text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+              data-path="pipeline-overview"
+              href="#"
+              >Tổng quan</a
+            >
+            <a
+              class="font-body-sm text-body-sm px-space-md py-space-xs rounded-full text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+              data-path="simulation-control"
+              href="#"
+              >Dừng tự chạy</a
+            >
+          </nav>
+
+          <div class="flex items-center gap-space-sm">
+            <div class="flex items-center gap-space-xs">
+              <div
+                class="flex items-center gap-space-xs bg-secondary-container text-on-secondary-container px-space-sm py-space-xs rounded-full shadow-[0_2px_0_rgba(30,107,63,0.2)]"
+              >
+                <span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+                <span class="font-label-code text-label-code font-bold">7 agent</span>
+              </div>
+              <div
+                class="flex items-center gap-space-xs bg-surface-container-high text-on-surface px-space-sm py-space-xs rounded-full shadow-[0_2px_0_rgba(45,55,72,0.08)]"
+              >
+                <span class="w-2 h-2 rounded-full bg-secondary"></span>
+                <span class="font-label-code text-label-code">1 bước duyệt</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-space-xs pl-space-xs">
+              <button
+                aria-label="Sound settings"
+                class="w-8 h-8 rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface flex items-center justify-center transition-colors shadow-[0_2px_0_rgba(45,55,72,0.06)]"
+                type="button"
+              >
+                <span class="material-symbols-outlined text-[18px]">volume_up</span>
+              </button>
+              <button
+                aria-label="Global settings"
+                class="w-8 h-8 rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface flex items-center justify-center transition-colors shadow-[0_2px_0_rgba(45,55,72,0.06)]"
+                type="button"
+              >
+                <span class="material-symbols-outlined text-[18px]">tune</span>
+              </button>
+              <div
+                class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-[0_2px_0_#541d24]"
+              >
+                <span class="material-symbols-outlined text-on-primary text-[18px]">person</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="w-full pt-16 min-h-[calc(100vh-4rem)] relative">
+      <div class="flex flex-col w-full relative min-h-[calc(100vh-4rem)] overflow-hidden select-none">
+        
+        <!-- 3D Three.js Interactive Diorama Canvas -->
+        <div class="absolute inset-0 w-full h-full pointer-events-auto">
+          <div class="absolute inset-0 w-full h-full bg-transparent" style="display: block">
+            <div id="threejs-container-ANIMATION_2" style="width: 100%; height: 100%"></div>
+            <!-- Three.js Library & Diorama Scene Script -->
+            <script src="https://ajax.googleapis.com/ajax/libs/threejs/r125/three.min.js"></script>
+            <script src="js/scene.js"></script>
+          </div>
+        </div>
+
+        <!-- Ambient Diorama Lighting Vignette -->
+        <div
+          class="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,_rgba(249,249,255,0)_40%,_rgba(208,218,240,0.45)_100%)]"
+        ></div>
+
+        <!-- HUD Overlay Container (12-Col Responsive Grid System) -->
+        <div class="relative z-10 w-full flex-1 flex flex-col justify-between p-gutter pointer-events-none">
+          
+          <!-- TOP TOOLBAR & CONTROLS HUD -->
+          <div class="w-full flex items-center justify-between gap-space-sm pointer-events-auto">
+            <!-- Quick Filter & Viewport Toggles -->
+            <div
+              class="flex items-center gap-space-xs bg-surface-container-lowest/90 backdrop-blur-md px-space-xs py-space-xs rounded-full shadow-[0_4px_0_rgba(45,55,72,0.08),0_12px_24px_-4px_rgba(124,45,55,0.08)]"
+            >
+              <button
+                class="flex items-center gap-space-xs px-space-md py-space-xs rounded-full bg-primary-container text-on-primary shadow-[0_3px_0_#541d24] transition-all hover:scale-105 active:translate-y-0.5 font-label-code text-label-code cursor-pointer"
+                id="btn-toggle-spin"
+              >
+                <span class="material-symbols-outlined text-[16px]" id="spin-icon">pause_circle</span>
+                <span id="spin-label">Dừng xoay</span>
+              </button>
+              <button
+                class="flex items-center gap-space-xs px-space-md py-space-xs rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-all font-label-code text-label-code shadow-[0_2px_0_rgba(45,55,72,0.06)] cursor-pointer"
+                id="btn-toggle-labels"
+              >
+                <span class="material-symbols-outlined text-[16px] text-primary">label</span>
+                <span>Tên</span>
+              </button>
+              <button
+                class="flex items-center gap-space-xs px-space-md py-space-xs rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-all font-label-code text-label-code shadow-[0_2px_0_rgba(45,55,72,0.06)] cursor-pointer"
+                id="btn-toggle-bubbles"
+              >
+                <span class="material-symbols-outlined text-[16px] text-tertiary">chat_bubble</span>
+                <span>Bong bóng</span>
+              </button>
+              <div class="hidden md:flex items-center gap-space-xs">
+                <button
+                  class="px-space-md py-space-xs rounded-full bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all font-label-code text-label-code"
+                >
+                  Toàn cảnh
+                </button>
+                <button
+                  class="px-space-md py-space-xs rounded-full bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all font-label-code text-label-code"
+                >
+                  Tổng quan
+                </button>
+                <button
+                  class="px-space-md py-space-xs rounded-full bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all font-label-code text-label-code"
+                >
+                  Dừng tự chạy
+                </button>
+              </div>
+            </div>
+
+            <!-- Pipeline Telemetry Cluster -->
+            <div
+              class="flex items-center gap-space-xs bg-surface-container-lowest/90 backdrop-blur-md px-space-sm py-space-xs rounded-full shadow-[0_4px_0_rgba(45,55,72,0.08),0_12px_24px_-4px_rgba(124,45,55,0.08)]"
+            >
+              <div
+                class="flex items-center gap-space-xs bg-secondary-container text-on-secondary-container px-space-sm py-space-xs rounded-full shadow-[0_2px_0_rgba(30,107,63,0.2)]"
+              >
+                <span class="w-2.5 h-2.5 rounded-full bg-secondary animate-ping"></span>
+                <span class="font-label-code text-label-code font-bold">7 agent online</span>
+              </div>
+              <div
+                class="hidden sm:flex items-center gap-space-xs bg-surface-container-high text-on-surface px-space-sm py-space-xs rounded-full"
+              >
+                <span class="material-symbols-outlined text-primary text-[15px]">verified_user</span>
+                <span class="font-label-code text-label-code">1 bước duyệt</span>
+              </div>
+              <div
+                class="flex items-center gap-space-xs bg-surface-container-low text-tertiary px-space-sm py-space-xs rounded-full"
+              >
+                <span class="material-symbols-outlined text-[15px]">speed</span>
+                <span class="font-label-code text-label-code">14ms latency</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- DIORAMA 3D SPATIAL OVERLAYS (PINNED TO ISOMETRIC NODES) -->
+          <div class="absolute inset-0 pointer-events-none overflow-hidden" id="diorama-spatial-layer">
+            
+            <!-- 1. CENTER CASTLE ORCHESTRATOR PIN -->
+            <div
+              class="absolute top-[48%] left-[50%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto transition-transform hover:scale-105 duration-200 z-30 group cursor-pointer"
+            >
+              <div
+                class="relative flex items-center gap-space-xs px-space-md py-space-xs rounded-full bg-surface-container-lowest text-on-surface shadow-[0_4px_0_rgba(45,55,72,0.12),0_16px_32px_rgba(124,45,55,0.16)] ring-2 ring-primary-fixed-dim"
+              >
+                <span class="text-[20px] select-none">🏰</span>
+                <div class="flex flex-col">
+                  <span class="font-headline-md text-body-md text-primary font-bold leading-tight"
+                    >Claude Code</span
+                  >
+                  <span class="font-label-code text-label-caps text-on-surface-variant font-bold leading-none"
+                    >ORCHESTRATOR HUB</span
+                  >
+                </div>
+                <span class="relative flex h-3 w-3 ml-space-xs">
+                  <span
+                    class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary-fixed-dim opacity-75"
+                  ></span>
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-secondary"></span>
+                </span>
+              </div>
+              <div
+                class="w-2.5 h-2.5 bg-surface-container-lowest rotate-45 -mt-1 shadow-[2px_2px_0_rgba(45,55,72,0.06)]"
+              ></div>
+              <div class="w-12 h-2.5 rounded-full bg-inverse-surface/10 filter blur-[2px] mt-1"></div>
+            </div>
+
+            <!-- 2. NODE 1: PM · BA (Top Left - City Office) -->
+            <div
+              class="spatial-node absolute top-[20%] left-[22%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto z-20 transition-transform duration-200 hover:-translate-y-2"
+            >
+              <div
+                class="speech-bubble bg-surface-container-lowest px-space-md py-space-xs rounded-xl shadow-[0_4px_0_rgba(45,55,72,0.08),0_12px_24px_-4px_rgba(124,45,55,0.08)] max-w-[220px] mb-1.5 animate-bounce [animation-duration:3s]"
+              >
+                <div class="flex items-center gap-space-xs mb-1">
+                  <span class="w-2 h-2 rounded-full bg-secondary"></span>
+                  <span
+                    class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider"
+                    >Sprint Planning</span
+                  >
+                </div>
+                <p class="font-body-sm text-body-sm text-on-surface font-semibold leading-snug">
+                  Đang phân tích requirement Sprint #24 · Specs PRD
+                </p>
+              </div>
+              <div
+                class="node-label flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container-high text-on-surface shadow-[0_2px_0_rgba(45,55,72,0.08)]"
+              >
+                <span class="material-symbols-outlined text-[16px] text-tertiary-container">domain</span>
+                <span class="font-label-code text-label-code font-bold">PM · BA</span>
+              </div>
+            </div>
+
+            <!-- 3. NODE 2: DEV (Mid Left - Woodcraft Workshop) -->
+            <div
+              class="spatial-node absolute top-[44%] left-[16%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto z-20 transition-transform duration-200 hover:-translate-y-2"
+            >
+              <div
+                class="speech-bubble bg-surface-container-lowest px-space-md py-space-xs rounded-xl shadow-[0_4px_0_rgba(45,55,72,0.08),0_12px_24px_-4px_rgba(124,45,55,0.08)] max-w-[220px] mb-1.5 animate-bounce [animation-duration:3.4s]"
+              >
+                <div class="flex items-center gap-space-xs mb-1">
+                  <span class="w-2 h-2 rounded-full bg-tertiary-fixed-dim animate-pulse"></span>
+                  <span class="font-label-caps text-label-caps text-tertiary-container uppercase tracking-wider"
+                    >Active Branch</span
+                  >
+                </div>
+                <p class="font-body-sm text-body-sm text-on-surface font-semibold leading-snug">
+                  Đang code ticket #142: login Google
+                </p>
+              </div>
+              <div
+                class="node-label flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-bold shadow-[0_2px_0_rgba(45,55,72,0.08)]"
+              >
+                <span class="material-symbols-outlined text-[16px]">hardware</span>
+                <span class="font-label-code text-label-code">Dev</span>
+              </div>
+            </div>
+
+            <!-- 4. NODE 3: REVIEW (Bottom Left - Windmill / Guardpost) -->
+            <div
+              class="spatial-node absolute top-[68%] left-[26%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto z-20 transition-transform duration-200 hover:-translate-y-2"
+            >
+              <div
+                class="speech-bubble bg-surface-container-lowest px-space-md py-space-xs rounded-xl shadow-[0_4px_0_rgba(45,55,72,0.08),0_12px_24px_-4px_rgba(124,45,55,0.08)] max-w-[210px] mb-1.5 animate-bounce [animation-duration:3.1s]"
+              >
+                <div class="flex items-center gap-space-xs mb-1">
+                  <span class="w-2 h-2 rounded-full bg-primary"></span>
+                  <span class="font-label-caps text-label-caps text-primary uppercase tracking-wider"
+                    >Diff Inspection</span
+                  >
+                </div>
+                <p class="font-body-sm text-body-sm text-on-surface font-semibold leading-snug">
+                  PR #87 có 3 góp ý kiến trúc
+                </p>
+              </div>
+              <div
+                class="node-label flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-primary-fixed text-on-primary-fixed font-bold shadow-[0_2px_0_rgba(45,55,72,0.08)]"
+              >
+                <span class="material-symbols-outlined text-[16px]">manage_search</span>
+                <span class="font-label-code text-label-code">Review</span>
+              </div>
+            </div>
+
+            <!-- 5. NODE 4: QA · TEST (Top Right - Chemistry Lab / Water Tower) -->
+            <div
+              class="spatial-node absolute top-[22%] left-[78%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto z-20 transition-transform duration-200 hover:-translate-y-2"
+            >
+              <div
+                class="speech-bubble bg-surface-container-lowest px-space-md py-space-xs rounded-xl shadow-[0_4px_0_rgba(45,55,72,0.08),0_12px_24px_-4px_rgba(124,45,55,0.08)] max-w-[220px] mb-1.5 animate-bounce [animation-duration:3.6s]"
+              >
+                <div class="flex items-center gap-space-xs mb-1">
+                  <span class="w-2 h-2 rounded-full bg-error animate-ping"></span>
+                  <span class="font-label-caps text-label-caps text-error font-bold uppercase tracking-wider"
+                    >Automated Regression</span
+                  >
+                </div>
+                <p class="font-body-sm text-body-sm text-error font-bold leading-snug flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[16px]">warning</span>
+                  Test fail: 2/48 case
+                </p>
+              </div>
+              <div
+                class="node-label flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-error-container text-on-error-container font-bold shadow-[0_2px_0_rgba(147,0,10,0.15)]"
+              >
+                <span class="material-symbols-outlined text-[16px]">science</span>
+                <span class="font-label-code text-label-code">QA · Test</span>
+              </div>
+            </div>
+
+            <!-- 6. NODE 5: SECURITY (Mid Right - Fortress Gate / Vault) -->
+            <div
+              class="spatial-node absolute top-[44%] left-[84%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto z-20 transition-transform duration-200 hover:-translate-y-2"
+            >
+              <div
+                class="speech-bubble bg-surface-container-lowest px-space-md py-space-xs rounded-xl shadow-[0_4px_0_rgba(45,55,72,0.08),0_12px_24px_-4px_rgba(124,45,55,0.08)] max-w-[210px] mb-1.5 animate-bounce [animation-duration:2.9s]"
+              >
+                <div class="flex items-center gap-space-xs mb-1">
+                  <span class="w-2 h-2 rounded-full bg-primary-container"></span>
+                  <span class="font-label-caps text-label-caps text-primary-container font-bold uppercase tracking-wider"
+                    >CVE Audit</span
+                  >
+                </div>
+                <p class="font-body-sm text-body-sm text-on-surface font-semibold leading-snug">
+                  1 dependency lỗi thời (lodash)
+                </p>
+              </div>
+              <div
+                class="node-label flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container-high text-primary font-bold shadow-[0_2px_0_rgba(45,55,72,0.08)]"
+              >
+                <span class="material-symbols-outlined text-[16px]">shield</span>
+                <span class="font-label-code text-label-code">Security</span>
+              </div>
+            </div>
+
+            <!-- 7. NODE 6: DEVOPS (Bottom Right - Train Depot / Launch Pad) -->
+            <div
+              class="spatial-node absolute top-[68%] left-[76%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto z-20 transition-transform duration-200 hover:-translate-y-2"
+            >
+              <div
+                class="speech-bubble bg-surface-container-lowest px-space-md py-space-xs rounded-xl shadow-[0_4px_0_rgba(45,55,72,0.08),0_12px_24px_-4px_rgba(124,45,55,0.08)] max-w-[220px] mb-1.5 animate-bounce [animation-duration:3.2s]"
+              >
+                <div class="flex items-center gap-space-xs mb-1">
+                  <span class="w-2 h-2 rounded-full bg-secondary"></span>
+                  <span class="font-label-caps text-label-caps text-secondary font-bold uppercase tracking-wider"
+                    >ArgoCD Sync</span
+                  >
+                </div>
+                <p class="font-body-sm text-body-sm text-secondary font-bold leading-snug flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[16px]">check_circle</span>
+                  Deploy staging thành công
+                </p>
+              </div>
+              <div
+                class="node-label flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-secondary-container text-on-secondary-container font-bold shadow-[0_2px_0_rgba(30,107,63,0.2)]"
+              >
+                <span class="material-symbols-outlined text-[16px]">rocket_launch</span>
+                <span class="font-label-code text-label-code">DevOps</span>
+              </div>
+            </div>
+
+            <!-- 8. NODE 7: MONITORING (Top Center-ish - High Watchtower) -->
+            <div
+              class="spatial-node absolute top-[16%] left-[50%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto z-20 transition-transform duration-200 hover:-translate-y-2"
+            >
+              <div
+                class="speech-bubble bg-surface-container-lowest px-space-md py-space-xs rounded-xl shadow-[0_4px_0_rgba(45,55,72,0.08),0_12px_24px_-4px_rgba(124,45,55,0.08)] max-w-[200px] mb-1.5 animate-bounce [animation-duration:3.8s]"
+              >
+                <div class="flex items-center gap-space-xs mb-1">
+                  <span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+                  <span class="font-label-caps text-label-caps text-secondary font-bold uppercase tracking-wider"
+                    >Prometheus</span
+                  >
+                </div>
+                <p class="font-body-sm text-body-sm text-on-surface font-semibold leading-snug">
+                  CPU 24% · Ổn định
+                </p>
+              </div>
+              <div
+                class="node-label flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container-lowest text-on-surface font-bold shadow-[0_2px_0_rgba(45,55,72,0.08)]"
+              >
+                <span class="material-symbols-outlined text-[16px] text-secondary">cell_tower</span>
+                <span class="font-label-code text-label-code">Monitoring</span>
+              </div>
+            </div>
+
+            <!-- 9. COURIER AGENTS WALKING ON PATHS -->
+            <!-- Courier 1: Between Dev and Review -->
+            <div
+              class="absolute top-[56%] left-[21%] -translate-x-1/2 -translate-y-1/2 pointer-events-auto z-25 group cursor-pointer transition-transform hover:scale-110"
+            >
+              <div
+                class="flex items-center gap-space-xs bg-surface-container-lowest px-space-sm py-space-xs rounded-full shadow-[0_4px_0_rgba(45,55,72,0.1),0_10px_16px_rgba(0,0,0,0.08)] ring-1 ring-tertiary/10"
+              >
+                <span class="text-[16px] animate-bounce [animation-duration:1.2s]">🏃</span>
+                <span class="font-label-code text-label-code text-on-surface font-semibold"
+                  >📦 Mang PR #87 sang Review</span
+                >
+              </div>
+              <div class="w-10 h-1.5 rounded-full bg-inverse-surface/10 filter blur-[1px] mx-auto mt-1"></div>
+            </div>
+
+            <!-- Courier 2: Between QA and Dev -->
+            <div
+              class="absolute top-[36%] left-[64%] -translate-x-1/2 -translate-y-1/2 pointer-events-auto z-25 group cursor-pointer transition-transform hover:scale-110"
+            >
+              <div
+                class="flex items-center gap-space-xs bg-surface-container-lowest px-space-sm py-space-xs rounded-full shadow-[0_4px_0_rgba(45,55,72,0.1),0_10px_16px_rgba(0,0,0,0.08)] ring-1 ring-error/20"
+              >
+                <span class="text-[16px] animate-bounce [animation-duration:0.9s]">🚴</span>
+                <span class="font-label-code text-label-code text-error font-semibold"
+                  >🐛 Mang bug sang Dev</span
+                >
+              </div>
+              <div class="w-10 h-1.5 rounded-full bg-inverse-surface/10 filter blur-[1px] mx-auto mt-1"></div>
+            </div>
+          </div>
+
+          <!-- BOTTOM FLOATING HUD DOCK & LEGEND -->
+          <div
+            class="w-full flex flex-col md:flex-row items-end md:items-center justify-between gap-space-md pointer-events-none mb-12 sm:mb-14"
+          >
+            <!-- Horizontal 7-Role Status Dock -->
+            <div class="w-full md:w-auto overflow-x-auto scrollbar-none pointer-events-auto">
+              <div
+                class="flex items-center gap-space-xs bg-surface-container-lowest/90 backdrop-blur-md px-space-sm py-space-xs rounded-full shadow-[0_4px_0_rgba(45,55,72,0.08),0_16px_32px_rgba(124,45,55,0.08)]"
+              >
+                <!-- Role Chip 1: PM -->
+                <div
+                  class="flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
+                  title="PM / BA: Sẵn sàng"
+                >
+                  <span class="material-symbols-outlined text-[15px] text-on-surface-variant">domain</span>
+                  <span class="font-label-code text-label-code text-on-surface font-semibold">PM</span>
+                  <span class="w-2 h-2 rounded-full bg-secondary"></span>
+                </div>
+                <!-- Role Chip 2: Dev -->
+                <div
+                  class="flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
+                  title="Dev: Đang code"
+                >
+                  <span class="material-symbols-outlined text-[15px] text-tertiary-container">hardware</span>
+                  <span class="font-label-code text-label-code text-on-surface font-semibold">Dev</span>
+                  <span class="w-2 h-2 rounded-full bg-tertiary-fixed-dim animate-pulse"></span>
+                </div>
+                <!-- Role Chip 3: Review -->
+                <div
+                  class="flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
+                  title="Review: Đang chờ duyệt PR"
+                >
+                  <span class="material-symbols-outlined text-[15px] text-primary">manage_search</span>
+                  <span class="font-label-code text-label-code text-on-surface font-semibold">Review</span>
+                  <span class="w-2 h-2 rounded-full bg-primary-fixed-dim"></span>
+                </div>
+                <!-- Role Chip 4: QA -->
+                <div
+                  class="flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
+                  title="QA: Phát hiện 2 test case lỗi"
+                >
+                  <span class="material-symbols-outlined text-[15px] text-error">science</span>
+                  <span class="font-label-code text-label-code text-on-surface font-semibold">QA</span>
+                  <span class="w-2 h-2 rounded-full bg-error"></span>
+                </div>
+                <!-- Role Chip 5: Security -->
+                <div
+                  class="flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
+                  title="Security: 1 cảnh báo dependency"
+                >
+                  <span class="material-symbols-outlined text-[15px] text-primary">shield</span>
+                  <span class="font-label-code text-label-code text-on-surface font-semibold">Security</span>
+                  <span class="w-2 h-2 rounded-full bg-primary"></span>
+                </div>
+                <!-- Role Chip 6: DevOps -->
+                <div
+                  class="flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
+                  title="DevOps: Đã deploy staging"
+                >
+                  <span class="material-symbols-outlined text-[15px] text-secondary">rocket_launch</span>
+                  <span class="font-label-code text-label-code text-on-surface font-semibold">DevOps</span>
+                  <span class="w-2 h-2 rounded-full bg-secondary"></span>
+                </div>
+                <!-- Role Chip 7: Monitoring -->
+                <div
+                  class="flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
+                  title="Monitoring: Hệ thống ổn định"
+                >
+                  <span class="material-symbols-outlined text-[15px] text-secondary">cell_tower</span>
+                  <span class="font-label-code text-label-code text-on-surface font-semibold">Monitor</span>
+                  <span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Miniature Viewport Camera Control + Asset Attribution Card -->
+            <div
+              class="pointer-events-auto flex items-center gap-space-xs bg-surface-container-lowest/90 backdrop-blur-md px-space-md py-space-xs rounded-2xl shadow-[0_4px_0_rgba(45,55,72,0.08),0_12px_24px_-4px_rgba(124,45,55,0.08)]"
+            >
+              <div class="flex flex-col pr-space-xs">
+                <span class="font-headline-md text-body-sm text-primary font-bold leading-tight"
+                  >Thị trấn solomi</span
+                >
+                <span class="font-label-code text-label-caps text-on-surface-variant font-medium"
+                  >Kenney + KayKit 3D</span
+                >
+              </div>
+              <div class="h-6 w-[1px] bg-outline-variant"></div>
+              <div class="flex items-center gap-1">
+                <button
+                  aria-label="Phóng to"
+                  class="w-7 h-7 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high flex items-center justify-center transition-transform active:scale-95 shadow-[0_1px_0_rgba(45,55,72,0.08)]"
+                  id="cam-zoom-in"
+                >
+                  <span class="material-symbols-outlined text-[16px]">add</span>
+                </button>
+                <button
+                  aria-label="Thu nhỏ"
+                  class="w-7 h-7 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high flex items-center justify-center transition-transform active:scale-95 shadow-[0_1px_0_rgba(45,55,72,0.08)]"
+                  id="cam-zoom-out"
+                >
+                  <span class="material-symbols-outlined text-[16px]">remove</span>
+                </button>
+                <button
+                  aria-label="Đặt lại góc nhìn"
+                  class="w-7 h-7 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high flex items-center justify-center transition-transform active:scale-95 shadow-[0_1px_0_rgba(45,55,72,0.08)]"
+                  id="cam-reset"
+                >
+                  <span class="material-symbols-outlined text-[16px]">center_focus_strong</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer Status -->
+    <footer
+      class="w-full pointer-events-none fixed bottom-0 left-0 right-0 z-40 pb-space-sm px-gutter-desktop"
+    >
+      <div class="w-full flex items-center justify-between">
+        <div
+          class="pointer-events-auto bg-surface-container-lowest/90 backdrop-blur-md px-space-md py-space-xs rounded-full shadow-[0_4px_0_rgba(45,55,72,0.08),0_12px_24px_-4px_rgba(124,45,55,0.08)] flex items-center gap-space-md"
+        >
+          <div class="flex items-center gap-space-xs">
+            <span class="material-symbols-outlined text-secondary text-[16px]">wb_sunny</span>
+            <span class="font-label-code text-label-code text-on-surface"
+              >Thời tiết: Nắng ấm (Latency 14ms)</span
+            >
+          </div>
+          <span class="font-label-code text-label-code text-outline">|</span>
+          <div class="flex items-center gap-space-xs">
+            <span class="material-symbols-outlined text-tertiary-container text-[16px]">swap_calls</span>
+            <span class="font-label-code text-label-code text-on-surface">99.98% TPS</span>
+          </div>
+        </div>
+        <div
+          class="pointer-events-auto bg-surface-container-lowest/80 backdrop-blur-md px-space-md py-space-xs rounded-full shadow-[0_2px_4px_rgba(45,55,72,0.06)]"
+        >
+          <span class="font-body-sm text-body-sm text-on-surface-variant font-medium"
+            >Thị trấn solomi – Mô hình 3D: Kenney + KayKit</span
+          >
+        </div>
+      </div>
+    </footer>
+
+    <!-- Interactive HUD Script -->
+    <script src="js/hud.js"></script>
+  </body>
+</html>
