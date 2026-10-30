@@ -106,22 +106,22 @@ export const PromptModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[1050] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in overflow-hidden overscroll-contain">
-      <div className="w-full max-w-2xl bg-slate-900 border border-slate-700/90 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-scale-up overscroll-contain">
+    <div className="fixed inset-0 z-[1050] flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in overflow-hidden overscroll-contain">
+      <div className="w-full max-w-2xl bg-slate-900 border border-slate-700/90 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[94dvh] sm:max-h-[92vh] animate-scale-up overscroll-contain">
         {/* Header Bar */}
-        <div className="flex items-center justify-between px-6 py-4 bg-slate-950/80 border-b border-slate-800 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-xl shadow-lg shadow-blue-900/40">
+        <div className="flex items-center justify-between gap-2 px-4 py-3 sm:px-6 sm:py-4 bg-slate-950/80 border-b border-slate-800 shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-lg sm:text-xl shadow-lg shadow-blue-900/40">
               ✨
             </div>
-            <div>
-              <h2 className="text-base font-bold text-white tracking-wide flex items-center gap-2">
-                <span>Giao việc cho 8 Autonomous AI Agents</span>
-                <span className="px-2 py-0.5 text-[10px] font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 rounded-full">
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-base font-bold text-white tracking-wide flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <span className="truncate">Giao việc cho 8 AI Agents</span>
+                <span className="px-2 py-0.5 text-[9px] sm:text-[10px] font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 rounded-full whitespace-nowrap">
                   Gemini 3.8 Live Stream
                 </span>
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-[11px] sm:text-xs text-slate-400 truncate">
                 Orchestrate · PRD · Git Diff · Review · QA · Security · GitHub PR Audit
               </p>
             </div>
@@ -129,21 +129,21 @@ export const PromptModal: React.FC = () => {
 
           <button
             onClick={() => openPromptModal(false)}
-            className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors border border-slate-700/60"
+            className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors border border-slate-700/60 shrink-0"
           >
-            <span>Esc</span>
+            <span className="hidden sm:inline">Esc</span>
             <span>✕</span>
           </button>
         </div>
 
         {/* Input Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto overscroll-contain">
+        <form onSubmit={handleSubmit} className="p-3.5 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto overscroll-contain">
           {/* Scenario Selector Pills */}
           <div className="space-y-1.5">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
               Chọn Kịch bản Vận hành:
             </span>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
               <button
                 type="button"
                 onClick={() => {
@@ -390,7 +390,7 @@ export const PromptModal: React.FC = () => {
         </form>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between px-6 py-4 bg-slate-950/60 border-t border-slate-800 shrink-0">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 px-4 py-3 sm:px-6 sm:py-4 bg-slate-950/60 border-t border-slate-800 shrink-0">
           {/* Key Button */}
           <button
             type="button"
@@ -398,13 +398,13 @@ export const PromptModal: React.FC = () => {
               openPromptModal(false);
               openApiKeyModal(true);
             }}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800/90 hover:bg-slate-700/90 text-slate-300 hover:text-white border border-slate-700 transition-colors"
+            className="flex items-center justify-center sm:justify-start gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800/90 hover:bg-slate-700/90 text-slate-300 hover:text-white border border-slate-700 transition-colors"
           >
             <span className={`w-2 h-2 rounded-full ${apiKey ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'}`} />
             <span>{apiKey ? 'API Key: Đã kết nối' : 'Cấu hình Gemini API Key'}</span>
           </button>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={() => openPromptModal(false)}
@@ -416,7 +416,7 @@ export const PromptModal: React.FC = () => {
               type="button"
               onClick={() => handleSubmit()}
               disabled={!prompt.trim() || isRealRunning}
-              className={`flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white transition-all shadow-lg ${
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 sm:px-5 py-2 rounded-xl text-xs font-bold text-white transition-all shadow-lg ${
                 !prompt.trim() || isRealRunning
                   ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
                   : scenario === 'github'
@@ -425,7 +425,7 @@ export const PromptModal: React.FC = () => {
               }`}
             >
               <span>{scenario === 'github' ? '🔗 Kéo Diff & Audit PR' : '🚀 Bắt đầu lập trình'}</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/30 font-mono text-blue-200">
+              <span className="hidden sm:inline text-[10px] px-1.5 py-0.5 rounded bg-black/30 font-mono text-blue-200">
                 Enter ↵
               </span>
             </button>

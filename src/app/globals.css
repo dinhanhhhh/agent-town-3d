@@ -58,3 +58,14 @@ body {
 .animate-scale-up {
   animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Hide scrollbars cleanly on horizontal chip/tab bars while keeping touch scroll */
+.scrollbar-none,
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

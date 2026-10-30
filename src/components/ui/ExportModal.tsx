@@ -241,19 +241,19 @@ ${telemetrySummary.artifactRows.join('\n')}
   };
 
   return (
-    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in overflow-hidden overscroll-contain">
-      <div className="w-full max-w-3xl bg-slate-900 border border-slate-700/90 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-scale-up overscroll-contain">
+    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in overflow-hidden overscroll-contain">
+      <div className="w-full max-w-3xl bg-slate-900 border border-slate-700/90 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[94dvh] sm:max-h-[90vh] animate-scale-up overscroll-contain">
         {/* Header Bar */}
-        <div className="flex items-center justify-between px-6 py-4 bg-slate-950/90 border-b border-slate-800 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xl shadow-lg shadow-indigo-900/40">
+        <div className="flex items-center justify-between gap-2 px-4 py-3 sm:px-6 sm:py-4 bg-slate-950/90 border-b border-slate-800 shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-lg sm:text-xl shadow-lg shadow-indigo-900/40">
               📑
             </div>
-            <div>
-              <h2 className="text-base font-bold text-white tracking-wide flex items-center gap-2">
-                <span>Xuất Báo Cáo Phát Hành (Release Summary)</span>
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-base font-bold text-white tracking-wide flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <span className="truncate">Xuất Báo Cáo Phát Hành</span>
                 <span
-                  className={`px-2 py-0.5 text-[10px] font-semibold rounded-full border ${
+                  className={`px-2 py-0.5 text-[9px] sm:text-[10px] font-semibold rounded-full border whitespace-nowrap ${
                     telemetrySummary.hasRealRun
                       ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                       : 'bg-blue-500/20 text-blue-300 border-blue-500/30'
@@ -262,7 +262,7 @@ ${telemetrySummary.artifactRows.join('\n')}
                   {telemetrySummary.hasRealRun ? '🟢 Live AI Data' : '🔵 Simulation Data'}
                 </span>
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-[11px] sm:text-xs text-slate-400 truncate">
                 Trích xuất động từ Artifacts thực tế, Review Score, Security CVEs & Snapshot 3D
               </p>
             </div>
@@ -270,15 +270,15 @@ ${telemetrySummary.artifactRows.join('\n')}
 
           <button
             onClick={() => openExportModal(false)}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors border border-slate-700/60"
+            className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors border border-slate-700/60 shrink-0"
           >
-            <span>Esc</span>
+            <span className="hidden sm:inline">Esc</span>
             <span>✕</span>
           </button>
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="p-6 overflow-y-auto overscroll-contain space-y-6 text-slate-300 text-sm">
+        <div className="p-3.5 sm:p-6 overflow-y-auto overscroll-contain space-y-4 sm:space-y-6 text-slate-300 text-sm">
           {/* 3D Town Snapshot Preview */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">

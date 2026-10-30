@@ -81,7 +81,7 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="relative w-screen h-screen overflow-hidden bg-slate-950">
+    <main className="relative w-screen h-[100dvh] overflow-hidden bg-slate-950">
       {/* 3D WebGL Canvas Layer */}
       <TownScene />
 

@@ -148,7 +148,7 @@ export const StationOverlay: React.FC = () => {
                     e.stopPropagation();
                     selectAgent(role, 'artifact');
                   }}
-                  className={`cursor-pointer transition-all duration-300 transform hover:scale-105 select-none max-w-[210px] text-center p-2 rounded-xl shadow-lg border backdrop-blur-md mb-2 ${
+                  className={`cursor-pointer transition-all duration-300 transform hover:scale-105 select-none max-w-[155px] sm:max-w-[210px] text-center p-1.5 sm:p-2 rounded-xl shadow-lg border backdrop-blur-md mb-1.5 sm:mb-2 ${
                     isError
                       ? 'bg-red-950/90 border-red-500 text-red-200'
                       : isDebugging
@@ -160,11 +160,11 @@ export const StationOverlay: React.FC = () => {
                       : 'bg-slate-900/80 border-slate-700 text-slate-300'
                   }`}
                 >
-                  <div className="text-[11px] font-medium leading-snug line-clamp-2">
+                  <div className="text-[10px] sm:text-[11px] font-medium leading-snug line-clamp-2">
                     {agent.speech}
                   </div>
                   {/* Little speech arrow below */}
-                  <div className="w-2 h-2 mx-auto rotate-45 -mb-3 mt-1 bg-inherit border-r border-b border-inherit" />
+                  <div className="w-2 h-2 mx-auto rotate-45 -mb-2.5 sm:-mb-3 mt-1 bg-inherit border-r border-b border-inherit" />
                 </div>
               </div>
             )}
@@ -181,10 +181,10 @@ export const StationOverlay: React.FC = () => {
                     e.stopPropagation();
                     selectAgent(role);
                   }}
-                  className="cursor-pointer flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-950/80 border border-slate-700/80 text-white shadow-md hover:border-slate-400 transition-colors whitespace-nowrap"
+                  className="cursor-pointer flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-slate-950/85 border border-slate-700/80 text-white shadow-md hover:border-slate-400 transition-colors whitespace-nowrap"
                 >
                   <span
-                    className={`w-2 h-2 rounded-full ${
+                    className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${
                       isError
                         ? 'bg-red-500 animate-ping'
                         : isDebugging
@@ -196,10 +196,10 @@ export const StationOverlay: React.FC = () => {
                         : 'bg-slate-400'
                     }`}
                   />
-                  <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400">
+                  <span className="hidden md:inline text-[10px] font-bold tracking-wider uppercase text-slate-400">
                     {layout.tag}
                   </span>
-                  <span className="text-xs font-semibold text-slate-100">{layout.name}</span>
+                  <span className="text-[10px] sm:text-xs font-semibold text-slate-100">{layout.name}</span>
                 </div>
               </div>
             )}

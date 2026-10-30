@@ -192,20 +192,20 @@ export const ArtifactModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in overflow-hidden overscroll-contain">
-      <div className="w-full max-w-2xl bg-slate-900 border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-scale-up overscroll-contain">
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in overflow-hidden overscroll-contain">
+      <div className="w-full max-w-2xl bg-slate-900 border border-slate-700/80 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[85vh] animate-scale-up overscroll-contain">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-slate-950/80 border-b border-slate-800">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-2 px-4 py-3 sm:px-6 sm:py-4 bg-slate-950/80 border-b border-slate-800">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <div
-              className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl shadow-md"
+              className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-2xl flex items-center justify-center text-lg sm:text-xl shadow-md"
               style={{ backgroundColor: `${TOKENS.colors['surface-container']}` }}
             >
               {selectedAgentRole === 'orchestrator' ? '🎛️' : '🏢'}
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-white">{layout?.name}</h2>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <h2 className="text-sm sm:text-base font-bold text-white truncate">{layout?.name}</h2>
                 <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-slate-800 text-slate-300 border border-slate-700">
                   {layout?.tag}
                 </span>
@@ -223,22 +223,22 @@ export const ArtifactModal: React.FC = () => {
                   }`}
                 />
               </div>
-              <p className="text-xs text-slate-400">{agent?.category}</p>
+              <p className="text-[11px] sm:text-xs text-slate-400 truncate">{agent?.category}</p>
             </div>
           </div>
           <button
             onClick={() => openArtifactModal(false)}
-            className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-colors"
+            className="w-8 h-8 shrink-0 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-colors"
           >
             ✕
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-2 px-6 pt-3 bg-slate-950/40 border-b border-slate-800">
+        <div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 pt-2.5 sm:pt-3 bg-slate-950/40 border-b border-slate-800 overflow-x-auto scrollbar-none flex-nowrap">
           <button
             onClick={() => setActiveTab('artifact')}
-            className={`px-4 py-2 text-xs font-bold rounded-t-xl transition-colors border-b-2 ${
+            className={`px-3 sm:px-4 py-2 text-xs font-bold rounded-t-xl transition-colors border-b-2 whitespace-nowrap ${
               activeTab === 'artifact'
                 ? 'text-white border-blue-400 bg-slate-800/60'
                 : 'text-slate-400 border-transparent hover:text-slate-200'
@@ -248,7 +248,7 @@ export const ArtifactModal: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('prompt')}
-            className={`px-4 py-2 text-xs font-bold rounded-t-xl transition-colors border-b-2 ${
+            className={`px-3 sm:px-4 py-2 text-xs font-bold rounded-t-xl transition-colors border-b-2 whitespace-nowrap ${
               activeTab === 'prompt'
                 ? 'text-white border-blue-400 bg-slate-800/60'
                 : 'text-slate-400 border-transparent hover:text-slate-200'
@@ -258,7 +258,7 @@ export const ArtifactModal: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('events')}
-            className={`px-4 py-2 text-xs font-bold rounded-t-xl transition-colors border-b-2 ${
+            className={`px-3 sm:px-4 py-2 text-xs font-bold rounded-t-xl transition-colors border-b-2 whitespace-nowrap ${
               activeTab === 'events'
                 ? 'text-white border-blue-400 bg-slate-800/60'
                 : 'text-slate-400 border-transparent hover:text-slate-200'
@@ -269,10 +269,10 @@ export const ArtifactModal: React.FC = () => {
         </div>
 
         {/* Content Body */}
-        <div className="p-6 overflow-y-auto overscroll-contain flex-1 font-mono text-xs">
+        <div className="p-3.5 sm:p-6 overflow-y-auto overscroll-contain flex-1 font-mono text-xs">
           {activeTab === 'artifact' && (
-            <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 overflow-x-auto text-slate-300 space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-800 text-[11px] text-slate-400 font-sans">
+            <div className="bg-slate-950 p-3 sm:p-4 rounded-2xl border border-slate-800 overflow-x-auto text-slate-300 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-800 text-[11px] text-slate-400 font-sans">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-slate-200">File: {artifact?.filename}</span>
                   <span className="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-400 font-mono">

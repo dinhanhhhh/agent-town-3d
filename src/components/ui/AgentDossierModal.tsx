@@ -57,28 +57,28 @@ export const AgentDossierModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in overflow-hidden overscroll-contain">
-      <div className="relative w-full max-w-2xl bg-[#0f172a]/95 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 overscroll-contain">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-sm animate-fade-in overflow-hidden overscroll-contain">
+      <div className="relative w-full max-w-2xl bg-[#0f172a]/95 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[85vh] text-slate-100 overscroll-contain">
         {/* HEADER BAR */}
         <div
-          className="p-5 flex items-center justify-between border-b border-slate-700/60"
+          className="p-3.5 sm:p-5 flex flex-wrap items-center justify-between gap-2.5 border-b border-slate-700/60"
           style={{ backgroundColor: `${hexColor}15` }}
         >
-          <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3 min-w-0">
             <div
-              className="w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold shadow-lg"
+              className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-xl flex items-center justify-center text-lg sm:text-xl font-bold shadow-lg"
               style={{ backgroundColor: hexColor, color: '#ffffff' }}
             >
               {layout.tag.split(' ')[0] === 'HUB' ? '🎛️' : '🏢'}
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <span className="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
                   {layout.tag}
                 </span>
-                <h2 className="text-lg font-bold text-white">{layout.name}</h2>
+                <h2 className="text-base sm:text-lg font-bold text-white truncate">{layout.name}</h2>
                 <span
-                  className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                  className={`text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-full ${
                     agent.status === 'working'
                       ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                       : agent.status === 'debugging'
@@ -89,14 +89,14 @@ export const AgentDossierModal: React.FC = () => {
                   ● {agent.status.toUpperCase()}
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">{agent.category}</p>
+              <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5 truncate">{agent.category}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 ml-auto">
             <button
               onClick={() => openArtifactModal(true)}
-              className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-cyan-300 hover:text-white border border-slate-700 transition"
+              className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-cyan-300 hover:text-white border border-slate-700 transition whitespace-nowrap"
               title="Chuyển sang trình thanh tra Artifact & Nhật ký sự kiện"
             >
               📦 Xem Artifact & Logs
@@ -106,7 +106,7 @@ export const AgentDossierModal: React.FC = () => {
                 openDossierModal(false);
                 selectAgent(null);
               }}
-              className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition"
+              className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition shrink-0"
             >
               ✕
             </button>
@@ -114,7 +114,7 @@ export const AgentDossierModal: React.FC = () => {
         </div>
 
         {/* BODY CONTENT - SCROLLABLE */}
-        <div className="flex-1 overflow-y-auto overscroll-contain p-5 space-y-4 text-xs">
+        <div className="flex-1 overflow-y-auto overscroll-contain p-3.5 sm:p-5 space-y-4 text-xs">
           {/* LỜI THOẠI / SUY NGHĨ HIỆN TẠI */}
           <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700/60">
             <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 block mb-1">
@@ -189,9 +189,9 @@ export const AgentDossierModal: React.FC = () => {
         </div>
 
         {/* FOOTER SWITCHER GIỮA CÁC TRẠM */}
-        <div className="p-3.5 bg-slate-900/90 border-t border-slate-800 flex items-center justify-between text-xs">
-          <span className="text-slate-400">Xem nhanh trạm khác:</span>
-          <div className="flex gap-1 overflow-x-auto">
+        <div className="p-3 sm:p-3.5 bg-slate-900/90 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+          <span className="text-slate-400 shrink-0">Xem nhanh trạm khác:</span>
+          <div className="flex gap-1 overflow-x-auto scrollbar-none pb-0.5">
             {STAGE_ORDER.map((r) => (
               <button
                 key={r}

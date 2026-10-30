@@ -39,19 +39,19 @@ export const ApiKeyModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in overflow-hidden overscroll-contain">
-      <div className="w-full max-w-md bg-slate-900 border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-scale-up overscroll-contain">
+    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in overflow-hidden overscroll-contain">
+      <div className="w-full max-w-md bg-slate-900 border border-slate-700/80 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[94dvh] animate-scale-up overscroll-contain">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-slate-950/80 border-b border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-xl">
+        <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 bg-slate-950/80 border-b border-slate-800">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-lg sm:text-xl">
               🔑
             </div>
             <div>
-              <h2 className="text-base font-bold text-white tracking-wide">
+              <h2 className="text-sm sm:text-base font-bold text-white tracking-wide">
                 Cấu hình AI API Key
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-[11px] sm:text-xs text-slate-400">
                 Hỗ trợ DeepSeek & Google Gemini
               </p>
             </div>
@@ -65,7 +65,7 @@ export const ApiKeyModal: React.FC = () => {
         </div>
 
         {/* Body */}
-        <div className="p-6 space-y-4">
+        <div className="p-4 sm:p-6 space-y-4 overflow-y-auto overscroll-contain">
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
               <span>DeepSeek hoặc Gemini API Key:</span>
