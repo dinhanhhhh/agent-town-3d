@@ -245,6 +245,9 @@
    - Đặt `Claude Code` (`orchestrator`) ngồi trên ghế Captain's Chair (`offsetDistance = -0.92`, `baseY = layout.position[1] + 0.48`, hướng `+Z` nhìn vào bàn Hologram).
    - Đặt 7 kỹ sư chuyên môn ngồi trực tiếp trên đệm ghế công thái học (`offsetDistance = -0.05`, `baseY = layout.position[1] + 0.52`, hướng `-Z` nhìn thẳng vào màn hình máy tính).
    - Điều chỉnh tư thế 2 chân gập về phía trước trên đệm ghế (`z = +0.16`) và 2 tay đặt lên bàn phím cơ (`z = +0.25`), cập nhật trực tiếp `position.y` của 2 bàn tay trong `useFrame` để tạo hiệu ứng gõ phím cơ liên hồi chân thực.
+3. **Liên tục hóa vòng đời Shipper (`waypoints.ts`, `Character.tsx`, `Building.tsx`, `Castle.tsx`):**
+   - Bổ sung điểm mốc `handover` bên trong phòng để Shipper bước qua cửa đến sát bàn làm việc thay vì dừng ngoài đường (`2.5m`).
+   - Khi giao hàng xong, hiển thị thùng kiện hàng (`Artifact Parcel`) đặt ngay trên góc bàn làm việc của kỹ sư và giữ `StandbyCourier` đứng đợi cạnh bàn cho tới khi kỹ sư hoàn thành để bưng kiện hàng đi tiếp, xóa bỏ hoàn toàn hiện tượng Shipper tự nhiên biến mất rồi lại hiện ra.
 
 ---
 

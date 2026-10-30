@@ -18,9 +18,12 @@ export const CommandCenter: React.FC = () => {
   const selectedAgentRole = useTownStore((s) => s.selectedAgentRole);
   const isRealRunning = useTownStore((s) => s.isRealRunning);
   const isSimulating = useTownStore((s) => s.isSimulating);
+  const orchestratorStatus = useTownStore((s) => s.agents.orchestrator?.status);
+  const hasOrchestratorArtifact = useTownStore((s) => Boolean(s.realArtifacts.orchestrator));
 
   const isSelected = selectedAgentRole === 'orchestrator';
   const isBusy = isRealRunning || isSimulating;
+  const isWorking = orchestratorStatus === 'working';
 
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime;
@@ -254,6 +257,27 @@ export const CommandCenter: React.FC = () => {
           intensity={1.0}
           position={[0, 1.3, 0]}
         />
+
+        {/* Kiện hàng Kế hoạch Tổng thể đặt trên mép bàn Hologram khi Orchestrator đang lập kế hoạch */}
+        {(isWorking || hasOrchestratorArtifact) && (
+          <group position={[0.42, 0.78, 0.42]}>
+            <mesh castShadow>
+              <boxGeometry args={[0.32, 0.22, 0.24]} />
+              <meshStandardMaterial
+                color={!isWorking && hasOrchestratorArtifact ? 0x38bdf8 : 0xfbbf24}
+                roughness={0.35}
+              />
+            </mesh>
+            <mesh position={[0, 0, 0.122]}>
+              <boxGeometry args={[0.05, 0.222, 0.01]} />
+              <meshBasicMaterial color={0xffffff} />
+            </mesh>
+            <mesh position={[0, 0.112, 0]}>
+              <boxGeometry args={[0.05, 0.01, 0.242]} />
+              <meshBasicMaterial color={0xffffff} />
+            </mesh>
+          </group>
+        )}
       </group>
 
       {/* ========================================================

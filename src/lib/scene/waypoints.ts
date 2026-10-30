@@ -3,6 +3,7 @@ import { AgentRole } from '../pipeline/stages';
 import { STATIONS_LAYOUT } from './layout';
 
 export interface StationNavPoints {
+  handover: THREE.Vector3;
   door: THREE.Vector3;
   street: THREE.Vector3;
   plaza: THREE.Vector3;
@@ -11,15 +12,17 @@ export interface StationNavPoints {
 
 /**
  * Trả về các điểm mốc điều hướng chuẩn xác theo hình học 3D cho từng trạm:
- * - door: điểm dừng trước bậc thềm đá mở của phòng (cách tâm phòng 2.5m, hoàn toàn bên ngoài phòng)
- * - street: điểm trên đại lộ nhánh dẫn vào trạm (cách tâm phòng 3.8m)
+ * - handover: điểm bước vào trong phòng sát mép bàn làm việc để giao/nhận tận tay kỹ sư
+ * - door: điểm bậc thềm cửa kính của phòng (cách tâm phòng 2.1m)
+ * - street: điểm trên đại lộ nhánh dẫn vào trạm (cách tâm phòng 3.6m)
  * - plaza: điểm tiếp giáp với vòng xuyến đại lộ trung tâm (bán kính R = 4.4m quanh lâu đài)
  * - angle: góc cực từ tâm đảo đến đại lộ của trạm
  */
 export function getStationNavPoints(role: AgentRole): StationNavPoints {
   if (role === 'orchestrator') {
     return {
-      door: new THREE.Vector3(0, 0.64, 3.2),
+      handover: new THREE.Vector3(0, 0.80, 1.15),
+      door: new THREE.Vector3(0, 0.68, 2.5),
       street: new THREE.Vector3(0, 0.64, 3.8),
       plaza: new THREE.Vector3(0, 0.64, 4.4),
       angle: Math.PI / 2, // 90 độ (hướng Nam)
@@ -31,18 +34,25 @@ export function getStationNavPoints(role: AgentRole): StationNavPoints {
   const fwdX = Math.sin(rotY);
   const fwdZ = Math.cos(rotY);
 
-  // Bậc thềm đá trước cửa mở (không đè lên tường hay nội thất)
+  // Điểm đứng ngay trước bàn làm việc bên trong phòng Lab để bàn giao kiện hàng
+  const handover = new THREE.Vector3(
+    layout.position[0] + fwdX * 0.85,
+    0.82,
+    layout.position[2] + fwdZ * 0.85
+  );
+
+  // Bậc thềm đá trước cửa mở
   const door = new THREE.Vector3(
-    layout.position[0] + fwdX * 2.5,
-    0.64,
-    layout.position[2] + fwdZ * 2.5
+    layout.position[0] + fwdX * 2.1,
+    0.66,
+    layout.position[2] + fwdZ * 2.1
   );
 
   // Đầu đại lộ nhánh nối vào trạm
   const street = new THREE.Vector3(
-    layout.position[0] + fwdX * 3.8,
+    layout.position[0] + fwdX * 3.6,
     0.64,
-    layout.position[2] + fwdZ * 3.8
+    layout.position[2] + fwdZ * 3.6
   );
 
   // Điểm giao cắt trên vòng xuyến đại lộ trung tâm (R = 4.4m)
@@ -53,22 +63,22 @@ export function getStationNavPoints(role: AgentRole): StationNavPoints {
     Math.sin(angle) * 4.4
   );
 
-  return { door, street, plaza, angle };
+  return { handover, door, street, plaza, angle };
 }
 
 /**
- * Tạo danh sách waypoints di chuyển hoàn toàn trên mạng lưới đường đá:
- * 1. Xuất phát từ thềm cửa mở của trạm xuất phát (Door A)
+ * Tạo danh sách waypoints di chuyển liên tục từ bàn làm việc trạm A tới tận bàn làm việc trạm B:
+ * 1. Nhận kiện hàng từ mép bàn làm việc trạm A (Handover A) -> bước qua cửa (Door A)
  * 2. Đi ra đại lộ nhánh (Street A) vào vòng xuyến trung tâm (Plaza A)
- * 3. Chạy theo cung tròn êm ái trên vòng xuyến đại lộ đá (R = 4.4m) tránh tuyệt đối lâu đài và các phòng
- * 4. Rẽ vào đại lộ nhánh của trạm đích (Plaza B -> Street B)
- * 5. Dừng lại giao hàng ngay bậc thềm cửa mở của trạm đích (Door B)
+ * 3. Chạy theo cung tròn êm ái trên vòng xuyến đại lộ đá (R = 4.4m)
+ * 4. Rẽ vào đại lộ nhánh của trạm đích (Plaza B -> Street B -> Door B)
+ * 5. Bước vào trong phòng và đặt kiện hàng lên bàn trạm B (Handover B)
  */
 export function getRouteWaypoints(from: AgentRole, to: AgentRole): THREE.Vector3[] {
   const start = getStationNavPoints(from);
   const end = getStationNavPoints(to);
 
-  const waypoints: THREE.Vector3[] = [start.door, start.street, start.plaza];
+  const waypoints: THREE.Vector3[] = [start.handover, start.door, start.street, start.plaza];
 
   // Tính góc quay ngắn nhất trên vòng xuyến trung tâm
   let deltaAngle = end.angle - start.angle;
@@ -89,7 +99,7 @@ export function getRouteWaypoints(from: AgentRole, to: AgentRole): THREE.Vector3
     );
   }
 
-  waypoints.push(end.plaza, end.street, end.door);
+  waypoints.push(end.plaza, end.street, end.door, end.handover);
   return waypoints;
 }
 

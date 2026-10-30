@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { Island } from './Island';
 import { Castle } from './Castle';
 import { Building } from './Building';
-import { StationAgent, CourierCharacter } from './Character';
+import { StationAgent, CourierCharacter, StandbyCourier } from './Character';
 import { Trees } from './Tree';
 import { Paths } from './Path';
 import { DataCables } from './DataCables';
@@ -159,10 +159,11 @@ export const TownScene: React.FC = () => {
           <StationAgent key={role} role={role} />
         ))}
 
-        {/* Shippers vận chuyển thùng artifact */}
+        {/* Shippers vận chuyển thùng artifact trên đường & đứng đợi bàn giao tại bàn làm việc */}
         {couriers.map((courier) => (
           <CourierCharacter key={courier.id} courier={courier} />
         ))}
+        <StandbyCourier />
 
         {/* 3D Tracker tính toán tọa độ chiếu cho nhãn 2D */}
         <OverlayProjector />

@@ -23,9 +23,11 @@ export const Building: React.FC<BuildingProps> = ({ role }) => {
   const selectAgent = useTownStore((s) => s.selectAgent);
   const selectedAgentRole = useTownStore((s) => s.selectedAgentRole);
   const agentStatus = useTownStore((s) => s.agents[role]?.status);
+  const hasArtifact = useTownStore((s) => Boolean(s.realArtifacts[role]));
 
   const isSelected = selectedAgentRole === role;
-  const isWorking = agentStatus === 'working' || agentStatus === 'debugging';
+  const isWorking =
+    agentStatus === 'working' || agentStatus === 'debugging' || agentStatus === 'waiting';
 
   const radarRef = useRef<THREE.Group>(null);
   const monitorLightRef = useRef<THREE.PointLight>(null);
@@ -337,6 +339,34 @@ export const Building: React.FC<BuildingProps> = ({ role }) => {
             <boxGeometry args={[0.07, 0.02, 0.11]} />
             <meshStandardMaterial color={0x1e293b} metalness={0.6} />
           </mesh>
+
+          {/* Kiện hàng Artifact vừa được Shipper bàn giao đặt ngay ngắn trên góc bàn khi kỹ sư đang xử lý */}
+          {(isWorking || hasArtifact) && (
+            <group position={[-0.6, 0.11, 0.32]}>
+              <mesh castShadow>
+                <boxGeometry args={[0.3, 0.22, 0.22]} />
+                <meshStandardMaterial
+                  color={
+                    agentStatus === 'debugging'
+                      ? 0xf87171
+                      : !isWorking && hasArtifact
+                        ? layout.accentColor
+                        : 0xfbbf24
+                  }
+                  roughness={0.35}
+                />
+              </mesh>
+              {/* Ruy băng trắng niêm phong kiện hàng */}
+              <mesh position={[0, 0, 0.112]}>
+                <boxGeometry args={[0.05, 0.222, 0.01]} />
+                <meshBasicMaterial color={0xffffff} />
+              </mesh>
+              <mesh position={[0, 0.112, 0]}>
+                <boxGeometry args={[0.05, 0.01, 0.222]} />
+                <meshBasicMaterial color={0xffffff} />
+              </mesh>
+            </group>
+          )}
         </group>
 
         {/* 7. GHẾ CÔNG THÁI HỌC LƯỚI CAO CẤP (Ergonomic Mesh Chair) */}
