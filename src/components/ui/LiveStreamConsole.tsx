@@ -33,8 +33,8 @@ export const LiveStreamConsole: React.FC = () => {
 
   return (
     <div
-      className={`fixed right-3 z-30 w-[390px] max-w-[calc(100vw-24px)] pointer-events-auto transition-all duration-300 ${
-        isLogDrawerOpen ? 'top-16' : 'bottom-14'
+      className={`fixed right-2 sm:right-3 z-30 w-[390px] max-w-[calc(100vw-16px)] pointer-events-auto transition-all duration-300 ${
+        isLogDrawerOpen ? 'top-14 sm:top-16' : 'bottom-24 lg:bottom-14'
       }`}
     >
       <div className="bg-slate-950/95 backdrop-blur-md border border-cyan-500/40 rounded-2xl shadow-2xl shadow-cyan-950/50 overflow-hidden flex flex-col">

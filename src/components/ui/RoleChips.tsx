@@ -48,8 +48,8 @@ export const RoleChips: React.FC = () => {
   };
 
   return (
-    <div className="absolute bottom-3 left-3 z-30 pointer-events-none max-w-[calc(100vw-400px)] overflow-x-auto pb-1 scrollbar-none">
-      <div className="pointer-events-auto flex items-center gap-1 p-1.5 bg-slate-900/85 backdrop-blur-md border border-slate-700/80 rounded-2xl shadow-2xl">
+    <div className="absolute bottom-2 left-2 right-2 lg:bottom-3 lg:left-3 lg:right-auto z-30 pointer-events-none lg:max-w-[calc(100vw-460px)] overflow-x-auto pb-0.5 scrollbar-none">
+      <div className="pointer-events-auto flex items-center gap-1 p-1 sm:p-1.5 bg-slate-900/85 backdrop-blur-md border border-slate-700/80 rounded-2xl shadow-2xl w-max">
         {STAGE_ORDER.map((role) => {
           const agent = agents[role];
           const layout = STATIONS_LAYOUT[role];

@@ -248,6 +248,9 @@
 3. **Liên tục hóa vòng đời Shipper (`waypoints.ts`, `Character.tsx`, `Building.tsx`, `Castle.tsx`):**
    - Bổ sung điểm mốc `handover` bên trong phòng để Shipper bước qua cửa đến sát bàn làm việc thay vì dừng ngoài đường (`2.5m`).
    - Khi giao hàng xong, hiển thị thùng kiện hàng (`Artifact Parcel`) đặt ngay trên góc bàn làm việc của kỹ sư và giữ `StandbyCourier` đứng đợi cạnh bàn cho tới khi kỹ sư hoàn thành để bưng kiện hàng đi tiếp, xóa bỏ hoàn toàn hiện tượng Shipper tự nhiên biến mất rồi lại hiện ra.
+4. **Chuẩn hóa Responsive 3D & HUD (`CameraRig.tsx`, `Topbar.tsx`, `RoleChips.tsx`, `StatusBar.tsx`, `MilestoneWidget.tsx`):**
+   - Trong `CameraRig.tsx`, nhân `cameraZoom` với hệ số `responsiveScale = Math.min(1, Math.max(0.45, size.width / 1200))` để ốc đảo 3D luôn nằm trọn trong khung nhìn khi thu hẹp cửa sổ trình duyệt hoặc mở trên tablet/mobile.
+   - Tách tầng `StatusBar` (`bottom-14 lg:bottom-3`) nằm phía trên `RoleChips` ở màn hình `< 1024px`, ẩn bớt chữ phụ trên `Topbar` theo breakpoint và tự động thu gọn danh sách task của `MilestoneWidget` khi `window.innerWidth < 768`.
 
 ---
 

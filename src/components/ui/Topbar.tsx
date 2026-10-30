@@ -54,15 +54,15 @@ export const Topbar: React.FC = () => {
   }, [openPromptModal]);
 
   return (
-    <header className="absolute top-3 left-3 right-3 z-30 pointer-events-none flex items-center justify-between gap-3 flex-nowrap overflow-x-auto">
+    <header className="absolute top-2 left-2 right-2 sm:top-3 sm:left-3 sm:right-3 z-30 pointer-events-none flex items-center justify-between gap-1.5 sm:gap-3 flex-nowrap overflow-x-auto scrollbar-none">
       {/* Brand & AI Prompt Opener Button */}
-      <div className="flex items-center gap-2.5 shrink-0">
-        <div className="pointer-events-auto flex items-center gap-2 px-3 py-1.5 bg-slate-900/85 backdrop-blur-md border border-slate-700/80 rounded-2xl shadow-xl">
-          <span className="text-base">🏢</span>
+      <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+        <div className="pointer-events-auto flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 bg-slate-900/85 backdrop-blur-md border border-slate-700/80 rounded-2xl shadow-xl">
+          <span className="text-sm sm:text-base">🏢</span>
           <div>
             <div className="flex items-center gap-1.5">
-              <h1 className="text-xs font-bold text-white tracking-wide uppercase">
-                Thị trấn DevOps
+              <h1 className="text-[11px] sm:text-xs font-bold text-white tracking-wide uppercase whitespace-nowrap">
+                <span className="hidden md:inline">Thị trấn </span>DevOps
               </h1>
               <span className="px-1.5 py-0.2 text-[9px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-md">
                 v1.4
@@ -74,7 +74,7 @@ export const Topbar: React.FC = () => {
         {/* AI Action Trigger Button (Spotlight / Raycast opener) */}
         <button
           onClick={() => openPromptModal(true)}
-          className={`pointer-events-auto flex items-center gap-2 px-3.5 py-2 rounded-2xl font-bold text-xs shadow-xl transition-all border ${
+          className={`pointer-events-auto flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-2xl font-bold text-xs shadow-xl transition-all border whitespace-nowrap ${
             isRealRunning
               ? 'bg-amber-600/30 text-amber-200 border-amber-500/50 hover:bg-amber-600/40 animate-pulse'
               : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-indigo-500 text-white border-blue-400/40 shadow-blue-900/40 hover:scale-[1.02]'
@@ -84,12 +84,13 @@ export const Topbar: React.FC = () => {
           {isRealRunning ? (
             <>
               <div className="w-3.5 h-3.5 border-2 border-amber-300 border-t-transparent rounded-full animate-spin" />
-              <span>AI Đang chạy stream...</span>
+              <span className="hidden sm:inline">AI Đang chạy...</span>
+              <span className="sm:hidden">AI...</span>
             </>
           ) : (
             <>
               <span>✨ Giao việc AI</span>
-              <span className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-black/25 text-[10px] text-blue-200 border border-white/15 font-mono">
+              <span className="hidden lg:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-black/25 text-[10px] text-blue-200 border border-white/15 font-mono">
                 Ctrl K
               </span>
             </>
@@ -99,22 +100,22 @@ export const Topbar: React.FC = () => {
         {isRealRunning && (
           <button
             onClick={abortPipeline}
-            className="pointer-events-auto flex items-center gap-1.5 px-3 py-2 rounded-2xl font-bold text-xs bg-rose-600/85 hover:bg-rose-500 text-white border border-rose-400/60 shadow-lg shadow-rose-950/50 transition-all"
+            className="pointer-events-auto flex items-center gap-1 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-2xl font-bold text-xs bg-rose-600/85 hover:bg-rose-500 text-white border border-rose-400/60 shadow-lg shadow-rose-950/50 transition-all whitespace-nowrap"
             title="Dừng ngay luồng AI Pipeline đang chạy"
           >
             <span>⏹</span>
-            <span>Dừng</span>
+            <span className="hidden sm:inline">Dừng</span>
           </button>
         )}
       </div>
 
-      {/* Control Buttons Group (Clean, single-line, non-wrapping toolbar) */}
-      <div className="pointer-events-auto flex items-center gap-1.5 p-1 bg-slate-900/85 backdrop-blur-md border border-slate-700/80 rounded-2xl shadow-xl shrink-0">
+      {/* Control Buttons Group (Clean, single-line, responsive toolbar) */}
+      <div className="pointer-events-auto flex items-center gap-1 sm:gap-1.5 p-1 bg-slate-900/85 backdrop-blur-md border border-slate-700/80 rounded-2xl shadow-xl shrink-0">
         {/* Theme Mode Switcher: Ngày / Hoàng hôn / Đêm */}
         <div className="flex items-center bg-slate-800/90 p-0.5 rounded-xl border border-slate-700" title="Đổi chu kỳ Ngày / Hoàng hôn / Đêm">
           <button
             onClick={() => setThemeMode('day')}
-            className={`px-2 py-1 text-xs rounded-lg transition-all ${
+            className={`px-1.5 sm:px-2 py-1 text-xs rounded-lg transition-all ${
               themeMode === 'day'
                 ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
                 : 'text-slate-400 hover:text-white'
@@ -125,7 +126,7 @@ export const Topbar: React.FC = () => {
           </button>
           <button
             onClick={() => setThemeMode('sunset')}
-            className={`px-2 py-1 text-xs rounded-lg transition-all ${
+            className={`px-1.5 sm:px-2 py-1 text-xs rounded-lg transition-all ${
               themeMode === 'sunset'
                 ? 'bg-orange-500 text-white font-bold shadow-sm'
                 : 'text-slate-400 hover:text-white'
@@ -136,7 +137,7 @@ export const Topbar: React.FC = () => {
           </button>
           <button
             onClick={() => setThemeMode('night')}
-            className={`px-2 py-1 text-xs rounded-lg transition-all ${
+            className={`px-1.5 sm:px-2 py-1 text-xs rounded-lg transition-all ${
               themeMode === 'night'
                 ? 'bg-indigo-600 text-white font-bold shadow-sm'
                 : 'text-slate-400 hover:text-white'
@@ -147,25 +148,26 @@ export const Topbar: React.FC = () => {
           </button>
         </div>
 
-        <div className="w-[1px] h-4 bg-slate-700 mx-0.5" />
+        <div className="w-[1px] h-4 bg-slate-700 mx-0.5 hidden sm:block" />
 
         {/* Rotation Toggle */}
         <button
           onClick={toggleRotating}
-          className={`px-2.5 py-1 text-xs font-semibold rounded-xl border transition-colors ${
+          className={`px-2 sm:px-2.5 py-1 text-xs font-semibold rounded-xl border transition-colors whitespace-nowrap ${
             isRotating
               ? 'bg-blue-600/30 text-blue-300 border-blue-500/50'
               : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-700/80'
           }`}
           title="Bật/Tắt tự động xoay camera toàn cảnh"
         >
-          {isRotating ? '🔄 Xoay' : '▶️ Xoay'}
+          <span>{isRotating ? '🔄' : '▶️'}</span>
+          <span className="hidden xl:inline ml-1">Xoay</span>
         </button>
 
         {/* Speed Multiplier Button (1x / 2x / 4x) */}
         <button
           onClick={cycleSimSpeed}
-          className="px-2 py-1 text-xs font-bold rounded-xl border border-amber-500/40 bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 transition-all shadow-sm"
+          className="px-2 py-1 text-xs font-bold rounded-xl border border-amber-500/40 bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 transition-all shadow-sm whitespace-nowrap"
           title="Tốc độ di chuyển Shipper & Animation: 1x, 2x, 4x"
         >
           ⚡ {simSpeed}x
@@ -174,27 +176,29 @@ export const Topbar: React.FC = () => {
         {/* Names Toggle */}
         <button
           onClick={toggleLabels}
-          className={`px-2.5 py-1 text-xs font-semibold rounded-xl border transition-colors ${
+          className={`px-2 sm:px-2.5 py-1 text-xs font-semibold rounded-xl border transition-colors whitespace-nowrap ${
             showLabels
               ? 'bg-blue-600/30 text-blue-300 border-blue-500/50'
               : 'bg-slate-800/80 text-slate-400 border-slate-700 hover:bg-slate-700/80'
           }`}
           title="Ẩn/Hiện nhãn tên trạm"
         >
-          🏷️ Tên
+          <span>🏷️</span>
+          <span className="hidden xl:inline ml-1">Tên</span>
         </button>
 
         {/* Speech Bubbles Toggle */}
         <button
           onClick={toggleBubbles}
-          className={`px-2.5 py-1 text-xs font-semibold rounded-xl border transition-colors ${
+          className={`px-2 sm:px-2.5 py-1 text-xs font-semibold rounded-xl border transition-colors whitespace-nowrap ${
             showBubbles
               ? 'bg-blue-600/30 text-blue-300 border-blue-500/50'
               : 'bg-slate-800/80 text-slate-400 border-slate-700 hover:bg-slate-700/80'
           }`}
           title="Ẩn/Hiện bong bóng thoại"
         >
-          💬 Thoại
+          <span>💬</span>
+          <span className="hidden xl:inline ml-1">Thoại</span>
         </button>
 
         {/* Sound FX Toggle */}
@@ -210,13 +214,13 @@ export const Topbar: React.FC = () => {
           {isSoundEnabled ? '🔔' : '🔕'}
         </button>
 
-        <div className="w-[1px] h-4 bg-slate-700 mx-0.5" />
+        <div className="w-[1px] h-4 bg-slate-700 mx-0.5 hidden sm:block" />
 
         {/* Chaos Engineering Simulator Button */}
         <button
           onClick={() => runChaosSimulation()}
           disabled={isChaosRunning}
-          className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-xl border transition-all ${
+          className={`flex items-center gap-1.5 px-2 sm:px-2.5 py-1 text-xs font-semibold rounded-xl border transition-all whitespace-nowrap ${
             isChaosRunning
               ? 'bg-rose-600/40 text-rose-200 border-rose-500/60 animate-pulse cursor-not-allowed'
               : 'bg-slate-800/80 text-amber-300 border-amber-500/40 hover:bg-amber-600/20'
@@ -224,23 +228,23 @@ export const Topbar: React.FC = () => {
           title="Kích hoạt kịch bản Chaos Engineering: Bão request 10x ➔ APM Alert ➔ Auto-scale HPA"
         >
           <span>{isChaosRunning ? '🔥' : '🚨'}</span>
-          <span className="hidden md:inline">{isChaosRunning ? 'Bão tải...' : 'Chaos'}</span>
+          <span className="hidden lg:inline">{isChaosRunning ? 'Bão tải...' : 'Chaos'}</span>
         </button>
 
         {/* Executive Release Export Button */}
         <button
           onClick={() => openExportModal(true)}
-          className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-xl border transition-all bg-slate-800/80 text-indigo-300 border-indigo-500/40 hover:bg-indigo-600/20 shadow-sm"
+          className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 text-xs font-semibold rounded-xl border transition-all bg-slate-800/80 text-indigo-300 border-indigo-500/40 hover:bg-indigo-600/20 shadow-sm whitespace-nowrap"
           title="Xuất báo cáo phát hành kèm Snapshot 3D và Telemetry"
         >
           <span>📑</span>
-          <span className="hidden md:inline">Báo cáo</span>
+          <span className="hidden lg:inline">Báo cáo</span>
         </button>
 
         {/* Log Drawer Toggle */}
         <button
           onClick={() => toggleLogDrawer()}
-          className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-xl border transition-all ${
+          className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 text-xs font-semibold rounded-xl border transition-all whitespace-nowrap ${
             isLogDrawerOpen
               ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-purple-400 shadow-md shadow-purple-900/30'
               : 'bg-slate-800/80 text-slate-200 border-slate-700 hover:bg-slate-700/80'
@@ -248,7 +252,7 @@ export const Topbar: React.FC = () => {
           title="Mở nhật ký công việc thực tế của các AI Agents"
         >
           <span>📋</span>
-          <span>Nhật ký việc</span>
+          <span className="hidden lg:inline">Nhật ký việc</span>
         </button>
 
         {/* Production Approval Notification Badge */}

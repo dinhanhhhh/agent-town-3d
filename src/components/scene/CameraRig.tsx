@@ -15,7 +15,7 @@ import { STATIONS_LAYOUT } from '../../lib/scene/layout';
  */
 export const CameraRig: React.FC = () => {
   const controlsRef = useRef<OrbitControlsImpl>(null);
-  const { camera } = useThree();
+  const { camera, size } = useThree();
 
   const isRotating = useTownStore((s) => s.isRotating);
   const cameraZoom = useTownStore((s) => s.cameraZoom);
@@ -25,6 +25,11 @@ export const CameraRig: React.FC = () => {
 
   const targetVec = useRef(new THREE.Vector3(0, 0, 0));
   const isUserInteracting = useRef(false);
+
+  // Hệ số thu phóng tự động theo kích thước khung nhìn (Responsive 3D Viewport Scale)
+  // giúp ốc đảo không bao giờ bị tràn lề trái/phải khi thu nhỏ cửa sổ hoặc xem trên mobile/tablet
+  const responsiveScale = Math.min(1, Math.max(0.45, size.width / 1200));
+  const effectiveZoom = cameraZoom * responsiveScale;
 
   // Update target when an agent is selected or target changes
   useEffect(() => {
@@ -50,8 +55,8 @@ export const CameraRig: React.FC = () => {
     // Chỉ lerp camera zoom khi người dùng KHÔNG đang cuộn chuột tương tác trực tiếp
     if (!isUserInteracting.current && 'zoom' in camera && typeof (camera as THREE.OrthographicCamera).zoom === 'number') {
       const orthoCam = camera as THREE.OrthographicCamera;
-      if (Math.abs(orthoCam.zoom - cameraZoom) > 0.05) {
-        orthoCam.zoom = THREE.MathUtils.lerp(orthoCam.zoom, cameraZoom, delta * 6);
+      if (Math.abs(orthoCam.zoom - effectiveZoom) > 0.05) {
+        orthoCam.zoom = THREE.MathUtils.lerp(orthoCam.zoom, effectiveZoom, delta * 6);
         orthoCam.updateProjectionMatrix();
       }
     }
@@ -71,7 +76,7 @@ export const CameraRig: React.FC = () => {
       autoRotateSpeed={1.5}
       maxPolarAngle={Math.PI / 2.15}
       minPolarAngle={Math.PI / 6}
-      minZoom={14}
+      minZoom={10}
       maxZoom={65}
       target={[0, 0, 0]}
       onStart={() => {
@@ -79,9 +84,10 @@ export const CameraRig: React.FC = () => {
       }}
       onEnd={() => {
         isUserInteracting.current = false;
-        // Đồng bộ mức zoom thực tế của camera về lại store
+        // Đồng bộ mức zoom thực tế của camera (đã quy đổi theo tỉ lệ màn hình) về lại store
         if ('zoom' in camera && typeof (camera as THREE.OrthographicCamera).zoom === 'number') {
-          setCameraZoom(Math.round((camera as THREE.OrthographicCamera).zoom));
+          const rawZoom = (camera as THREE.OrthographicCamera).zoom / responsiveScale;
+          setCameraZoom(Math.round(Math.max(14, Math.min(65, rawZoom))));
         }
       }}
     />

@@ -52,26 +52,26 @@ export const StatusBar: React.FC = () => {
   }, [latencyMs]);
 
   return (
-    <footer className="absolute bottom-3 right-3 z-30 pointer-events-none flex items-center gap-3">
+    <footer className="absolute bottom-14 right-2 lg:bottom-3 lg:right-3 z-30 pointer-events-none flex items-center gap-1.5 sm:gap-2.5">
       {/* Zoom Controls */}
       <div className="pointer-events-auto flex items-center gap-1 p-1 bg-slate-900/85 backdrop-blur-md border border-slate-700/80 rounded-2xl shadow-xl">
         <button
           onClick={zoomIn}
-          className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center transition-colors text-sm"
+          className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center transition-colors text-sm"
           title="Phóng to"
         >
           +
         </button>
         <button
           onClick={zoomOut}
-          className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center transition-colors text-sm"
+          className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center transition-colors text-sm"
           title="Thu nhỏ"
         >
           −
         </button>
         <button
           onClick={resetCamera}
-          className="px-2.5 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold flex items-center justify-center transition-colors text-xs"
+          className="px-2 sm:px-2.5 h-7 sm:h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold flex items-center justify-center transition-colors text-[11px] sm:text-xs"
           title="Đặt lại góc nhìn"
         >
           Reset
@@ -79,34 +79,34 @@ export const StatusBar: React.FC = () => {
       </div>
 
       {/* APM & Weather Telemetry Bar */}
-      <div className="pointer-events-auto flex items-center gap-3.5 px-4 py-2 bg-slate-900/85 backdrop-blur-md border border-slate-700/80 rounded-2xl shadow-xl text-xs">
+      <div className="pointer-events-auto flex items-center gap-2 sm:gap-3 px-2.5 sm:px-4 py-1.5 sm:py-2 bg-slate-900/85 backdrop-blur-md border border-slate-700/80 rounded-2xl shadow-xl text-xs whitespace-nowrap">
         {/* Weather */}
-        <div className="flex items-center gap-1.5 text-slate-300">
+        <div className="hidden xl:flex items-center gap-1.5 text-slate-300">
           <span>☀️</span>
           <span className="font-medium text-slate-300">{weather}</span>
         </div>
 
-        <div className="w-[1px] h-4 bg-slate-700" />
+        <div className="hidden xl:block w-[1px] h-4 bg-slate-700" />
 
         {/* Latency with Sparkline */}
-        <div className="flex items-center gap-2">
-          <div className="text-[11px] font-mono text-slate-400">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="text-[10px] sm:text-[11px] font-mono text-slate-400">
             P99: <span className="text-sky-400 font-bold">{latencyMs}ms</span>
           </div>
-          <canvas ref={canvasRef} width={50} height={16} className="opacity-90" />
+          <canvas ref={canvasRef} width={50} height={16} className="hidden sm:block opacity-90" />
         </div>
 
-        <div className="w-[1px] h-4 bg-slate-700" />
+        <div className="hidden sm:block w-[1px] h-4 bg-slate-700" />
 
         {/* TPS */}
-        <div className="text-[11px] font-mono text-slate-400">
+        <div className="hidden sm:block text-[11px] font-mono text-slate-400">
           TPS: <span className="text-emerald-400 font-bold">{tps}</span>
         </div>
 
         <div className="w-[1px] h-4 bg-slate-700" />
 
         {/* CPU Usage */}
-        <div className="text-[11px] font-mono text-slate-400">
+        <div className="text-[10px] sm:text-[11px] font-mono text-slate-400">
           CPU:{' '}
           <span
             className={`font-bold ${

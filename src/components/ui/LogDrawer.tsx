@@ -38,7 +38,7 @@ export const LogDrawer: React.FC = () => {
   return (
     <aside
       aria-label="Nhật ký công việc thực tế"
-      className="fixed bottom-14 right-4 z-40 w-[420px] max-w-[calc(100vw-32px)] h-[380px] bg-[#fbf6ea] border-2 border-[#d97706]/40 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-slate-800 pointer-events-auto select-none"
+      className="fixed bottom-24 lg:bottom-14 right-2 sm:right-4 z-40 w-[420px] max-w-[calc(100vw-16px)] h-[340px] sm:h-[380px] max-h-[60vh] bg-[#fbf6ea] border-2 border-[#d97706]/40 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-slate-800 pointer-events-auto select-none overscroll-contain"
       style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
     >
       {/* Header bar phong cách giấy da retro Solomi */}

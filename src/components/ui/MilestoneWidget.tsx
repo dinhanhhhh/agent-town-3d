@@ -5,6 +5,13 @@ import { useTownStore } from '../../store/useTownStore';
 
 export const MilestoneWidget: React.FC = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Tự động thu gọn danh sách task trên màn hình nhỏ (< 768px) để không che khuất ốc đảo 3D
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setIsCollapsed(true);
+    }
+  }, []);
   const agents = useTownStore((s) => s.agents);
   const tasks = useTownStore((s) => s.tasks);
   const approvals = useTownStore((s) => s.approvals);
@@ -64,8 +71,8 @@ export const MilestoneWidget: React.FC = () => {
         ];
 
   return (
-    <div className="absolute top-16 left-3 z-30 w-72 pointer-events-none transition-all duration-300 select-none">
-      <div className="pointer-events-auto bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden p-3 space-y-2.5">
+    <div className="absolute top-14 left-2 sm:top-16 sm:left-3 z-30 w-60 sm:w-72 max-w-[calc(100vw-16px)] pointer-events-none transition-all duration-300 select-none">
+      <div className="pointer-events-auto bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden p-2.5 sm:p-3 space-y-2 sm:space-y-2.5">
         {/* Header Widget */}
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-2">
