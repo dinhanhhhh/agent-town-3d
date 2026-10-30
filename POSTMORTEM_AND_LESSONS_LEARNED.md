@@ -13,6 +13,11 @@
 5. [Sự cố 5: Quá nhiều bong bóng thoại (Speech Bubbles) gây rối mắt Diorama](#5-sự-cố-5-quá-nhiều-bong-bóng-thoại-speech-bubbles-gây-rối-mắt-diorama)
 6. [Sự cố 6: Shipper bị đứng khựng giữa đường khi Pipeline chuyển trạng thái](#6-sự-cố-6-shipper-bị-đứng-khựng-giữa-đường-khi-pipeline-chuyển-trạng-thái)
 7. [Sự cố 7: Lỗi Compile TypeScript (Type Overlap & Duplicate Key)](#7-sự-cố-7-lỗi-compile-typescript-type-overlap--duplicate-key)
+8. [Sự cố 8: Kiểu dữ liệu màu 3D (Number) gán trực tiếp vào Style CSS (String)](#8-sự-cố-8-kiểu-dữ-liệu-màu-3d-number-gán-trực-tiếp-vào-style-css-string)
+9. [Sự cố 9: Không khớp kiểu EventSeverity và Tên Method trong Audio Synthesizer](#9-sự-cố-9-không-khớp-kiểu-eventseverity-và-tên-method-trong-audio-synthesizer)
+10. [Sự cố 10: Xung đột Double Courier Ticker làm treo cứng Pipeline tự động (Race Condition)](#10-sự-cố-10-xung-đột-double-courier-ticker-làm-treo-cứng-pipeline-tự-động-race-condition)
+11. [Sự cố 11: Mở chồng 2 Modal cùng lúc và rò rỉ nhãn 3D phía sau Backdrop](#11-sự-cố-11-mở-chồng-2-modal-cùng-lúc-và-rò-rỉ-nhãn-3d-phía-sau-backdrop)
+12. [Sự cố 12: Hạt xung dữ liệu (Photon Pulse) trên cáp quang đứng yên tại điểm giữa](#12-sự-cố-12-hạt-xung-dữ-liệu-photon-pulse-trên-cáp-quang-đứng-yên-tại-điểm-giữa)
 
 ---
 
@@ -175,6 +180,52 @@
 - Chuẩn hóa giá trị severity thành `'warn'` theo đúng type union `EventSeverity`.
 - Đồng bộ tên method của singleton `sfx` (`sfx.playSuccessFanfare()`).
 - Bắt buộc chạy `npm run build` kiểm tra toàn diện trước khi bàn giao.
+
+---
+
+## 10. Sự cố 10: Xung đột Double Courier Ticker làm treo cứng Pipeline tự động (Race Condition)
+
+### 🔴 Triệu chứng (Symptom)
+- Trong chế độ mô phỏng tự động (`MockSimulator`), Shipper di chuyển với tốc độ thất thường (gấp đôi bình thường) và pipeline thỉnh thoảng bị **treo cứng vĩnh viễn** sau khi Shipper biến mất ở cửa trạm tiếp theo mà trạm đó không bao giờ chuyển sang trạng thái làm việc.
+
+### 🔍 Nguyên nhân gốc rễ (Root Cause)
+- Hai vòng lặp độc lập cùng cộng dồn `courier.progress` trên cùng một mảng state Zustand:
+  1. `CourierTicker` trong `TownScene.tsx` chạy qua `useFrame` (60fps) và gọi `store.removeCourier(id)` ngay khi `nextProgress >= 1` nhưng **không kích hoạt callback chuyển trạm**.
+  2. `MockSimulator.tick()` chạy qua `setInterval` (100ms) cũng cộng `courier.progress` và chờ `nextProgress >= 1` để gọi `onCourierArrived()`.
+- Bất cứ khi nào nhịp 60fps cán mốc `>= 1` trước nhịp 100ms, courier bị xóa âm thầm khỏi store khiến `onCourierArrived()` bị bỏ lỡ hoàn toàn.
+
+### ✅ Giải pháp chuẩn hóa (Solution & Prevention)
+- **Single Source of Truth cho chuyển động 3D:** Xóa hoàn toàn logic cộng `courier.progress` khỏi `MockSimulator.tick()`, giao độc quyền cho `CourierTicker` (60fps, có kẹp `Math.min(delta, 0.1)` chống vọt frame khi chuyển tab).
+- Ngay khi `nextProgress >= 1` trong `CourierTicker`, gọi `store.removeCourier(courier.id)` đồng thời gọi thẳng `simulator.handleCourierArrived(...)` nếu `store.isSimulating === true`.
+
+---
+
+## 11. Sự cố 11: Mở chồng 2 Modal cùng lúc và rò rỉ nhãn 3D phía sau Backdrop
+
+### 🔴 Triệu chứng (Symptom)
+- Khi click vào các chip trạm dưới thanh `RoleChips`, bong bóng thoại 3D (`Labels.tsx`) hoặc dòng nhiệm vụ trong `MilestoneWidget`, cả `AgentDossierModal` lẫn `ArtifactModal` đều bật chồng lên nhau tạo 2 lớp màn đen; khi đóng bảng trên lại hiện bảng dưới. Ngoài ra nhãn tên 3D vẫn hiển thị đè phía sau khi mở `AgentDossierModal` hoặc `ExportModal`.
+
+### 🔍 Nguyên nhân gốc rễ (Root Cause)
+- Hàm `selectAgent(role)` trong `useTownStore.ts` mặc định ép `isDossierModalOpen: true`, trong khi các sự kiện `onClick` ở các component trên lại gọi nối tiếp `selectAgent(role)` rồi `openArtifactModal(true)`.
+- Biến `isAnyModalOpen` trong `Labels.tsx` chưa kiểm tra `isDossierModalOpen` và `isExportModalOpen`.
+
+### ✅ Giải pháp chuẩn hóa (Solution & Prevention)
+- Mở rộng chữ ký hàm `selectAgent(role, modalMode: 'dossier' | 'artifact' | 'none' = 'dossier')` đảm bảo tính loại trừ tương hỗ (mutually exclusive) giữa `isDossierModalOpen` và `isArtifactModalOpen`, đồng thời hỗ trợ `'none'` khi chỉ muốn bay camera 3D tới trạm (`flyToStation`).
+- Bổ sung đầy đủ `isDossierModalOpen` và `isExportModalOpen` vào điều kiện ẩn `StationOverlay` trong `Labels.tsx`.
+
+---
+
+## 12. Sự cố 12: Hạt xung dữ liệu (Photon Pulse) trên cáp quang đứng yên tại điểm giữa
+
+### 🔴 Triệu chứng (Symptom)
+- Các hạt cầu xung dữ liệu trên 7 tuyến cáp quang neon (`DataCables.tsx`) chỉ phập phồng to nhỏ tại đúng trung điểm dây cáp thay vì chạy dọc từ AI Command Center ra các phòng lab.
+
+### 🔍 Nguyên nhân gốc rễ (Root Cause)
+- Vòng lặp `useFrame` tính toán biến `progress = (t * 1.5 + idx * 0.25) % 1` rồi lưu vào `mesh.userData.progress`, nhưng quên gọi `mesh.position.set(x, y, z)` để cập nhật tọa độ không gian thực tế của mesh Three.js.
+
+### ✅ Giải pháp chuẩn hóa (Solution & Prevention)
+- Tiền tính toán vector góc cực `{ angle, rStart, cableLen }` bằng `useMemo` cho 7 trạm và cập nhật trực tiếp `mesh.position.set(Math.cos(angle) * currentR, y, Math.sin(angle) * currentR)` trong mỗi frame của `useFrame`.
+- **Lưu ý bổ sung khi lưu trữ file `.tsx` cũ vào `docs/archive/`:** Do `tsconfig.json` mặc định quét `**/*.tsx` trên toàn repo, mọi component `.tsx` lưu trữ trong `docs/archive/legacy-v1/` phải đổi hậu tố sang `.tsx.bak` để tránh lỗi đường dẫn import tương đối khi chạy `next build`.
 
 ---
 

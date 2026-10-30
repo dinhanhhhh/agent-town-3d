@@ -27,7 +27,7 @@ export const Topbar: React.FC = () => {
   const approvals = useTownStore((s) => s.approvals);
   const openApprovalModal = useTownStore((s) => s.openApprovalModal);
   const isRealRunning = useTownStore((s) => s.isRealRunning);
-  const apiKey = useTownStore((s) => s.apiKey);
+  const abortPipeline = useTownStore((s) => s.abortPipeline);
   const openPromptModal = useTownStore((s) => s.openPromptModal);
   const isChaosRunning = useTownStore((s) => s.isChaosRunning);
   const runChaosSimulation = useTownStore((s) => s.runChaosSimulation);
@@ -65,7 +65,7 @@ export const Topbar: React.FC = () => {
                 Thị trấn DevOps
               </h1>
               <span className="px-1.5 py-0.2 text-[9px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-md">
-                v1.3
+                v1.4
               </span>
             </div>
           </div>
@@ -79,12 +79,12 @@ export const Topbar: React.FC = () => {
               ? 'bg-amber-600/30 text-amber-200 border-amber-500/50 hover:bg-amber-600/40 animate-pulse'
               : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-indigo-500 text-white border-blue-400/40 shadow-blue-900/40 hover:scale-[1.02]'
           }`}
-          title="Bấm để giao việc cho 8 AI Agents (Phím tắt: Ctrl+K hoặc /)"
+          title="Bấm để giao việc cho 8 AI Agents hoặc Audit GitHub PR (Phím tắt: Ctrl+K hoặc /)"
         >
           {isRealRunning ? (
             <>
               <div className="w-3.5 h-3.5 border-2 border-amber-300 border-t-transparent rounded-full animate-spin" />
-              <span>AI Đang lập trình...</span>
+              <span>AI Đang chạy stream...</span>
             </>
           ) : (
             <>
@@ -95,6 +95,17 @@ export const Topbar: React.FC = () => {
             </>
           )}
         </button>
+
+        {isRealRunning && (
+          <button
+            onClick={abortPipeline}
+            className="pointer-events-auto flex items-center gap-1.5 px-3 py-2 rounded-2xl font-bold text-xs bg-rose-600/85 hover:bg-rose-500 text-white border border-rose-400/60 shadow-lg shadow-rose-950/50 transition-all"
+            title="Dừng ngay luồng AI Pipeline đang chạy"
+          >
+            <span>⏹</span>
+            <span>Dừng</span>
+          </button>
+        )}
       </div>
 
       {/* Control Buttons Group (Clean, single-line, non-wrapping toolbar) */}

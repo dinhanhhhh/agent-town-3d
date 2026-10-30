@@ -169,21 +169,7 @@ export class MockSimulator implements IEventSource {
     const store = useTownStore.getState();
     if (!store.isSimulating) return;
 
-    // 1. Advance couriers progress
-    const couriers = [...store.couriers];
-    const speed = 0.04 * store.simSpeed;
-
-    for (const courier of couriers) {
-      const nextProgress = courier.progress + speed;
-      if (nextProgress >= 1) {
-        store.removeCourier(courier.id);
-        this.onCourierArrived(courier.fromRole, courier.toRole, courier.boxType);
-      } else {
-        store.updateCourierProgress(courier.id, nextProgress);
-      }
-    }
-
-    // 2. Telemetry jitter for realistic APM
+    // Telemetry jitter for realistic APM (Courier progression is unified in 60fps CourierTicker)
     if (Math.random() < 0.2) {
       store.updateTelemetry({
         latencyMs: Math.floor(12 + Math.random() * 6),
@@ -193,8 +179,9 @@ export class MockSimulator implements IEventSource {
     }
   }
 
-  private onCourierArrived(from: AgentRole, to: AgentRole, boxType: string) {
+  public handleCourierArrived(from: AgentRole, to: AgentRole, boxType: string) {
     const store = useTownStore.getState();
+    if (!store.isSimulating) return;
 
     // Reset sender agent to idle/ready
     if (store.agents[from].status === 'walking') {

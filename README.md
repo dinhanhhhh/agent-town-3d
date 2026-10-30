@@ -6,7 +6,7 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16.4-black?logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.3-blue?logo=react)](https://react.dev/)
 [![React Three Fiber](https://img.shields.io/badge/R3F-v9-blue?logo=three.js)](https://docs.pmnd.rs/react-three-fiber)
-[![Gemini API](https://img.shields.io/badge/Google_Gemini-2.5_Flash-orange?logo=google)](https://ai.google.dev/)
+[![Gemini API](https://img.shields.io/badge/Google_Gemini-3.8_Flash_SSE-orange?logo=google)](https://ai.google.dev/)
 [![Zustand](https://img.shields.io/badge/Zustand-v4-brown)](https://github.com/pmndrs/zustand)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?logo=typescript)](https://www.typescriptlang.org/)
@@ -29,24 +29,25 @@
 - 🏃 **Người Vận Chuyển 3D (Courier Shippers)**: Trực quan hóa việc truyền tải Artifacts (PR diff, Test report, Docker image) chạy trên hệ thống đường đá 7 nan hoa và vòng xuyến trung tâm.
 - 🚴 **Vòng Lặp Phản Hồi Tự Động (Feedback Loop)**: Khi QA bắt lỗi hoặc Tech Review từ chối, Shipper đạp xe ngược về xưởng Dev để kỹ sư viết bản vá lỗi (hotfix patch).
 - 🛡️ **Cổng Phê Duyệt Triển Khai (Production Approval Gate)**: Cơ chế Human-in-the-loop an toàn yêu cầu Tech Lead / Con người bấm duyệt trước khi triển khai lên Production.
-- 🤖 **Hai Chế Độ Vận Hành Song Song**:
-  1. **AI Thật (Real Gemini 2.5 API)**: Kết nối trực tiếp Google Gemini API để tạo artifacts thực thụ theo prompt tùy biến.
-  2. **Giả lập Kịch bản (Mock Simulator)**: Mô phỏng tức thì các nhánh nghiệp vụ (tính năng mới, bắt bug token refresh, lỗi bảo mật SAST).
+- 🤖 **Ba Chế Độ Vận Hành Chuyên Nghiệp**:
+  1. **Live AI Token Streaming (Gemini 3.8 Flash / DeepSeek SSE)**: Truyền trực tiếp từng dòng code, PRD, Git Diff và báo cáo lên màn hình Terminal nổi thời gian thực kèm nút **`⏹ Dừng`** (`AbortController`).
+  2. **Kiểm Toán GitHub Pull Request Thật (Public GitHub PR Audit)**: Dán URL một PR công khai bất kỳ trên GitHub (`https://github.com/owner/repo/pull/123`) để kéo diff thật về thị trấn và điều phối các trạm Review, QA, DevSecOps chấm điểm trực tiếp.
+  3. **Giả lập Kịch bản Tự Trị & Chaos Engineering**: Mô phỏng tức thì các nhánh nghiệp vụ (Feature mới, Bug feedback loop, SAST/CVE OWASP patch, bão tải 10x HPA Auto-scaling).
 
 ---
 
 ## 👥 2. Đặc tả 8 Autonomous AI Agents & Artifacts
 
-| # | Trạm & Agent | Icon | Tòa nhà 3D | Tọa độ & Góc xoay | Vai trò & Trách nhiệm | Artifact Đầu Ra |
+| # | Trạm & Agent | Icon | Tòa nhà 3D (High-Tech Lab) | Tọa độ & Góc xoay | Vai trò & Trách nhiệm | Artifact Đầu Ra |
 |---|---|:---:|---|:---:|---|---|
-| **0** | **Claude Code** | 🏢 | Trung tâm chỉ huy kính (War Room) | `[0, 0.6, 0]`, $0^\circ$ | Orchestrator Hub: Phân tích prompt, phân rã milestone & điều phối pipeline | `MilestonePlan.json` |
-| **1** | **PM · BA** | 🏢 | Văn phòng Tây Bắc | `[-6.5, 0.6, -6.5]`, $45^\circ$ | Đặc tả PRD, User Stories, tiêu chuẩn nghiệm thu Gherkin Given-When-Then | `PRD.md` |
-| **2** | **Dev Engineer** | 🛠️ | Xưởng mộc Chính Tây | `[-9.2, 0.6, 0]`, $90^\circ$ | Viết mã nguồn Clean Architecture, xử lý validation & tạo Pull Request | `source-code.diff` |
-| **3** | **Tech Review** | 🔍 | Cối xay gió Tây Nam | `[-6.5, 0.6, 6.5]`, $135^\circ$ | Principal Reviewer: Rà soát logic, boundary check, quyết định Approve/Reject | `ReviewComments.json` |
-| **4** | **QA · Test** | 🧪 | Phòng lab Đông Bắc | `[6.5, 0.6, -6.5]`, $-45^\circ$ | Chạy tự động 48 test suites, kiểm thử biên & báo cáo tỷ lệ coverage | `TestReport.json` |
-| **5** | **DevSecOps** | 🛡️ | Pháo đài Chính Đông | `[9.2, 0.6, 0]`, $-90^\circ$ | Quét SAST, kiểm tra CVE dependencies, phòng chống rò rỉ secret token | `SecurityScanReport.json` |
-| **6** | **Release Eng** | 🚀 | Trạm bến tàu Đông Nam | `[6.5, 0.6, 6.5]`, $-135^\circ$ | Đóng gói Docker multi-stage, cấu hình CI/CD & điều phối Canary release | `Dockerfile` / `deploy.yaml` |
-| **7** | **APM Monitor** | 📡 | Tháp canh radar Chính Bắc| `[0, 0.6, -9.2]`, $0^\circ$ | Watchdog SRE giám sát CPU, RAM, Latency P99 và TPS Production | `ClusterHealth.json` |
+| **0** | **Claude Code** | 🎛️ | AI Command Center (War Room) | `[0, 0.6, 0]`, $0^\circ$ | Orchestrator Hub: Phân tích prompt / GitHub PR, phân rã milestone & điều phối SSE | `MilestonePlan.json` |
+| **1** | **PM · BA** | 🏢 | Product Strategy Lab (Tây Bắc) | `[-6.5, 0.6, -6.5]`, $45^\circ$ | Đặc tả PRD, ngữ cảnh PR, tiêu chuẩn nghiệm thu Gherkin Given-When-Then | `PRD.md` / `PR-Context.md` |
+| **2** | **Dev Engineer** | 🛠️ | Software Engineering Lab (Chính Tây) | `[-9.2, 0.6, 0]`, $90^\circ$ | Lập trình TypeScript Clean Architecture, đồng bộ & tạo bản vá Unified Git Diff | `source-code.diff` |
+| **3** | **Tech Review** | 🔍 | Code Review & Arch Lab (Tây Nam) | `[-6.5, 0.6, 6.5]`, $135^\circ$ | Principal Reviewer: Rà soát diff, boundary check, chấm điểm Approve/Reject | `ReviewComments.json` |
+| **4** | **QA · Test** | 🧪 | QA Automation Server Lab (Đông Bắc) | `[6.5, 0.6, -6.5]`, $-45^\circ$ | Sinh bộ Unit & Regression Test tự động (Jest/Vitest) & kiểm thử biên | `test-suite.spec.ts` |
+| **5** | **DevSecOps** | 🛡️ | CyberSec & SAST Vault (Chính Đông) | `[9.2, 0.6, 0]`, $-90^\circ$ | Quét SAST, kiểm tra CVE dependencies, phòng chống rò rỉ secret & OWASP Top 10 | `SecurityAudit.json` |
+| **6** | **Release Eng** | 🚀 | Container & K8s Hub (Đông Nam) | `[6.5, 0.6, 6.5]`, $-135^\circ$ | Đóng gói Docker multi-stage, cổng duyệt Gatekeeper & HPA Auto-scaler | `Dockerfile` / `ScaleUp.yaml` |
+| **7** | **APM Monitor** | 📡 | SRE Radar & NOC Tower (Chính Bắc) | `[0, 0.6, -9.2]`, $0^\circ$ | Watchdog SRE giám sát CPU, Latency P99, TPS Production & cảnh báo bão tải | `ClusterHealth.json` |
 
 ---
 
@@ -79,11 +80,13 @@ Hệ thống ứng dụng mô hình **Kiến trúc Đối xứng Hướng tâm (
 
 ## 🎨 4. Điểm Nhấn Đồ Họa & Trải Nghiệm Người Dùng (Visual & UX)
 
+- ⚡ **Live AI Token Streaming (SSE) & Nút Dừng Khẩn Cấp (`LiveStreamConsole`)**: Truyền trực tiếp từng cụm token mã nguồn / đặc tả đang sinh từ AI lên màn hình Terminal nổi thời gian thực kèm con trỏ nhấp nháy và nút **`⏹ Dừng`** (`AbortController`).
+- 🔗 **Chế Độ Audit GitHub Pull Request Thực Tế**: Nhập trực tiếp URL của bất kỳ Public GitHub PR nào (`https://github.com/owner/repo/pull/123`), tự động kéo metadata và bản vá `.diff` thật lên `GitDiffViewer` để dàn AI Agents kiểm toán Code Quality, Regression Tests và SAST Security.
 - 🎮 **Điều Khiển Camera Tự Do Bằng Chuột (Interactive OrbitControls)**: Kéo chuột trái xoay 360° quanh đảo, chuột phải pan di chuyển góc nhìn mượt mà, con lăn chuột zoom vô cấp không giật; đồng bộ hai chiều với thanh trượt zoom của HUD.
-- ⚡ **Dải Cáp Quang Dữ Liệu Phát Sáng (Glowing Neon Data Cables)**: 7 đường cáp ngầm phát quang neon chạy dọc theo 7 đại lộ nan hoa với các hạt xung photon (Data Stream Pulse) nhấp nháy theo trạng thái làm việc của từng trạm.
+- ⚡ **Dải Cáp Quang Dữ Liệu Phát Sáng (Glowing Neon Data Cables)**: 7 đường cáp ngầm phát quang neon chạy dọc theo 7 đại lộ nan hoa với các hạt xung photon (Data Stream Pulse) phóng dọc dây cáp theo trạng thái làm việc của từng trạm.
 - 🔍 **Trình Xem Git Diff Chuẩn GitHub (Interactive Git Diff Viewer)**: Đánh số dòng, tô màu cú pháp trực quan (dòng thêm `+` xanh lá, dòng xóa `-` đỏ, chunk `@@` tím) và hỗ trợ chuyển đổi linh hoạt giữa `Unified View` và `Split View` 2 cột.
 - 🚨 **Giả Lập Thử Tải Chịu Lỗi (Chaos Engineering & Load Surge 10x)**: Mô phỏng bão request đột biến khiến TPS tăng vọt 2,500, Latency vượt 168ms; APM Watchdog kích hoạt báo động đỏ và DevOps tự động kích hoạt HPA Auto-scaler (`ScaleUp.yaml`) để hạ nhiệt hệ thống về ngưỡng an toàn.
-- 📑 **Xuất Báo Cáo Phát Hành Kèm Snapshot 3D (Executive Release Export)**: Tự động chụp lại ảnh snapshot 3D thị trấn từ WebGL Canvas, biên tập báo cáo phát hành tổng hợp số liệu kiểm thử QA, an ninh SAST, telemetry APM và hỗ trợ sao chép Markdown hoặc tải file `.md` / `.png`.
+- 📑 **Xuất Báo Cáo Phát Hành Động Kèm Snapshot 3D (Dynamic Executive Release Export)**: Tự động chụp ảnh snapshot 3D từ WebGL Canvas và trích xuất động 100% số liệu thật từ phiên chạy (điểm Review, số kịch bản test `it()`, thống kê `+additions/-deletions`, số lượng CVEs, số vòng Feedback Loops) ra file `.md` / `.png`.
 - 🏢 **7 Trạm Chuyên Môn Công Nghệ Cao (High-Tech Autonomous Labs)**: Thiết kế đồng bộ hoàn hảo với AI Command Center: Vách kính cường lực mờ khung nhôm graphite, sàn cleanroom trắng bóng tương phản, bàn nâng công thái học (Smart Standing Desk) viền LED neon phát sáng theo màu accent, đèn ray treo trần thông minh rọi sáng khi làm việc và trang bị đạo cụ độc bản (Triple monitor, Docker containers, Cyber vault, Server racks...).
 - 🏢 **Trung Tâm Chỉ Huy AI (AI Command Center / War Room)**: Thay thế lâu đài cổ tích cũ bằng tòa nhà điều hành kính bán nguyệt trong suốt hiện đại, sở hữu **Bàn Hologram 3D lơ lửng phát sáng**, dàn màn hình NOC giám sát cong và ghế xoay thuyền trưởng.
 - 🌸 **Tiểu Cảnh Hạt Môi Trường Sống Động (Particles Ambience)**:
@@ -126,7 +129,8 @@ agent-town-3d/
 ├── src/
 │   ├── app/
 │   │   ├── api/
-│   │   │   └── pipeline/route.ts     # Endpoint Gemini 2.5 Flash / Flash Lite streaming
+│   │   │   ├── github-pr/route.ts    # Endpoint kéo metadata & .diff thật từ GitHub REST API
+│   │   │   └── pipeline/route.ts     # Endpoint Live SSE Streaming Gemini 3.8 Flash / DeepSeek
 │   │   ├── globals.css               # Tailwind CSS & custom scrollbar styles
 │   │   ├── layout.tsx                # Metadata & root HTML layout
 │   │   └── page.tsx                  # Trang chính lắp ráp Canvas 3D & DOM HUD
@@ -145,21 +149,28 @@ agent-town-3d/
 │   │   │   ├── Labels.tsx            # 3D Tracker chiếu nhãn và bong bóng thoại ra 2D DOM
 │   │   │   └── CameraRig.tsx         # Điều khiển Camera Isometric & OrbitControls mượt mà
 │   │   └── ui/
-│   │       ├── Topbar.tsx            # Thanh điều khiển 1 dòng, theme, speed 1x/2x/4x, SFX
-│   │       ├── MilestoneOverview.tsx # Bảng widget tổng quan 4 ô số liệu milestone
+│   │       ├── Topbar.tsx            # Thanh điều khiển 1 dòng, theme, speed 1x/2x/4x, nút Dừng AI
+│   │       ├── MilestoneWidget.tsx   # Bảng widget tổng quan 4 ô số liệu milestone
+│   │       ├── LiveStreamConsole.tsx # Màn hình Terminal nổi hiển thị Live SSE Token Stream
 │   │       ├── LogDrawer.tsx         # Khung nhật ký cố định kích thước 420x380px
 │   │       ├── RoleChips.tsx         # Thanh dock 8 trạm ở chân màn hình
-│   │       ├── ApprovalModal.tsx     # Cổng duyệt Production Gatekeeper
+│   │       ├── ApprovalModal.tsx     # Cổng duyệt Production Gatekeeper tích hợp GitDiffViewer
 │   │       ├── ArtifactModal.tsx     # Bộ thanh tra Artifacts đa tab & system prompt
 │   │       ├── AgentDossierModal.tsx # Hồ sơ kỹ sư AI (Tech Stack, Prompt, Tải mã nguồn)
 │   │       ├── GitDiffViewer.tsx     # Bộ so sánh mã nguồn Git Diff chuẩn GitHub (Unified / Split)
-│   │       ├── ExportModal.tsx       # Modal xuất báo cáo phát hành kèm Snapshot 3D WebGL
-│   │       ├── PromptModal.tsx       # Modal giao việc AI với 4 kịch bản tùy chọn
-│   │       ├── ApiKeyModal.tsx       # Modal nhập Google Gemini API key bảo mật
+│   │       ├── ExportModal.tsx       # Modal xuất báo cáo phát hành động kèm Snapshot 3D WebGL
+│   │       ├── PromptModal.tsx       # Modal giao việc AI 5 kịch bản (bao gồm GitHub PR Audit)
+│   │       ├── ApiKeyModal.tsx       # Modal nhập Google Gemini / DeepSeek API key bảo mật
 │   │       └── StatusBar.tsx         # Thanh APM Telemetry (CPU, Latency, TPS) & Zoom
 │   ├── lib/
+│   │   ├── ai/
+│   │   │   ├── gemini.ts             # Google Gemini 3.8 Flash REST & SSE Stream client
+│   │   │   └── deepseek.ts           # DeepSeek Chat REST & SSE Stream client
 │   │   ├── audio/
 │   │   │   └── sfx.ts                # Bộ tạo âm thanh tổng hợp Web Audio API
+│   │   ├── events/
+│   │   │   ├── EventSource.ts        # Giao diện nguồn sự kiện pipeline
+│   │   │   └── MockSimulator.ts      # Bộ mô phỏng kịch bản SDLC tự động
 │   │   ├── pipeline/
 │   │   │   └── stages.ts             # Định nghĩa schemas, role types, stage order
 │   │   └── scene/
@@ -220,8 +231,8 @@ npm run start
 ## 📖 7. Tài Liệu Kỹ Thuật Tham Khảo
 
 - 🤖 [**`AGENTS.md`**](file:///c:/Users/Admin/Documents/CV_Truong%20Dinh%20Anh/Ph%E1%BB%8Fng%20v%E1%BA%A5n/agent-town-3d/AGENTS.md): Đặc tả chi tiết System Prompt, hợp đồng dữ liệu đầu vào / đầu ra và cơ chế phối hợp giữa 8 AI Agents.
-- 📜 [**`CHANGELOG.md`**](file:///c:/Users/Admin/Documents/CV_Truong%20Dinh%20Anh/Ph%E1%BB%8Fng%20v%E1%BA%A5n/agent-town-3d/CHANGELOG.md): Nhật ký lưu vết toàn bộ các phiên bản, tính năng mới và các đợt refactor kiến trúc từ v1.0 đến v1.2.
-- 🛠️ [**`POSTMORTEM_AND_LESSONS_LEARNED.md`**](file:///c:/Users/Admin/Documents/CV_Truong%20Dinh%20Anh/Ph%E1%BB%8Fng%20v%E1%BA%A5n/agent-town-3d/POSTMORTEM_AND_LESSONS_LEARNED.md): Tài liệu lưu trữ 8 sự cố kỹ thuật tiêu biểu đã từng xuất hiện (lỗi đi xuyên tường, mặt đường mờ, lỗi layout, lỗi TypeScript...) kèm nguyên nhân gốc và biện pháp phòng ngừa vĩnh viễn.
+- 📜 [**`CHANGELOG.md`**](file:///c:/Users/Admin/Documents/CV_Truong%20Dinh%20Anh/Ph%E1%BB%8Fng%20v%E1%BA%A5n/agent-town-3d/CHANGELOG.md): Nhật ký lưu vết toàn bộ các phiên bản, tính năng mới và các đợt refactor kiến trúc từ v1.0 đến v1.4.
+- 🛠️ [**`POSTMORTEM_AND_LESSONS_LEARNED.md`**](file:///c:/Users/Admin/Documents/CV_Truong%20Dinh%20Anh/Ph%E1%BB%8Fng%20v%E1%BA%A5n/agent-town-3d/POSTMORTEM_AND_LESSONS_LEARNED.md): Tài liệu lưu trữ 12 sự cố kỹ thuật tiêu biểu đã từng xuất hiện (lỗi đi xuyên tường, race condition bộ đếm shipper, mở chồng modal, xung dữ liệu cáp quang...) kèm nguyên nhân gốc và biện pháp phòng ngừa vĩnh viễn.
 
 ---
 

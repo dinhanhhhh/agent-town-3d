@@ -39,8 +39,8 @@ export const ApiKeyModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
-      <div className="w-full max-w-md bg-slate-900 border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-scale-up">
+    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in overflow-hidden overscroll-contain">
+      <div className="w-full max-w-md bg-slate-900 border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-scale-up overscroll-contain">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 bg-slate-950/80 border-b border-slate-800">
           <div className="flex items-center gap-3">

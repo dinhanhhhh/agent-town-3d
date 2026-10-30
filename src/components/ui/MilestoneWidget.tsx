@@ -11,7 +11,6 @@ export const MilestoneWidget: React.FC = () => {
   const events = useTownStore((s) => s.events);
   const openApprovalModal = useTownStore((s) => s.openApprovalModal);
   const selectAgent = useTownStore((s) => s.selectAgent);
-  const openArtifactModal = useTownStore((s) => s.openArtifactModal);
 
   // 1. Tính toán 4 chỉ số động
   const agentList = Object.values(agents);
@@ -161,8 +160,7 @@ export const MilestoneWidget: React.FC = () => {
                       if (isPending) {
                         openApprovalModal(true);
                       } else {
-                        selectAgent('dev');
-                        openArtifactModal(true);
+                        selectAgent(t.stage || 'dev', 'artifact');
                       }
                     }}
                     className="p-2 rounded-xl bg-slate-950/60 hover:bg-slate-800/70 border border-slate-800/80 hover:border-slate-700/80 transition-all cursor-pointer flex items-center justify-between gap-2 group"

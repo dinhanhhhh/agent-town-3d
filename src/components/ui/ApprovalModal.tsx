@@ -4,17 +4,17 @@ import React, { useState } from 'react';
 import { useTownStore } from '../../store/useTownStore';
 import { simulator } from '../../lib/events/MockSimulator';
 import { AgentRole } from '../../lib/pipeline/stages';
-import { STATIONS_LAYOUT } from '../../lib/scene/layout';
+import { GitDiffViewer } from './GitDiffViewer';
 
 const BUILDING_NAMES: Record<AgentRole, string> = {
-  orchestrator: 'Lâu đài Trung tâm',
-  pm: 'Tòa nhà Công sở (Tây Bắc)',
-  dev: 'Xưởng Thợ mộc (Phía Tây)',
-  review: 'Cối xay gió (Tây Nam)',
-  qa: 'Phòng thí nghiệm (Đông Bắc)',
-  security: 'Pháo đài Ngân khố (Phía Đông)',
-  devops: 'Trạm ga Bến tàu (Đông Nam)',
-  monitor: 'Tháp canh Quan trắc (Phía Bắc)',
+  orchestrator: 'AI Command Center (Trung tâm)',
+  pm: 'Product Strategy Lab (Tây Bắc)',
+  dev: 'Software Engineering Lab (Chính Tây)',
+  review: 'Code Review & Architecture Lab (Tây Nam)',
+  qa: 'QA Automation Server Lab (Đông Bắc)',
+  security: 'CyberSec & SAST Vault (Chính Đông)',
+  devops: 'Container & K8s Release Hub (Đông Nam)',
+  monitor: 'SRE Radar & NOC Watchtower (Chính Bắc)',
 };
 
 const DEFAULT_ARTIFACTS: Record<
@@ -291,10 +291,10 @@ export const ApprovalModal: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  // Fly 3D Camera directly to the agent's work station
+  // Fly 3D Camera directly to the agent's work station without opening Dossier modal
   const flyToStation = (role: AgentRole) => {
     openApprovalModal(false);
-    selectAgent(role);
+    selectAgent(role, 'none');
     setCameraZoom(38);
   };
 
@@ -341,8 +341,8 @@ export const ApprovalModal: React.FC = () => {
       : null;
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
-      <div className="w-full max-w-4xl bg-slate-900 border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-scale-up">
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in overflow-hidden overscroll-contain">
+      <div className="w-full max-w-4xl bg-slate-900 border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-scale-up overscroll-contain">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-amber-950/50 via-slate-900 to-slate-900 border-b border-slate-800">
           <div className="flex items-center gap-3">
@@ -450,7 +450,7 @@ export const ApprovalModal: React.FC = () => {
         </div>
 
         {/* Content Body */}
-        <div className="p-6 overflow-y-auto flex-1 text-sm text-slate-300 space-y-4">
+        <div className="p-6 overflow-y-auto overscroll-contain flex-1 text-sm text-slate-300 space-y-4">
           {/* Target Task Details Header */}
           <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-2xl flex items-center justify-between">
             <div className="space-y-1">
@@ -636,10 +636,20 @@ export const ApprovalModal: React.FC = () => {
                 </div>
               </div>
 
-              {/* Code Pre Block */}
-              <pre className="p-4 bg-slate-950 rounded-2xl border border-slate-800 text-xs font-mono text-emerald-400 leading-relaxed overflow-x-auto max-h-[50vh] select-text">
-                {currentTabArtifact.content}
-              </pre>
+              {/* Code / Git Diff Block */}
+              {currentTabArtifact.language === 'diff' ||
+              currentTabArtifact.filename.endsWith('.diff') ? (
+                <div className="max-h-[50vh] overflow-y-auto overscroll-contain">
+                  <GitDiffViewer
+                    diffText={currentTabArtifact.content}
+                    filename={currentTabArtifact.filename}
+                  />
+                </div>
+              ) : (
+                <pre className="p-4 bg-slate-950 rounded-2xl border border-slate-800 text-xs font-mono text-emerald-400 leading-relaxed overflow-x-auto max-h-[50vh] overscroll-contain select-text">
+                  {currentTabArtifact.content}
+                </pre>
+              )}
             </div>
           )}
         </div>

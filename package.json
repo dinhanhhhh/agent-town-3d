@@ -1,6 +1,6 @@
 {
   "name": "agent-town-3d",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "private": true,
   "scripts": {
     "dev": "next dev",

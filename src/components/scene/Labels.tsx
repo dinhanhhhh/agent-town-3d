@@ -95,14 +95,20 @@ export const StationOverlay: React.FC = () => {
   const isApprovalModalOpen = useTownStore((s) => s.isApprovalModalOpen);
   const isApiKeyModalOpen = useTownStore((s) => s.isApiKeyModalOpen);
   const isPromptModalOpen = useTownStore((s) => s.isPromptModalOpen);
+  const isDossierModalOpen = useTownStore((s) => s.isDossierModalOpen);
+  const isExportModalOpen = useTownStore((s) => s.isExportModalOpen);
   const agents = useTownStore((s) => s.agents);
   const couriers = useTownStore((s) => s.couriers);
   const selectAgent = useTownStore((s) => s.selectAgent);
   const selectedAgentRole = useTownStore((s) => s.selectedAgentRole);
-  const openArtifactModal = useTownStore((s) => s.openArtifactModal);
 
   const isAnyModalOpen =
-    isArtifactModalOpen || isApprovalModalOpen || isApiKeyModalOpen || isPromptModalOpen;
+    isArtifactModalOpen ||
+    isApprovalModalOpen ||
+    isApiKeyModalOpen ||
+    isPromptModalOpen ||
+    isDossierModalOpen ||
+    isExportModalOpen;
 
   return (
     <div
@@ -140,8 +146,7 @@ export const StationOverlay: React.FC = () => {
                 <div
                   onClick={(e) => {
                     e.stopPropagation();
-                    selectAgent(role);
-                    openArtifactModal(true);
+                    selectAgent(role, 'artifact');
                   }}
                   className={`cursor-pointer transition-all duration-300 transform hover:scale-105 select-none max-w-[210px] text-center p-2 rounded-xl shadow-lg border backdrop-blur-md mb-2 ${
                     isError

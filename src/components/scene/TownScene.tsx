@@ -16,17 +16,23 @@ import { OverlayProjector, StationOverlay } from './Labels';
 import { CameraRig } from './CameraRig';
 import { AgentRole, STAGE_ORDER } from '../../lib/pipeline/stages';
 import { useTownStore } from '../../store/useTownStore';
+import { simulator } from '../../lib/events/MockSimulator';
 
 const CourierTicker: React.FC = () => {
   useFrame((_, delta) => {
     const store = useTownStore.getState();
     if (store.couriers.length === 0) return;
     const speed = store.simSpeed || 1;
+    const dt = Math.min(delta, 0.1);
+    const activeCouriers = [...store.couriers];
 
-    for (const courier of store.couriers) {
-      const nextProgress = courier.progress + delta * 0.35 * speed;
+    for (const courier of activeCouriers) {
+      const nextProgress = courier.progress + dt * 0.4 * speed;
       if (nextProgress >= 1) {
         store.removeCourier(courier.id);
+        if (store.isSimulating) {
+          simulator.handleCourierArrived(courier.fromRole, courier.toRole, courier.boxType);
+        }
       } else {
         store.updateCourierProgress(courier.id, nextProgress);
       }

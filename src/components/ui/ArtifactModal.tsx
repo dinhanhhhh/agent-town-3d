@@ -192,8 +192,8 @@ export const ArtifactModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
-      <div className="w-full max-w-2xl bg-slate-900 border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-scale-up">
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in overflow-hidden overscroll-contain">
+      <div className="w-full max-w-2xl bg-slate-900 border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-scale-up overscroll-contain">
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 bg-slate-950/80 border-b border-slate-800">
           <div className="flex items-center gap-3">
@@ -201,7 +201,7 @@ export const ArtifactModal: React.FC = () => {
               className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl shadow-md"
               style={{ backgroundColor: `${TOKENS.colors['surface-container']}` }}
             >
-              🏛️
+              {selectedAgentRole === 'orchestrator' ? '🎛️' : '🏢'}
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -269,7 +269,7 @@ export const ArtifactModal: React.FC = () => {
         </div>
 
         {/* Content Body */}
-        <div className="p-6 overflow-y-auto flex-1 font-mono text-xs">
+        <div className="p-6 overflow-y-auto overscroll-contain flex-1 font-mono text-xs">
           {activeTab === 'artifact' && (
             <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 overflow-x-auto text-slate-300 space-y-3">
               <div className="flex items-center justify-between pb-2 border-b border-slate-800 text-[11px] text-slate-400 font-sans">

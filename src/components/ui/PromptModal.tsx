@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useTownStore } from '../../store/useTownStore';
+import { ScenarioMode, useTownStore } from '../../store/useTownStore';
 
 const SAMPLE_PROMPTS = [
   {
@@ -22,6 +22,29 @@ const SAMPLE_PROMPTS = [
   },
 ];
 
+const SAMPLE_GITHUB_PRS = [
+  {
+    url: 'https://github.com/pmndrs/zustand/pull/2785',
+    title: 'pmndrs/zustand #2785',
+    desc: 'Kiểm toán PR thực tế từ thư viện quản lý state Zustand',
+  },
+  {
+    url: 'https://github.com/vercel/swr/pull/3020',
+    title: 'vercel/swr #3020',
+    desc: 'Kiểm toán React Hooks data fetching PR từ Vercel',
+  },
+  {
+    url: 'https://github.com/colinhacks/zod/pull/3850',
+    title: 'colinhacks/zod #3850',
+    desc: 'Kiểm toán TypeScript schema validation PR từ Zod',
+  },
+  {
+    url: 'https://github.com/lucide-icons/lucide/pull/2500',
+    title: 'lucide-icons/lucide #2500',
+    desc: 'Kiểm toán PR open-source từ bộ icon Lucide',
+  },
+];
+
 export const PromptModal: React.FC = () => {
   const isPromptModalOpen = useTownStore((s) => s.isPromptModalOpen);
   const openPromptModal = useTownStore((s) => s.openPromptModal);
@@ -31,7 +54,8 @@ export const PromptModal: React.FC = () => {
   const runRealPipeline = useTownStore((s) => s.runRealPipeline);
 
   const [prompt, setPrompt] = useState('Xác thực Google OAuth 2.0 & JWT');
-  const [scenario, setScenario] = useState<'feature' | 'bug' | 'security' | 'chaos'>('feature');
+  const [scenario, setScenario] = useState<ScenarioMode>('feature');
+  const [urlError, setUrlError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -54,23 +78,38 @@ export const PromptModal: React.FC = () => {
 
   if (!isPromptModalOpen) return null;
 
+  const validateGitHubInput = (val: string): boolean => {
+    const trimmed = val.trim();
+    const isUrl = /^https?:\/\/(?:www\.)?github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/pull\/\d+/i.test(trimmed);
+    const isShort = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+#\d+$/.test(trimmed);
+    return isUrl || isShort;
+  };
+
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!prompt.trim() || isRealRunning) return;
+
+    if (scenario === 'github' && !validateGitHubInput(prompt)) {
+      setUrlError('Vui lòng nhập đúng định dạng https://github.com/owner/repo/pull/123 hoặc owner/repo#123');
+      return;
+    }
+
+    setUrlError('');
     runRealPipeline(prompt.trim(), scenario);
     openPromptModal(false);
   };
 
-  const handleSelectSample = (sampleTitle: string) => {
-    setPrompt(sampleTitle);
+  const handleSelectSample = (value: string) => {
+    setPrompt(value);
+    setUrlError('');
     inputRef.current?.focus();
   };
 
   return (
-    <div className="fixed inset-0 z-[1050] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
-      <div className="w-full max-w-2xl bg-slate-900 border border-slate-700/90 rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-scale-up">
+    <div className="fixed inset-0 z-[1050] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in overflow-hidden overscroll-contain">
+      <div className="w-full max-w-2xl bg-slate-900 border border-slate-700/90 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-scale-up overscroll-contain">
         {/* Header Bar */}
-        <div className="flex items-center justify-between px-6 py-4 bg-slate-950/80 border-b border-slate-800">
+        <div className="flex items-center justify-between px-6 py-4 bg-slate-950/80 border-b border-slate-800 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-xl shadow-lg shadow-blue-900/40">
               ✨
@@ -78,12 +117,12 @@ export const PromptModal: React.FC = () => {
             <div>
               <h2 className="text-base font-bold text-white tracking-wide flex items-center gap-2">
                 <span>Giao việc cho 8 Autonomous AI Agents</span>
-                <span className="px-2 py-0.5 text-[10px] font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-full">
-                  Gemini Flash
+                <span className="px-2 py-0.5 text-[10px] font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 rounded-full">
+                  Gemini 3.8 Live Stream
                 </span>
               </h2>
               <p className="text-xs text-slate-400">
-                Orchestrate · PRD · Code · Review · Test · Security · Release
+                Orchestrate · PRD · Git Diff · Review · QA · Security · GitHub PR Audit
               </p>
             </div>
           </div>
@@ -98,18 +137,21 @@ export const PromptModal: React.FC = () => {
         </div>
 
         {/* Input Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto overscroll-contain">
           {/* Scenario Selector Pills */}
           <div className="space-y-1.5">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
               Chọn Kịch bản Vận hành:
             </span>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
               <button
                 type="button"
                 onClick={() => {
                   setScenario('feature');
-                  if (!prompt) setPrompt('Xác thực Google OAuth 2.0 & JWT');
+                  setUrlError('');
+                  if (!prompt || prompt.includes('github.com')) {
+                    setPrompt('Xác thực Google OAuth 2.0 & JWT');
+                  }
                 }}
                 className={`p-2.5 rounded-xl text-left border transition-all ${
                   scenario === 'feature'
@@ -130,6 +172,7 @@ export const PromptModal: React.FC = () => {
                 type="button"
                 onClick={() => {
                   setScenario('bug');
+                  setUrlError('');
                   setPrompt('Xử lý ngoại lệ token refresh và retry mechanism');
                 }}
                 className={`p-2.5 rounded-xl text-left border transition-all ${
@@ -151,6 +194,7 @@ export const PromptModal: React.FC = () => {
                 type="button"
                 onClick={() => {
                   setScenario('security');
+                  setUrlError('');
                   setPrompt('Quét bảo mật OWASP Top 10 và sanitize input');
                 }}
                 className={`p-2.5 rounded-xl text-left border transition-all ${
@@ -164,7 +208,29 @@ export const PromptModal: React.FC = () => {
                   <span>AppSec Audit</span>
                 </div>
                 <div className="text-[10px] text-slate-400 mt-0.5 truncate">
-                  Quét SAST & CVE
+                  Bắt CVE ➔ Vá OWASP
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setScenario('github');
+                  setUrlError('');
+                  setPrompt('https://github.com/pmndrs/zustand/pull/2785');
+                }}
+                className={`p-2.5 rounded-xl text-left border transition-all ${
+                  scenario === 'github'
+                    ? 'bg-purple-600/30 border-purple-400 text-purple-200 shadow-md shadow-purple-900/30'
+                    : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <div className="text-xs font-bold flex items-center gap-1.5">
+                  <span>🔗</span>
+                  <span>GitHub PR</span>
+                </div>
+                <div className="text-[10px] text-slate-400 mt-0.5 truncate">
+                  Kéo PR thật ➔ Audit
                 </div>
               </button>
 
@@ -172,6 +238,7 @@ export const PromptModal: React.FC = () => {
                 type="button"
                 onClick={() => {
                   setScenario('chaos');
+                  setUrlError('');
                   setPrompt('Thử tải chịu lỗi: Traffic Surge 10x & HPA Auto-scaling');
                 }}
                 className={`p-2.5 rounded-xl text-left border transition-all ${
@@ -191,78 +258,139 @@ export const PromptModal: React.FC = () => {
             </div>
           </div>
 
-          {/* Main Prompt Input Box */}
+          {/* Main Prompt / GitHub PR URL Input Box */}
           <div className="space-y-1.5">
             <div className="relative">
               <input
                 ref={inputRef}
                 type="text"
                 value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Nhập tính năng bạn muốn các AI Agent xây dựng (VD: REST API TodoList bằng TypeScript)..."
+                onChange={(e) => {
+                  setPrompt(e.target.value);
+                  if (urlError) setUrlError('');
+                }}
+                placeholder={
+                  scenario === 'github'
+                    ? 'Dán link GitHub PR công khai (VD: https://github.com/owner/repo/pull/123 hoặc owner/repo#123)...'
+                    : 'Nhập tính năng bạn muốn các AI Agent xây dựng (VD: REST API TodoList bằng TypeScript)...'
+                }
                 disabled={isRealRunning}
-                className="w-full pl-4 pr-10 py-3.5 bg-slate-950 border border-slate-700 focus:border-blue-500 rounded-2xl text-slate-100 placeholder-slate-500 text-sm focus:outline-none transition-colors shadow-inner"
+                className={`w-full pl-4 pr-10 py-3.5 bg-slate-950 border rounded-2xl text-slate-100 placeholder-slate-500 text-sm focus:outline-none transition-colors shadow-inner ${
+                  urlError
+                    ? 'border-rose-500 focus:border-rose-400'
+                    : scenario === 'github'
+                    ? 'border-purple-500/60 focus:border-purple-400 font-mono text-xs'
+                    : 'border-slate-700 focus:border-blue-500'
+                }`}
               />
               {prompt && (
                 <button
                   type="button"
-                  onClick={() => setPrompt('')}
+                  onClick={() => {
+                    setPrompt('');
+                    setUrlError('');
+                  }}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 text-xs w-5 h-5 rounded-full flex items-center justify-center bg-slate-800"
                 >
                   ✕
                 </button>
               )}
             </div>
+            {urlError && (
+              <p className="text-[11px] font-medium text-rose-400 px-1">{urlError}</p>
+            )}
           </div>
 
           {/* Preset Suggestion Cards */}
           <div className="space-y-2">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              Hoặc chọn kịch bản mẫu:
+              {scenario === 'github'
+                ? 'Hoặc chọn nhanh một Public GitHub PR thực tế để kiểm toán:'
+                : 'Hoặc chọn kịch bản mẫu:'}
             </span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {SAMPLE_PROMPTS.map((sample, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => handleSelectSample(sample.title)}
-                  className="text-left p-3 rounded-2xl bg-slate-950/70 hover:bg-slate-800/80 border border-slate-800/80 hover:border-slate-700 transition-all group"
-                >
-                  <div className="text-xs font-bold text-slate-200 group-hover:text-blue-300 transition-colors">
-                    {sample.title}
-                  </div>
-                  <div className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
-                    {sample.desc}
-                  </div>
-                </button>
-              ))}
-            </div>
+            {scenario === 'github' ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {SAMPLE_GITHUB_PRS.map((sample, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleSelectSample(sample.url)}
+                    className="text-left p-3 rounded-2xl bg-slate-950/70 hover:bg-purple-950/30 border border-slate-800/80 hover:border-purple-500/50 transition-all group"
+                  >
+                    <div className="text-xs font-bold font-mono text-purple-300 group-hover:text-purple-200 transition-colors">
+                      🔗 {sample.title}
+                    </div>
+                    <div className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
+                      {sample.desc}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {SAMPLE_PROMPTS.map((sample, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleSelectSample(sample.title)}
+                    className="text-left p-3 rounded-2xl bg-slate-950/70 hover:bg-slate-800/80 border border-slate-800/80 hover:border-slate-700 transition-all group"
+                  >
+                    <div className="text-xs font-bold text-slate-200 group-hover:text-blue-300 transition-colors">
+                      {sample.title}
+                    </div>
+                    <div className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
+                      {sample.desc}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Multi-Agent Pipeline Preview Flow */}
           <div className="p-3 bg-slate-950/50 border border-slate-800/80 rounded-2xl flex items-center justify-between text-[11px] text-slate-400 overflow-x-auto gap-1">
-            <span className="text-slate-200 font-semibold flex items-center gap-1">
-              <span>🏰</span> Hub
-            </span>
-            <span>➔</span>
-            <span>🏢 PM</span>
-            <span>➔</span>
-            <span>🛠️ Dev</span>
-            <span>➔</span>
-            <span>🔍 Review</span>
-            <span>➔</span>
-            <span>🧪 QA</span>
-            <span>➔</span>
-            <span>🛡️ Sec</span>
-            <span>➔</span>
-            <span>🚀 DevOps</span>
-            <span>➔</span>
-            <span>📡 APM</span>
+            {scenario === 'github' ? (
+              <>
+                <span className="text-purple-300 font-semibold flex items-center gap-1">
+                  <span>🔗</span> GitHub API
+                </span>
+                <span>➔</span>
+                <span>🛠️ Diff Sync</span>
+                <span>➔</span>
+                <span>🔍 PR Review</span>
+                <span>➔</span>
+                <span>🧪 Regression QA</span>
+                <span>➔</span>
+                <span>🛡️ SAST Scan</span>
+                <span>➔</span>
+                <span>🚀 Release Gate</span>
+              </>
+            ) : (
+              <>
+                <span className="text-slate-200 font-semibold flex items-center gap-1">
+                  <span>🎛️</span> Hub
+                </span>
+                <span>➔</span>
+                <span>🏢 PM</span>
+                <span>➔</span>
+                <span>🛠️ Dev</span>
+                <span>➔</span>
+                <span>🔍 Review</span>
+                <span>➔</span>
+                <span>🧪 QA</span>
+                <span>➔</span>
+                <span>🛡️ Sec</span>
+                <span>➔</span>
+                <span>🚀 DevOps</span>
+                <span>➔</span>
+                <span>📡 APM</span>
+              </>
+            )}
           </div>
         </form>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between px-6 py-4 bg-slate-950/60 border-t border-slate-800">
+        <div className="flex items-center justify-between px-6 py-4 bg-slate-950/60 border-t border-slate-800 shrink-0">
           {/* Key Button */}
           <button
             type="button"
@@ -286,15 +414,17 @@ export const PromptModal: React.FC = () => {
             </button>
             <button
               type="button"
-              onClick={handleSubmit}
+              onClick={() => handleSubmit()}
               disabled={!prompt.trim() || isRealRunning}
               className={`flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white transition-all shadow-lg ${
                 !prompt.trim() || isRealRunning
                   ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                  : scenario === 'github'
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 shadow-purple-900/40 hover:scale-[1.02]'
                   : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-blue-900/40 hover:scale-[1.02]'
               }`}
             >
-              <span>🚀 Bắt đầu lập trình</span>
+              <span>{scenario === 'github' ? '🔗 Kéo Diff & Audit PR' : '🚀 Bắt đầu lập trình'}</span>
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/30 font-mono text-blue-200">
                 Enter ↵
               </span>

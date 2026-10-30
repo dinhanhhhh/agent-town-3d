@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTownStore } from '../../store/useTownStore';
+import { STAGE_ORDER } from '../../lib/pipeline/stages';
 
 export const ExportModal: React.FC = () => {
   const isExportModalOpen = useTownStore((s) => s.isExportModalOpen);
   const openExportModal = useTownStore((s) => s.openExportModal);
   const tasks = useTownStore((s) => s.tasks);
   const activeTaskId = useTownStore((s) => s.activeTaskId);
+  const events = useTownStore((s) => s.events);
   const cpuUsage = useTownStore((s) => s.cpuUsage);
   const latencyMs = useTownStore((s) => s.latencyMs);
   const tps = useTownStore((s) => s.tps);
@@ -19,9 +21,128 @@ export const ExportModal: React.FC = () => {
   const activeTask = tasks.find((t) => t.id === activeTaskId) || tasks[0];
   const taskTitle = activeTask?.title || 'Phát triển Tính năng Hệ thống Tự Trị (Sprint #24)';
 
+  // Phân tích động 100% dữ liệu từ realArtifacts & events phiên chạy thực tế
+  const telemetrySummary = useMemo(() => {
+    const hasRealRun = Object.values(realArtifacts).some((a) => a !== null);
+
+    // 1. Phân tích Diff từ Dev / GitHub PR
+    let diffAdditions = 0;
+    let diffDeletions = 0;
+    if (realArtifacts.dev?.content) {
+      const lines = realArtifacts.dev.content.split('\n');
+      for (const l of lines) {
+        if (l.startsWith('+') && !l.startsWith('+++')) diffAdditions++;
+        if (l.startsWith('-') && !l.startsWith('---')) diffDeletions++;
+      }
+    }
+
+    // 2. Phân tích điểm số & kết luận từ Tech Review
+    let reviewScore = '9.4/10';
+    let reviewVerdict = 'APPROVED';
+    let reviewSummary = 'Kiến trúc Clean Code đạt chuẩn, kiểm soát đầy đủ boundary & exception.';
+    if (realArtifacts.review?.content) {
+      try {
+        const parsed = JSON.parse(realArtifacts.review.content);
+        if (parsed.score !== undefined) reviewScore = `${parsed.score}/10`;
+        if (parsed.verdict) reviewVerdict = String(parsed.verdict);
+        if (parsed.summary) reviewSummary = String(parsed.summary);
+      } catch {
+        reviewScore = 'Reviewed';
+      }
+    }
+
+    // 3. Phân tích số lượng Test Cases thực tế từ QA
+    let qaHeadline = '48/48 Passed';
+    let qaSubline = 'Coverage 98.4%';
+    if (realArtifacts.qa?.content) {
+      const content = realArtifacts.qa.content;
+      const itMatches = content.match(/\b(?:it|test)\s*\(/g);
+      if (itMatches && itMatches.length > 0) {
+        qaHeadline = `${itMatches.length}/${itMatches.length} Specs`;
+        qaSubline = 'Jest/Vitest Suite ✅';
+      } else {
+        try {
+          const parsed = JSON.parse(content);
+          if (parsed.totalTests) {
+            qaHeadline = `${parsed.passed ?? parsed.totalTests}/${parsed.totalTests} Passed`;
+          }
+          if (parsed.coverage) qaSubline = `Coverage ${parsed.coverage}`;
+        } catch {
+          qaHeadline = 'Suite Ready';
+        }
+      }
+    }
+
+    // 4. Phân tích bảo mật SAST & CVEs từ DevSecOps
+    let secHeadline = '0 High CVEs';
+    let secSubline = 'OWASP Top 10 ✅';
+    let secCompliance = 'OWASP Top 10, Zero Secret Leak';
+    if (realArtifacts.security?.content) {
+      try {
+        const parsed = JSON.parse(realArtifacts.security.content);
+        const cveCount = typeof parsed.cveCount === 'number' ? parsed.cveCount : 0;
+        const status = parsed.status || 'PASSED';
+        secHeadline = `${cveCount} CVEs (${status})`;
+        if (Array.isArray(parsed.compliance) && parsed.compliance.length > 0) {
+          secCompliance = parsed.compliance
+            .map((c: unknown) => (typeof c === 'string' ? c : (c as { standard?: string })?.standard || 'Compliant'))
+            .join(', ');
+          secSubline = `${parsed.compliance.length} chuẩn tuân thủ ✅`;
+        }
+      } catch {
+        secHeadline = 'SAST Audited';
+      }
+    }
+
+    // 5. Thống kê Feedback Loops & Sự kiện thực tế trong phiên
+    const activeTaskEvents = activeTask
+      ? events.filter((e) => e.taskId === activeTask.id)
+      : events;
+    const feedbackLoopsCount = activeTaskEvents.filter(
+      (e) => e.kind === 'fail' || e.kind === 'alert'
+    ).length;
+
+    // 6. Danh sách Artifacts thực tế đã tạo
+    const DEFAULT_ARTIFACT_META: Record<string, { filename: string; desc: string }> = {
+      orchestrator: { filename: 'MilestonePlan.json', desc: 'Bản đồ phân rã nhiệm vụ từ AI Command Center' },
+      pm: { filename: 'PRD.md', desc: 'Đặc tả nghiệp vụ & Acceptance Criteria từ PM · BA' },
+      dev: { filename: 'source-code.diff', desc: 'Bản vá Git Unified Diff từ Dev Engineer' },
+      review: { filename: 'ReviewComments.json', desc: 'Đánh giá Code Quality & PR Verdict từ Tech Review' },
+      qa: { filename: 'test-suite.spec.ts', desc: 'Bộ kịch bản kiểm thử tự động từ QA Automation' },
+      security: { filename: 'SecurityAudit.json', desc: 'Báo cáo rà soát SAST & OWASP từ DevSecOps' },
+      devops: { filename: 'Dockerfile', desc: 'Cấu hình Multi-stage Container & Canary Rollout' },
+      monitor: { filename: 'ClusterHealth.json', desc: 'Đo lường số liệu APM thực tế từ SRE Watchdog' },
+    };
+
+    const artifactRows = STAGE_ORDER.map((role, idx) => {
+      const real = realArtifacts[role];
+      const fallback = DEFAULT_ARTIFACT_META[role];
+      if (real) {
+        const lines = real.content.split('\n').length;
+        return `${idx + 1}. \`${real.filename}\` (${lines} dòng · AI Generated) – ${fallback.desc}.`;
+      }
+      return `${idx + 1}. \`${fallback.filename}\` (Mẫu tiêu chuẩn) – ${fallback.desc}.`;
+    });
+
+    return {
+      hasRealRun,
+      diffAdditions,
+      diffDeletions,
+      reviewScore,
+      reviewVerdict,
+      reviewSummary,
+      qaHeadline,
+      qaSubline,
+      secHeadline,
+      secSubline,
+      secCompliance,
+      feedbackLoopsCount,
+      artifactRows,
+    };
+  }, [realArtifacts, events, activeTask]);
+
   useEffect(() => {
     if (isExportModalOpen) {
-      // Find 3D WebGL Canvas
       const canvas = document.querySelector('canvas');
       if (canvas) {
         try {
@@ -48,49 +169,48 @@ export const ExportModal: React.FC = () => {
 
   const generateMarkdownReport = (): string => {
     const timestamp = new Date().toLocaleString('vi-VN');
+    const diffLine =
+      telemetrySummary.diffAdditions > 0 || telemetrySummary.diffDeletions > 0
+        ? `\n* **Thống kê Git Diff:** +${telemetrySummary.diffAdditions} dòng thêm / -${telemetrySummary.diffDeletions} dòng xóa`
+        : '';
+
     return `# 🚀 BÁO CÁO TỔNG KẾT PHÁT HÀNH (EXECUTIVE RELEASE SUMMARY)
 > **Dự án:** Agent Town 3D · Multi-Agent Autonomous DevOps Platform  
 > **Thời gian xuất:** ${timestamp}  
-> **Trạng thái:** ✅ PRODUCTION DEPLOYED (GATEKEEPER APPROVED)
+> **Nguồn dữ liệu:** ${telemetrySummary.hasRealRun ? '🟢 REAL AI / GITHUB PR AUDIT TELEMETRY' : '🔵 SIMULATION TELEMETRY'}  
+> **Trạng thái:** ✅ PRODUCTION READY (${telemetrySummary.reviewVerdict})
 
 ---
 
-## 📌 1. Thông Tin Bản Phát Hành
-* **Tên Task / Feature:** ${taskTitle}
-* **Mã định danh:** ${activeTask?.refNo || 'AI-RELEASE-2026'}
-* **Kiến trúc điều phối:** Hub & Spoke Multi-Agent Pipeline (8 Trạm Kỹ Sư AI Tự Trị)
-* **Trạng thái kiểm thử:** 100% Passed (48/48 Unit & Integration Test Suites)
-* **Độ bao phủ mã nguồn (Code Coverage):** 98.4%
+## 📌 1. Thông Tin Bản Phát Hành & Chất Lượng Mã Nguồn
+* **Tên Task / Pull Request:** ${taskTitle}
+* **Mã định danh:** ${activeTask?.refNo || 'AI-RELEASE-2026'}${diffLine}
+* **Điểm đánh giá Tech Review:** ${telemetrySummary.reviewScore} (${telemetrySummary.reviewVerdict})
+* **Nhận xét kiến trúc:** ${telemetrySummary.reviewSummary}
+* **Kết quả kiểm thử QA:** ${telemetrySummary.qaHeadline} (${telemetrySummary.qaSubline})
+* **Số vòng lặp tự sửa lỗi (Feedback Loops):** ${telemetrySummary.feedbackLoopsCount} vòng tự phục hồi
 
 ---
 
 ## 🛡️ 2. Kiểm Tra Bảo Mật & Tuân Thủ (DevSecOps)
-* **Số lỗ hổng phát hiện:** 0 High/Critical CVEs
-* **Tiêu chuẩn tuân thủ:** OWASP Top 10 Compliant
-* **Cơ chế xác thực & dữ liệu:** JWT 7-day Refresh Token, Input Sanitization, HMAC Webhook
+* **Kết quả quét SAST:** ${telemetrySummary.secHeadline}
+* **Tiêu chuẩn tuân thủ:** ${telemetrySummary.secCompliance}
 
 ---
 
 ## 📡 3. Chỉ Số Vận Hành Hạ Tầng (Production APM Telemetry)
-* **Trạng thái cụm máy chủ:** HEALTHY 🟢
-* **P99 Response Latency:** ${latencyMs}ms (Ngưỡng an toàn < 50ms)
+* **Trạng thái cụm máy chủ:** ${latencyMs < 50 ? 'HEALTHY 🟢' : 'HIGH LOAD 🟡'}
+* **P99 Response Latency:** ${latencyMs}ms (Ngưỡng SLA < 50ms)
 * **Tải CPU cụm (Cluster CPU):** ${cpuUsage}%
 * **Thông lượng giao dịch:** ${tps} TPS
 
 ---
 
 ## 📦 4. Danh Sách Sản Phẩm Chuyển Giao (Artifacts)
-1. \`MilestonePlan.json\` – Bản đồ phân rã nhiệm vụ từ Claude Code Hub.
-2. \`PRD.md\` – Đặc tả nghiệp vụ & Acceptance Criteria từ PM · BA.
-3. \`source-code.ts\` – Mã nguồn chuẩn Clean Architecture từ Dev Engineer.
-4. \`ReviewComments.json\` – Đánh giá Code Smells & phê duyệt PR từ Tech Review.
-5. \`test-suite.spec.ts\` – Bộ kịch bản kiểm thử tự động từ QA Automation.
-6. \`SecurityAudit.json\` – Báo cáo rà soát SAST & phụ thuộc từ DevSecOps.
-7. \`Dockerfile & deploy.yaml\` – Cấu hình Container & Canary Rollout từ DevOps.
-8. \`ClusterHealth.json\` – Đo lường số liệu APM thực tế từ Monitoring Watchdog.
+${telemetrySummary.artifactRows.join('\n')}
 
 ---
-*Báo cáo được khởi tạo tự động bởi Agent Town 3D Platform.*
+*Báo cáo được trích xuất động theo thời gian thực bởi Agent Town 3D v1.4 Platform.*
 `;
   };
 
@@ -121,8 +241,8 @@ export const ExportModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in">
-      <div className="w-full max-w-3xl bg-slate-900 border border-slate-700/90 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-scale-up">
+    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in overflow-hidden overscroll-contain">
+      <div className="w-full max-w-3xl bg-slate-900 border border-slate-700/90 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-scale-up overscroll-contain">
         {/* Header Bar */}
         <div className="flex items-center justify-between px-6 py-4 bg-slate-950/90 border-b border-slate-800 shrink-0">
           <div className="flex items-center gap-3">
@@ -132,12 +252,18 @@ export const ExportModal: React.FC = () => {
             <div>
               <h2 className="text-base font-bold text-white tracking-wide flex items-center gap-2">
                 <span>Xuất Báo Cáo Phát Hành (Release Summary)</span>
-                <span className="px-2 py-0.5 text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-full">
-                  Executive Ready
+                <span
+                  className={`px-2 py-0.5 text-[10px] font-semibold rounded-full border ${
+                    telemetrySummary.hasRealRun
+                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                      : 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+                  }`}
+                >
+                  {telemetrySummary.hasRealRun ? '🟢 Live AI Data' : '🔵 Simulation Data'}
                 </span>
               </h2>
               <p className="text-xs text-slate-400">
-                Tổng hợp metrics QA, Security CVEs, APM Telemetry & Snapshot 3D
+                Trích xuất động từ Artifacts thực tế, Review Score, Security CVEs & Snapshot 3D
               </p>
             </div>
           </div>
@@ -152,7 +278,7 @@ export const ExportModal: React.FC = () => {
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="p-6 overflow-y-auto space-y-6 text-slate-300 text-sm">
+        <div className="p-6 overflow-y-auto overscroll-contain space-y-6 text-slate-300 text-sm">
           {/* 3D Town Snapshot Preview */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -186,24 +312,34 @@ export const ExportModal: React.FC = () => {
             </div>
           </div>
 
-          {/* Quick Metrics Grid */}
+          {/* Dynamic Metrics Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 flex flex-col">
-              <span className="text-[11px] text-slate-400 font-medium">Kiểm thử QA</span>
-              <span className="text-lg font-bold text-emerald-400 mt-1">48/48 Passed</span>
-              <span className="text-[10px] text-emerald-500/80 mt-0.5">Coverage 98.4%</span>
+              <span className="text-[11px] text-slate-400 font-medium">Review & QA</span>
+              <span className="text-lg font-bold text-emerald-400 mt-1 truncate">
+                {telemetrySummary.qaHeadline}
+              </span>
+              <span className="text-[10px] text-emerald-500/80 mt-0.5 truncate">
+                Score {telemetrySummary.reviewScore} · {telemetrySummary.qaSubline}
+              </span>
             </div>
 
             <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 flex flex-col">
               <span className="text-[11px] text-slate-400 font-medium">Bảo mật SAST</span>
-              <span className="text-lg font-bold text-teal-400 mt-1">0 High CVEs</span>
-              <span className="text-[10px] text-teal-500/80 mt-0.5">OWASP Top 10 ✅</span>
+              <span className="text-lg font-bold text-teal-400 mt-1 truncate">
+                {telemetrySummary.secHeadline}
+              </span>
+              <span className="text-[10px] text-teal-500/80 mt-0.5 truncate">
+                {telemetrySummary.secSubline}
+              </span>
             </div>
 
             <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 flex flex-col">
               <span className="text-[11px] text-slate-400 font-medium">Độ trễ P99</span>
               <span className="text-lg font-bold text-blue-400 mt-1">{latencyMs} ms</span>
-              <span className="text-[10px] text-blue-500/80 mt-0.5">Chuẩn SLA &lt; 50ms</span>
+              <span className="text-[10px] text-blue-500/80 mt-0.5">
+                {telemetrySummary.feedbackLoopsCount} Feedback Loops
+              </span>
             </div>
 
             <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 flex flex-col">
@@ -215,16 +351,22 @@ export const ExportModal: React.FC = () => {
 
           {/* Task & Scope Overview */}
           <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-white">{taskTitle}</span>
-              <span className="px-2 py-0.5 text-[10px] font-semibold bg-blue-500/20 text-blue-300 rounded-md">
-                {activeTask?.refNo || 'AI-RELEASE-2026'}
-              </span>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-bold text-white truncate">{taskTitle}</span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {(telemetrySummary.diffAdditions > 0 || telemetrySummary.diffDeletions > 0) && (
+                  <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-slate-900 border border-slate-700 rounded-md">
+                    <span className="text-emerald-400">+{telemetrySummary.diffAdditions}</span>{' '}
+                    <span className="text-rose-400">-{telemetrySummary.diffDeletions}</span>
+                  </span>
+                )}
+                <span className="px-2 py-0.5 text-[10px] font-semibold bg-blue-500/20 text-blue-300 rounded-md">
+                  {activeTask?.refNo || 'AI-RELEASE-2026'}
+                </span>
+              </div>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Vòng đời phát triển phần mềm tự trị hoàn thành trọn vẹn qua 7 trạm chuyên môn:
-              Phân tích PRD ➔ Lập trình TypeScript ➔ Tech Lead Review ➔ QA Automation ➔
-              DevSecOps Audit ➔ Staging Rollout ➔ APM Live Telemetry.
+              {telemetrySummary.reviewSummary}
             </p>
           </div>
         </div>

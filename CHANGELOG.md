@@ -4,6 +4,26 @@ Tất cả các thay đổi đáng chú ý của dự án **Agent Town 3D** sẽ
 
 ---
 
+## [v1.4.0] - 2026-10-31
+### 🚀 Tính năng Đột Phá (Major Features)
+- **Live AI Token Streaming (SSE) & Nút Dừng Khẩn Cấp (`LiveStreamConsole.tsx`, `api/pipeline/route.ts`, `gemini.ts`, `deepseek.ts`)**:
+  - Chuyển đổi luồng gọi AI sang giao thức Server-Sent Events (`text/event-stream`) truyền trực tiếp từng cụm token từ Google Gemini 3.8 Flash / DeepSeek lên màn hình Terminal nổi theo thời gian thực.
+  - Bổ sung cơ chế `AbortController` cho phép bấm nút **`⏹ Dừng`** ngay trên Topbar hoặc khung Live Stream để ngắt kết nối và thu hồi trạng thái các trạm tức thì.
+- **Chế độ Kiểm Toán GitHub Pull Request Thực Tế (`api/github-pr/route.ts`, `PromptModal.tsx`, `useTownStore.ts`)**:
+  - Hỗ trợ dán URL GitHub PR công khai bất kỳ (`https://github.com/owner/repo/pull/123` hoặc `owner/repo#123`) để kéo trực tiếp PR metadata và bản vá `.diff` thật về thị trấn 3D.
+  - Hiển thị diff thật trên `GitDiffViewer` (Unified & Split 2 cột) và điều phối chuỗi trạm **Review ➔ QA ➔ DevSecOps ➔ Release Gate** chấm điểm, sinh test và quét bảo mật SAST trên chính PR đó.
+- **Báo Cáo Phát Hành Trích Xuất Động 100% (`ExportModal.tsx`)**:
+  - Tự động bóc tách điểm số & nhận xét từ `ReviewComments.json`, đếm số kịch bản `it()/test()` thực tế từ `test-suite.spec.ts`, số dòng `+additions/-deletions` của bản diff, số lượng CVE từ `SecurityAudit.json` và tổng số vòng lặp Feedback Loops trong phiên chạy.
+
+### 🐛 Sửa lỗi & Chuẩn hóa Kỹ thuật (Bug Fixes & Repo Hygiene)
+- **Xóa bỏ Race Condition giữa 2 bộ đếm Shipper (`TownScene.tsx`, `MockSimulator.ts`)**: Hợp nhất chuyển động Shipper về một nguồn 60fps duy nhất tại `CourierTicker`, chấm dứt hoàn toàn lỗi treo đứng pipeline tự động.
+- **Khắc phục lỗi mở chồng 2 Modal & rò rỉ nhãn 3D (`useTownStore.ts`, `RoleChips.tsx`, `Labels.tsx`, `MilestoneWidget.tsx`, `ApprovalModal.tsx`)**: Chuẩn hóa tham số `modalMode` (`'dossier' | 'artifact' | 'none'`) và ẩn triệt để overlay nhãn 3D khi mở mọi modal; bổ sung `overscroll-contain` khóa cuộn nền.
+- **Kích hoạt chuyển động hạt xung Photon dọc Cáp Quang (`DataCables.tsx`)**: Cập nhật trực tiếp tọa độ cực `mesh.position.set()` trong `useFrame` giúp xung dữ liệu phóng mượt từ AI Command Center tới 7 phòng lab.
+- **Đồng bộ Git Diff & Kịch bản AppSec Audit cho AI Thật (`route.ts`, `useTownStore.ts`)**: Chuẩn hóa đầu ra trạm Dev sang Unified Git Diff (`source-code.diff`) kích hoạt `GitDiffViewer` 100% thời gian; bổ sung kịch bản Feedback Loop bảo mật SAST/OWASP hoàn chỉnh cho chế độ `security`.
+- **Dọn dẹp cấu trúc Repo & Đồng bộ `AGENTS.md`**: Lưu trữ bản prototype Vanilla JS v1.0 (`index.html`, `js/`, `css/`) và các file không còn sử dụng vào `docs/archive/legacy-v1/`; cập nhật toàn diện `AGENTS.md` khớp kiến trúc Next.js 16 + R3F + High-Tech Labs.
+
+---
+
 ## [v1.3.0] - 2026-10-30
 ### 🚀 Tính năng & Tối ưu Trải nghiệm (Features & UX Enhancements)
 - **Điều Khiển Camera Tự Do Bằng Chuột (`CameraRig.tsx`)**:

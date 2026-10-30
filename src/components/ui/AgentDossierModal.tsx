@@ -9,9 +9,9 @@ import { GitDiffViewer } from './GitDiffViewer';
 
 // Danh mục Tech Stack chuyên môn của từng Agent
 const AGENT_TECH_STACK: Record<AgentRole, string[]> = {
-  orchestrator: ['Claude 3.7 Sonnet', 'Gemini 2.5 Flash', 'DAG Milestones', 'Orchestrator Hub', 'Multi-Agent Bus'],
+  orchestrator: ['Claude Code Hub', 'Gemini 3.8 Flash', 'DAG Milestones', 'Orchestrator Hub', 'Multi-Agent Bus'],
   pm: ['Notion Specs', 'Jira Software', 'Gherkin BDD', 'PRD RFC', 'User Story Mapping'],
-  dev: ['Next.js 16', 'TypeScript 5.6', 'Tailwind CSS', 'Clean Architecture', 'REST & GraphQL'],
+  dev: ['Next.js 16', 'TypeScript 5.6', 'Tailwind CSS', 'Clean Architecture', 'Git Unified Diff'],
   review: ['GitHub PR Review', 'SonarQube', 'ESLint', 'Code Smells Audit', 'Boundary Safety'],
   qa: ['Playwright', 'Jest / Vitest', 'Coverage 98%', 'Edge Case Suite', 'K6 Load Test'],
   security: ['Trivy Scanner', 'OWASP Top 10', 'SAST Audit', 'Secret Leak Check', 'CVE Watchdog'],
@@ -22,6 +22,7 @@ const AGENT_TECH_STACK: Record<AgentRole, string[]> = {
 export const AgentDossierModal: React.FC = () => {
   const isDossierModalOpen = useTownStore((s) => s.isDossierModalOpen);
   const openDossierModal = useTownStore((s) => s.openDossierModal);
+  const openArtifactModal = useTownStore((s) => s.openArtifactModal);
   const selectedAgentRole = useTownStore((s) => s.selectedAgentRole);
   const selectAgent = useTownStore((s) => s.selectAgent);
   const agents = useTownStore((s) => s.agents);
@@ -56,8 +57,8 @@ export const AgentDossierModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-2xl bg-[#0f172a]/95 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in overflow-hidden overscroll-contain">
+      <div className="relative w-full max-w-2xl bg-[#0f172a]/95 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100 overscroll-contain">
         {/* HEADER BAR */}
         <div
           className="p-5 flex items-center justify-between border-b border-slate-700/60"
@@ -68,7 +69,7 @@ export const AgentDossierModal: React.FC = () => {
               className="w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold shadow-lg"
               style={{ backgroundColor: hexColor, color: '#ffffff' }}
             >
-              {layout.tag.split(' ')[0] === 'HUB' ? '🏰' : '🏢'}
+              {layout.tag.split(' ')[0] === 'HUB' ? '🎛️' : '🏢'}
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -92,19 +93,28 @@ export const AgentDossierModal: React.FC = () => {
             </div>
           </div>
 
-          <button
-            onClick={() => {
-              openDossierModal(false);
-              selectAgent(null);
-            }}
-            className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition"
-          >
-            ✕
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => openArtifactModal(true)}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-cyan-300 hover:text-white border border-slate-700 transition"
+              title="Chuyển sang trình thanh tra Artifact & Nhật ký sự kiện"
+            >
+              📦 Xem Artifact & Logs
+            </button>
+            <button
+              onClick={() => {
+                openDossierModal(false);
+                selectAgent(null);
+              }}
+              className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition"
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
         {/* BODY CONTENT - SCROLLABLE */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4 text-xs">
+        <div className="flex-1 overflow-y-auto overscroll-contain p-5 space-y-4 text-xs">
           {/* LỜI THOẠI / SUY NGHĨ HIỆN TẠI */}
           <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700/60">
             <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 block mb-1">
@@ -166,11 +176,11 @@ export const AgentDossierModal: React.FC = () => {
                 </div>
               </div>
               {currentArtifact.language === 'diff' || currentArtifact.filename.endsWith('.diff') ? (
-                <div className="max-h-60 overflow-y-auto">
+                <div className="max-h-60 overflow-y-auto overscroll-contain">
                   <GitDiffViewer diffText={currentArtifact.content} filename={currentArtifact.filename} />
                 </div>
               ) : (
-                <div className="max-h-48 overflow-y-auto p-3 rounded-lg bg-slate-950 border border-slate-800 font-mono text-[11px] text-emerald-300/90 whitespace-pre leading-relaxed select-text">
+                <div className="max-h-48 overflow-y-auto overscroll-contain p-3 rounded-lg bg-slate-950 border border-slate-800 font-mono text-[11px] text-emerald-300/90 whitespace-pre leading-relaxed select-text">
                   {currentArtifact.content}
                 </div>
               )}
@@ -185,7 +195,7 @@ export const AgentDossierModal: React.FC = () => {
             {STAGE_ORDER.map((r) => (
               <button
                 key={r}
-                onClick={() => selectAgent(r)}
+                onClick={() => selectAgent(r, 'dossier')}
                 className={`px-2 py-1 rounded text-[11px] font-medium transition ${
                   selectedAgentRole === r
                     ? 'bg-indigo-600 text-white'

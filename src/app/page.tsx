@@ -52,6 +52,7 @@ import { ArtifactModal } from '../components/ui/ArtifactModal';
 import { ApiKeyModal } from '../components/ui/ApiKeyModal';
 import { AgentDossierModal } from '../components/ui/AgentDossierModal';
 import { ExportModal } from '../components/ui/ExportModal';
+import { LiveStreamConsole } from '../components/ui/LiveStreamConsole';
 import { simulator } from '../lib/events/MockSimulator';
 
 // Dynamically import TownScene with ssr: false for WebGL safety
@@ -88,6 +89,7 @@ export default function Home() {
       <Topbar />
       <MilestoneWidget />
       <LogDrawer />
+      <LiveStreamConsole />
       <RoleChips />
       <StatusBar />
 

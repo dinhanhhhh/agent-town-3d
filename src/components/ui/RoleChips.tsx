@@ -6,7 +6,7 @@ import { STATIONS_LAYOUT } from '../../lib/scene/layout';
 import { useTownStore } from '../../store/useTownStore';
 
 const ROLE_ICONS: Record<AgentRole, string> = {
-  orchestrator: '🏰',
+  orchestrator: '🎛️',
   pm: '🏢',
   dev: '🛠️',
   review: '🔍',
@@ -31,7 +31,6 @@ export const RoleChips: React.FC = () => {
   const agents = useTownStore((s) => s.agents);
   const selectedAgentRole = useTownStore((s) => s.selectedAgentRole);
   const selectAgent = useTownStore((s) => s.selectAgent);
-  const openArtifactModal = useTownStore((s) => s.openArtifactModal);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -61,8 +60,7 @@ export const RoleChips: React.FC = () => {
             <button
               key={role}
               onClick={() => {
-                selectAgent(role);
-                openArtifactModal(true);
+                selectAgent(role, 'dossier');
               }}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap border ${
                 isSelected
