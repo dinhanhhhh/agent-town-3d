@@ -188,46 +188,110 @@
                 <span class="material-symbols-outlined text-[16px] text-tertiary">chat_bubble</span>
                 <span>Bong bóng</span>
               </button>
-              <div class="hidden md:flex items-center gap-space-xs">
-                <button
-                  class="px-space-md py-space-xs rounded-full bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all font-label-code text-label-code"
+              <button
+                class="flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-all font-label-code text-label-code shadow-[0_2px_0_rgba(45,55,72,0.06)] cursor-pointer"
+                id="btn-toggle-lighting"
+                title="Đổi thời gian / ánh sáng: Ngày ➔ Hoàng hôn ➔ Đêm"
+              >
+                <span class="material-symbols-outlined text-[16px] text-amber-500" id="lighting-icon">light_mode</span>
+                <span id="lighting-label">Ngày</span>
+              </button>
+              <button
+                class="flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-all font-label-code text-label-code shadow-[0_2px_0_rgba(45,55,72,0.06)] cursor-pointer"
+                id="btn-toggle-sfx"
+                title="Bật/Tắt âm thanh hiệu ứng SFX"
+              >
+                <span class="material-symbols-outlined text-[16px] text-secondary" id="sfx-icon">volume_up</span>
+                <span id="sfx-label">SFX</span>
+              </button>
+            </div>
+
+            <!-- Pipeline Telemetry Cluster & Prompt AI Button -->
+            <div class="flex items-center gap-space-xs">
+              <button
+                id="btn-open-prompt-modal"
+                class="flex items-center gap-space-xs px-space-md py-space-xs rounded-full bg-primary text-on-primary font-label-code text-label-code font-bold hover:scale-105 active:scale-95 transition-all shadow-[0_4px_0_rgba(45,55,72,0.12),0_12px_24px_-4px_rgba(124,45,55,0.16)] cursor-pointer"
+              >
+                <span class="material-symbols-outlined text-[16px]">magic_button</span>
+                <span>Prompt AI Mới</span>
+              </button>
+
+              <div
+                class="flex items-center gap-space-xs bg-surface-container-lowest/90 backdrop-blur-md px-space-sm py-space-xs rounded-full shadow-[0_4px_0_rgba(45,55,72,0.08),0_12px_24px_-4px_rgba(124,45,55,0.08)]"
+              >
+                <div
+                  class="flex items-center gap-space-xs bg-secondary-container text-on-secondary-container px-space-sm py-space-xs rounded-full shadow-[0_2px_0_rgba(30,107,63,0.2)]"
                 >
-                  Toàn cảnh
+                  <span class="w-2.5 h-2.5 rounded-full bg-secondary animate-ping"></span>
+                  <span class="font-label-code text-label-code font-bold">8 agent online</span>
+                </div>
+                <div
+                  class="hidden sm:flex items-center gap-space-xs bg-surface-container-low text-tertiary px-space-sm py-space-xs rounded-full"
+                >
+                  <span class="material-symbols-outlined text-[15px]">speed</span>
+                  <span class="font-label-code text-label-code">14ms latency</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PIPELINE DISPATCHER & CONTROL DOCK -->
+          <div
+            class="w-full flex flex-wrap items-center justify-between gap-space-sm bg-surface-container-lowest/95 backdrop-blur-md px-space-md py-space-xs rounded-2xl shadow-[0_4px_0_rgba(45,55,72,0.08),0_12px_24px_-4px_rgba(124,45,55,0.08)] mt-2 pointer-events-auto border border-outline-variant/30"
+          >
+            <div class="flex items-center gap-space-sm flex-wrap">
+              <div class="flex items-center gap-space-xs">
+                <span class="material-symbols-outlined text-primary text-[18px]">alt_route</span>
+                <span class="font-label-code text-label-code font-bold text-primary">Kịch bản:</span>
+                <select
+                  id="scenario-select"
+                  class="font-body-sm bg-surface-container px-space-sm py-1 rounded-lg text-on-surface border border-outline-variant/40 outline-none focus:ring-2 focus:ring-primary cursor-pointer font-medium max-w-xs sm:max-w-none truncate"
+                >
+                  <option value="oauth_feature">🚀 Sprint: Google OAuth 2.0 (Happy Path)</option>
+                  <option value="feedback_loop_bug">🐛 Hotfix: Token Race Condition (Feedback Loop)</option>
+                  <option value="perf_redis_cache">⚡ Perf: Redis Cache & P99 Latency (180ms ➔ 14ms)</option>
+                </select>
+              </div>
+
+              <div class="flex items-center gap-space-xs">
+                <button
+                  id="btn-pipeline-play"
+                  class="flex items-center gap-1 px-space-md py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-code text-label-code font-bold shadow-[0_2px_0_rgba(30,107,63,0.2)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                >
+                  <span class="material-symbols-outlined text-[16px]">play_arrow</span>
+                  <span>Chạy Pipeline</span>
                 </button>
                 <button
-                  class="px-space-md py-space-xs rounded-full bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all font-label-code text-label-code"
+                  id="btn-pipeline-step"
+                  class="flex items-center gap-1 px-space-sm py-1 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface font-label-code text-label-code transition-all cursor-pointer"
+                  title="Đi tiếp 1 bước"
                 >
-                  Tổng quan
+                  <span class="material-symbols-outlined text-[16px]">skip_next</span>
+                  <span>Bước tiếp</span>
                 </button>
                 <button
-                  class="px-space-md py-space-xs rounded-full bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all font-label-code text-label-code"
+                  id="btn-pipeline-reset"
+                  class="flex items-center gap-1 px-space-sm py-1 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface font-label-code text-label-code transition-all cursor-pointer"
+                  title="Đặt lại từ đầu"
                 >
-                  Dừng tự chạy
+                  <span class="material-symbols-outlined text-[16px]">restart_alt</span>
+                  <span>Reset</span>
                 </button>
               </div>
             </div>
 
-            <!-- Pipeline Telemetry Cluster -->
-            <div
-              class="flex items-center gap-space-xs bg-surface-container-lowest/90 backdrop-blur-md px-space-sm py-space-xs rounded-full shadow-[0_4px_0_rgba(45,55,72,0.08),0_12px_24px_-4px_rgba(124,45,55,0.08)]"
-            >
-              <div
-                class="flex items-center gap-space-xs bg-secondary-container text-on-secondary-container px-space-sm py-space-xs rounded-full shadow-[0_2px_0_rgba(30,107,63,0.2)]"
-              >
-                <span class="w-2.5 h-2.5 rounded-full bg-secondary animate-ping"></span>
-                <span class="font-label-code text-label-code font-bold">7 agent online</span>
+            <div class="flex items-center gap-space-md flex-1 max-w-md justify-end">
+              <div class="flex flex-col flex-1 max-w-xs">
+                <div class="flex items-center justify-between text-[11px] font-label-code text-on-surface-variant mb-1">
+                  <span id="pipeline-current-step">Sẵn sàng khởi động</span>
+                  <span id="pipeline-progress-text" class="font-bold text-primary">0%</span>
+                </div>
+                <div class="w-full h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+                  <div id="pipeline-progress-bar" class="h-full bg-primary rounded-full transition-all duration-300 w-0"></div>
+                </div>
               </div>
-              <div
-                class="hidden sm:flex items-center gap-space-xs bg-surface-container-high text-on-surface px-space-sm py-space-xs rounded-full"
-              >
-                <span class="material-symbols-outlined text-primary text-[15px]">verified_user</span>
-                <span class="font-label-code text-label-code">1 bước duyệt</span>
-              </div>
-              <div
-                class="flex items-center gap-space-xs bg-surface-container-low text-tertiary px-space-sm py-space-xs rounded-full"
-              >
-                <span class="material-symbols-outlined text-[15px]">speed</span>
-                <span class="font-label-code text-label-code">14ms latency</span>
+              <div class="text-[11px] font-body-sm text-on-surface-variant hidden xl:block">
+                💡 <i>Click vào trạm để xem Artifact</i>
               </div>
             </div>
           </div>
@@ -237,8 +301,20 @@
             
             <!-- 1. CENTER CASTLE ORCHESTRATOR PIN -->
             <div
-              class="absolute top-[48%] left-[50%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto transition-transform hover:scale-105 duration-200 z-30 group cursor-pointer"
+              class="spatial-node absolute top-[48%] left-[50%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto transition-transform hover:scale-105 duration-200 z-30 group cursor-pointer"
+              data-agent="orchestrator"
             >
+              <div
+                class="speech-bubble bg-surface-container-lowest px-space-md py-space-xs rounded-xl shadow-[0_4px_0_rgba(45,55,72,0.08),0_12px_24px_-4px_rgba(124,45,55,0.08)] max-w-[240px] mb-1.5 animate-bounce [animation-duration:4s]"
+              >
+                <div class="flex items-center gap-space-xs mb-1">
+                  <span class="w-2 h-2 rounded-full bg-secondary"></span>
+                  <span class="font-label-caps text-label-caps text-primary uppercase tracking-wider font-bold">Pipeline Dispatcher</span>
+                </div>
+                <p class="font-body-sm text-body-sm text-on-surface font-semibold leading-snug">
+                  Sẵn sàng nhận prompt phát triển phần mềm...
+                </p>
+              </div>
               <div
                 class="relative flex items-center gap-space-xs px-space-md py-space-xs rounded-full bg-surface-container-lowest text-on-surface shadow-[0_4px_0_rgba(45,55,72,0.12),0_16px_32px_rgba(124,45,55,0.16)] ring-2 ring-primary-fixed-dim"
               >
@@ -266,7 +342,8 @@
 
             <!-- 2. NODE 1: PM · BA (Top Left - City Office) -->
             <div
-              class="spatial-node absolute top-[20%] left-[22%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto z-20 transition-transform duration-200 hover:-translate-y-2"
+              class="spatial-node absolute top-[20%] left-[22%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto z-20 transition-transform duration-200 hover:-translate-y-2 cursor-pointer"
+              data-agent="pm"
             >
               <div
                 class="speech-bubble bg-surface-container-lowest px-space-md py-space-xs rounded-xl shadow-[0_4px_0_rgba(45,55,72,0.08),0_12px_24px_-4px_rgba(124,45,55,0.08)] max-w-[220px] mb-1.5 animate-bounce [animation-duration:3s]"
@@ -292,7 +369,8 @@
 
             <!-- 3. NODE 2: DEV (Mid Left - Woodcraft Workshop) -->
             <div
-              class="spatial-node absolute top-[44%] left-[16%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto z-20 transition-transform duration-200 hover:-translate-y-2"
+              class="spatial-node absolute top-[44%] left-[16%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto z-20 transition-transform duration-200 hover:-translate-y-2 cursor-pointer"
+              data-agent="dev"
             >
               <div
                 class="speech-bubble bg-surface-container-lowest px-space-md py-space-xs rounded-xl shadow-[0_4px_0_rgba(45,55,72,0.08),0_12px_24px_-4px_rgba(124,45,55,0.08)] max-w-[220px] mb-1.5 animate-bounce [animation-duration:3.4s]"
@@ -317,7 +395,8 @@
 
             <!-- 4. NODE 3: REVIEW (Bottom Left - Windmill / Guardpost) -->
             <div
-              class="spatial-node absolute top-[68%] left-[26%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto z-20 transition-transform duration-200 hover:-translate-y-2"
+              class="spatial-node absolute top-[68%] left-[26%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto z-20 transition-transform duration-200 hover:-translate-y-2 cursor-pointer"
+              data-agent="review"
             >
               <div
                 class="speech-bubble bg-surface-container-lowest px-space-md py-space-xs rounded-xl shadow-[0_4px_0_rgba(45,55,72,0.08),0_12px_24px_-4px_rgba(124,45,55,0.08)] max-w-[210px] mb-1.5 animate-bounce [animation-duration:3.1s]"
@@ -342,7 +421,8 @@
 
             <!-- 5. NODE 4: QA · TEST (Top Right - Chemistry Lab / Water Tower) -->
             <div
-              class="spatial-node absolute top-[22%] left-[78%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto z-20 transition-transform duration-200 hover:-translate-y-2"
+              class="spatial-node absolute top-[22%] left-[78%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto z-20 transition-transform duration-200 hover:-translate-y-2 cursor-pointer"
+              data-agent="qa"
             >
               <div
                 class="speech-bubble bg-surface-container-lowest px-space-md py-space-xs rounded-xl shadow-[0_4px_0_rgba(45,55,72,0.08),0_12px_24px_-4px_rgba(124,45,55,0.08)] max-w-[220px] mb-1.5 animate-bounce [animation-duration:3.6s]"
@@ -368,7 +448,8 @@
 
             <!-- 6. NODE 5: SECURITY (Mid Right - Fortress Gate / Vault) -->
             <div
-              class="spatial-node absolute top-[44%] left-[84%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto z-20 transition-transform duration-200 hover:-translate-y-2"
+              class="spatial-node absolute top-[44%] left-[84%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto z-20 transition-transform duration-200 hover:-translate-y-2 cursor-pointer"
+              data-agent="security"
             >
               <div
                 class="speech-bubble bg-surface-container-lowest px-space-md py-space-xs rounded-xl shadow-[0_4px_0_rgba(45,55,72,0.08),0_12px_24px_-4px_rgba(124,45,55,0.08)] max-w-[210px] mb-1.5 animate-bounce [animation-duration:2.9s]"
@@ -393,7 +474,8 @@
 
             <!-- 7. NODE 6: DEVOPS (Bottom Right - Train Depot / Launch Pad) -->
             <div
-              class="spatial-node absolute top-[68%] left-[76%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto z-20 transition-transform duration-200 hover:-translate-y-2"
+              class="spatial-node absolute top-[68%] left-[76%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto z-20 transition-transform duration-200 hover:-translate-y-2 cursor-pointer"
+              data-agent="devops"
             >
               <div
                 class="speech-bubble bg-surface-container-lowest px-space-md py-space-xs rounded-xl shadow-[0_4px_0_rgba(45,55,72,0.08),0_12px_24px_-4px_rgba(124,45,55,0.08)] max-w-[220px] mb-1.5 animate-bounce [animation-duration:3.2s]"
@@ -419,7 +501,8 @@
 
             <!-- 8. NODE 7: MONITORING (Top Center-ish - High Watchtower) -->
             <div
-              class="spatial-node absolute top-[16%] left-[50%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto z-20 transition-transform duration-200 hover:-translate-y-2"
+              class="spatial-node absolute top-[16%] left-[50%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto z-20 transition-transform duration-200 hover:-translate-y-2 cursor-pointer"
+              data-agent="monitoring"
             >
               <div
                 class="speech-bubble bg-surface-container-lowest px-space-md py-space-xs rounded-xl shadow-[0_4px_0_rgba(45,55,72,0.08),0_12px_24px_-4px_rgba(124,45,55,0.08)] max-w-[200px] mb-1.5 animate-bounce [animation-duration:3.8s]"
@@ -443,30 +526,32 @@
             </div>
 
             <!-- 9. COURIER AGENTS WALKING ON PATHS -->
-            <!-- Courier 1: Between Dev and Review -->
+            <!-- Courier 1: Forward Path (Dev, Review, QA, DevOps) -->
             <div
+              id="courier-1-wrap"
               class="absolute top-[56%] left-[21%] -translate-x-1/2 -translate-y-1/2 pointer-events-auto z-25 group cursor-pointer transition-transform hover:scale-110"
             >
               <div
                 class="flex items-center gap-space-xs bg-surface-container-lowest px-space-sm py-space-xs rounded-full shadow-[0_4px_0_rgba(45,55,72,0.1),0_10px_16px_rgba(0,0,0,0.08)] ring-1 ring-tertiary/10"
               >
                 <span class="text-[16px] animate-bounce [animation-duration:1.2s]">🏃</span>
-                <span class="font-label-code text-label-code text-on-surface font-semibold"
+                <span class="font-label-code text-label-code text-on-surface font-semibold" id="courier-1-label"
                   >📦 Mang PR #87 sang Review</span
                 >
               </div>
               <div class="w-10 h-1.5 rounded-full bg-inverse-surface/10 filter blur-[1px] mx-auto mt-1"></div>
             </div>
 
-            <!-- Courier 2: Between QA and Dev -->
+            <!-- Courier 2: Feedback Loop Path (QA to Dev) -->
             <div
+              id="courier-2-wrap"
               class="absolute top-[36%] left-[64%] -translate-x-1/2 -translate-y-1/2 pointer-events-auto z-25 group cursor-pointer transition-transform hover:scale-110"
             >
               <div
                 class="flex items-center gap-space-xs bg-surface-container-lowest px-space-sm py-space-xs rounded-full shadow-[0_4px_0_rgba(45,55,72,0.1),0_10px_16px_rgba(0,0,0,0.08)] ring-1 ring-error/20"
               >
                 <span class="text-[16px] animate-bounce [animation-duration:0.9s]">🚴</span>
-                <span class="font-label-code text-label-code text-error font-semibold"
+                <span class="font-label-code text-label-code text-error font-semibold" id="courier-2-label"
                   >🐛 Mang bug sang Dev</span
                 >
               </div>
@@ -483,68 +568,85 @@
               <div
                 class="flex items-center gap-space-xs bg-surface-container-lowest/90 backdrop-blur-md px-space-sm py-space-xs rounded-full shadow-[0_4px_0_rgba(45,55,72,0.08),0_16px_32px_rgba(124,45,55,0.08)]"
               >
+                <!-- Role Chip 0: Claude Code (Orchestrator) -->
+                <div
+                  class="role-chip flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
+                  data-agent="orchestrator"
+                  title="Claude Code: Orchestrator Hub"
+                >
+                  <span class="text-[14px]">🏰</span>
+                  <span class="font-label-code text-label-code text-on-surface font-semibold">Hub</span>
+                  <span class="status-dot w-2 h-2 rounded-full bg-secondary"></span>
+                </div>
                 <!-- Role Chip 1: PM -->
                 <div
-                  class="flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
+                  class="role-chip flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
+                  data-agent="pm"
                   title="PM / BA: Sẵn sàng"
                 >
                   <span class="material-symbols-outlined text-[15px] text-on-surface-variant">domain</span>
                   <span class="font-label-code text-label-code text-on-surface font-semibold">PM</span>
-                  <span class="w-2 h-2 rounded-full bg-secondary"></span>
+                  <span class="status-dot w-2 h-2 rounded-full bg-secondary"></span>
                 </div>
                 <!-- Role Chip 2: Dev -->
                 <div
-                  class="flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
+                  class="role-chip flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
+                  data-agent="dev"
                   title="Dev: Đang code"
                 >
                   <span class="material-symbols-outlined text-[15px] text-tertiary-container">hardware</span>
                   <span class="font-label-code text-label-code text-on-surface font-semibold">Dev</span>
-                  <span class="w-2 h-2 rounded-full bg-tertiary-fixed-dim animate-pulse"></span>
+                  <span class="status-dot w-2 h-2 rounded-full bg-tertiary-fixed-dim animate-pulse"></span>
                 </div>
                 <!-- Role Chip 3: Review -->
                 <div
-                  class="flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
+                  class="role-chip flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
+                  data-agent="review"
                   title="Review: Đang chờ duyệt PR"
                 >
                   <span class="material-symbols-outlined text-[15px] text-primary">manage_search</span>
                   <span class="font-label-code text-label-code text-on-surface font-semibold">Review</span>
-                  <span class="w-2 h-2 rounded-full bg-primary-fixed-dim"></span>
+                  <span class="status-dot w-2 h-2 rounded-full bg-primary-fixed-dim"></span>
                 </div>
                 <!-- Role Chip 4: QA -->
                 <div
-                  class="flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
+                  class="role-chip flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
+                  data-agent="qa"
                   title="QA: Phát hiện 2 test case lỗi"
                 >
                   <span class="material-symbols-outlined text-[15px] text-error">science</span>
                   <span class="font-label-code text-label-code text-on-surface font-semibold">QA</span>
-                  <span class="w-2 h-2 rounded-full bg-error"></span>
+                  <span class="status-dot w-2 h-2 rounded-full bg-error"></span>
                 </div>
                 <!-- Role Chip 5: Security -->
                 <div
-                  class="flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
+                  class="role-chip flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
+                  data-agent="security"
                   title="Security: 1 cảnh báo dependency"
                 >
                   <span class="material-symbols-outlined text-[15px] text-primary">shield</span>
                   <span class="font-label-code text-label-code text-on-surface font-semibold">Security</span>
-                  <span class="w-2 h-2 rounded-full bg-primary"></span>
+                  <span class="status-dot w-2 h-2 rounded-full bg-primary"></span>
                 </div>
                 <!-- Role Chip 6: DevOps -->
                 <div
-                  class="flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
+                  class="role-chip flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
+                  data-agent="devops"
                   title="DevOps: Đã deploy staging"
                 >
                   <span class="material-symbols-outlined text-[15px] text-secondary">rocket_launch</span>
                   <span class="font-label-code text-label-code text-on-surface font-semibold">DevOps</span>
-                  <span class="w-2 h-2 rounded-full bg-secondary"></span>
+                  <span class="status-dot w-2 h-2 rounded-full bg-secondary"></span>
                 </div>
                 <!-- Role Chip 7: Monitoring -->
                 <div
-                  class="flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
+                  class="role-chip flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
+                  data-agent="monitoring"
                   title="Monitoring: Hệ thống ổn định"
                 >
                   <span class="material-symbols-outlined text-[15px] text-secondary">cell_tower</span>
                   <span class="font-label-code text-label-code text-on-surface font-semibold">Monitor</span>
-                  <span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+                  <span class="status-dot w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
                 </div>
               </div>
             </div>
@@ -600,8 +702,8 @@
           class="pointer-events-auto bg-surface-container-lowest/90 backdrop-blur-md px-space-md py-space-xs rounded-full shadow-[0_4px_0_rgba(45,55,72,0.08),0_12px_24px_-4px_rgba(124,45,55,0.08)] flex items-center gap-space-md"
         >
           <div class="flex items-center gap-space-xs">
-            <span class="material-symbols-outlined text-secondary text-[16px]">wb_sunny</span>
-            <span class="font-label-code text-label-code text-on-surface"
+            <span class="material-symbols-outlined text-secondary text-[16px]" id="weather-icon">wb_sunny</span>
+            <span class="font-label-code text-label-code text-on-surface" id="footer-weather-status"
               >Thời tiết: Nắng ấm (Latency 14ms)</span
             >
           </div>
@@ -609,6 +711,11 @@
           <div class="flex items-center gap-space-xs">
             <span class="material-symbols-outlined text-tertiary-container text-[16px]">swap_calls</span>
             <span class="font-label-code text-label-code text-on-surface">99.98% TPS</span>
+          </div>
+          <span class="font-label-code text-label-code text-outline hidden sm:inline">|</span>
+          <div class="hidden sm:flex items-center gap-space-xs">
+            <span class="text-[10px] font-label-code text-on-surface-variant font-bold uppercase">APM Live:</span>
+            <canvas id="apm-waveform" width="70" height="16" class="rounded bg-surface-container-high/60"></canvas>
           </div>
         </div>
         <div
@@ -621,7 +728,187 @@
       </div>
     </footer>
 
-    <!-- Interactive HUD Script -->
+    <!-- Agent Artifact Inspector Modal (Multi-Tab) -->
+    <div
+      id="agent-artifact-modal"
+      class="fixed inset-0 z-50 hidden items-center justify-center bg-inverse-surface/40 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+    >
+      <div
+        class="bg-surface-container-lowest text-on-surface rounded-2xl shadow-[0_16px_32px_rgba(124,45,55,0.18),0_4px_0_rgba(45,55,72,0.12)] border border-outline-variant/40 max-w-2xl w-full max-h-[88vh] flex flex-col overflow-hidden"
+      >
+        <!-- Modal Header -->
+        <div class="px-space-md py-space-sm bg-surface-container-low flex items-center justify-between border-b border-outline-variant/30">
+          <div class="flex items-center gap-space-sm">
+            <span class="text-3xl select-none" id="modal-agent-icon">🏢</span>
+            <div class="flex flex-col">
+              <div class="flex items-center gap-space-xs">
+                <h3 class="font-headline-md text-headline-md text-primary font-bold" id="modal-agent-name">PM · BA</h3>
+                <span id="modal-agent-status" class="px-space-sm py-0.5 rounded-full text-[11px] font-bold font-label-code bg-secondary-container text-on-secondary-container">SUCCESS</span>
+              </div>
+              <span class="font-label-code text-label-code text-on-surface-variant font-medium" id="modal-agent-role">Product Manager & Business Analyst</span>
+            </div>
+          </div>
+          <button
+            id="btn-close-artifact-modal"
+            class="w-8 h-8 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center transition-all cursor-pointer"
+            aria-label="Đóng"
+          >
+            <span class="material-symbols-outlined text-[20px]">close</span>
+          </button>
+        </div>
+
+        <!-- Multi-Tab Navigation Header -->
+        <div class="px-space-md pt-space-xs bg-surface-container-low flex items-center gap-space-xs border-b border-outline-variant/30 overflow-x-auto select-none">
+          <button id="tab-btn-artifact" class="px-space-md py-1.5 rounded-t-xl text-[12px] font-label-code transition-all bg-primary-container text-on-primary font-bold cursor-pointer">
+            📄 Sản phẩm (Artifact)
+          </button>
+          <button id="tab-btn-telemetry" class="px-space-md py-1.5 rounded-t-xl text-[12px] font-label-code transition-all bg-surface-container text-on-surface hover:bg-surface-container-high cursor-pointer">
+            📊 Chỉ số Đo lường
+          </button>
+          <button id="tab-btn-prompt" class="px-space-md py-1.5 rounded-t-xl text-[12px] font-label-code transition-all bg-surface-container text-on-surface hover:bg-surface-container-high cursor-pointer">
+            🤖 System Prompt
+          </button>
+          <button id="tab-btn-logs" class="px-space-md py-1.5 rounded-t-xl text-[12px] font-label-code transition-all bg-surface-container text-on-surface hover:bg-surface-container-high cursor-pointer">
+            📜 Console Log
+          </button>
+        </div>
+
+        <!-- Modal Body (Scrollable Tab Panels) -->
+        <div class="p-space-md flex-1 overflow-y-auto space-y-space-md">
+          <!-- Active Status Bubble Quote (always visible) -->
+          <div class="bg-surface-container-lowest p-space-sm rounded-xl border border-outline-variant/30 shadow-sm flex items-start gap-space-xs">
+            <span class="material-symbols-outlined text-primary text-[18px] mt-0.5">chat</span>
+            <div class="flex flex-col">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant font-label-caps">Trạng thái hiện tại</span>
+              <p class="font-body-md text-body-md text-on-surface font-semibold" id="modal-agent-speech">Đang phân tích requirement Sprint #24 · Specs PRD</p>
+            </div>
+          </div>
+
+          <!-- TAB 1: ARTIFACT OUTPUT -->
+          <div id="modal-panel-artifact" class="space-y-space-xs">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-space-xs">
+                <span class="material-symbols-outlined text-primary text-[18px]">description</span>
+                <span class="font-label-code text-label-code font-bold text-on-surface" id="modal-artifact-name">PRD-Google-OAuth.md</span>
+              </div>
+              <button
+                id="btn-copy-artifact"
+                class="flex items-center gap-1 px-space-sm py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-code text-[11px] font-semibold transition-all cursor-pointer"
+              >
+                <span class="material-symbols-outlined text-[14px]">content_copy</span>
+                <span>Sao chép</span>
+              </button>
+            </div>
+            <pre class="bg-inverse-surface text-inverse-on-surface p-space-md rounded-xl font-label-code text-[12px] leading-relaxed overflow-x-auto whitespace-pre-wrap max-h-72 border border-inverse-surface/40 selection:bg-primary-container"><code id="modal-artifact-code"></code></pre>
+          </div>
+
+          <!-- TAB 2: TELEMETRY METRICS -->
+          <div id="modal-panel-telemetry" class="hidden space-y-space-sm">
+            <h4 class="text-[12px] font-bold text-on-surface font-label-code">Thông số kỹ thuật & Hiệu năng:</h4>
+            <div id="modal-telemetry-content" class="grid grid-cols-2 sm:grid-cols-3 gap-space-sm">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- TAB 3: SYSTEM PROMPT -->
+          <div id="modal-panel-prompt" class="hidden space-y-space-sm">
+            <div class="bg-surface-container-low p-space-md rounded-xl border border-outline-variant/30">
+              <div class="flex items-center gap-space-xs text-[12px] font-bold text-on-surface-variant font-label-code mb-2">
+                <span class="material-symbols-outlined text-[16px] text-primary">psychology</span>
+                <span>System Prompt Core (AGENTS.md)</span>
+              </div>
+              <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed" id="modal-agent-prompt">
+                Bạn là Senior Product Manager...
+              </p>
+            </div>
+          </div>
+
+          <!-- TAB 4: CONSOLE LOG -->
+          <div id="modal-panel-logs" class="hidden space-y-space-xs">
+            <span class="text-[11px] font-label-code text-on-surface-variant font-bold">Standard Output (stdout / stderr):</span>
+            <pre class="bg-[#0f172a] text-[#38ef7d] p-space-md rounded-xl font-label-code text-[11px] leading-relaxed overflow-x-auto whitespace-pre-wrap max-h-72 border border-slate-700 shadow-inner"><code id="modal-logs-code"></code></pre>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="px-space-md py-space-xs bg-surface-container-low border-t border-outline-variant/30 flex items-center justify-between text-on-surface-variant">
+          <span class="text-[11px] font-label-code">Mô hình DevOps SDLC Tự Trị · Agent Town 3D</span>
+          <span class="text-[11px] font-body-sm">Nhấn Esc hoặc click bên ngoài để đóng</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Prompt Dispatcher Modal (AI Custom Task Generator) -->
+    <div
+      id="prompt-dispatcher-modal"
+      class="fixed inset-0 z-50 hidden items-center justify-center bg-inverse-surface/40 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+    >
+      <div
+        class="bg-surface-container-lowest text-on-surface rounded-2xl shadow-[0_16px_32px_rgba(124,45,55,0.18),0_4px_0_rgba(45,55,72,0.12)] border border-outline-variant/40 max-w-xl w-full p-space-md flex flex-col gap-space-md"
+      >
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-space-xs">
+            <span class="text-2xl select-none">🤖</span>
+            <div class="flex flex-col">
+              <h3 class="font-headline-md text-headline-md text-primary font-bold">Kích hoạt Task AI Tùy chỉnh</h3>
+              <span class="font-label-code text-[11px] text-on-surface-variant">Phân rã yêu cầu tự động qua 8 Agent</span>
+            </div>
+          </div>
+          <button
+            id="btn-close-prompt-modal"
+            class="w-7 h-7 rounded-full bg-surface-container hover:bg-surface-container-high flex items-center justify-center cursor-pointer"
+          >
+            <span class="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+
+        <form id="custom-prompt-form" class="space-y-space-sm">
+          <label class="block text-body-sm font-semibold text-on-surface">Nhập yêu cầu phát triển phần mềm:</label>
+          <textarea
+            id="custom-prompt-input"
+            rows="3"
+            placeholder="Ví dụ: Xây dựng Chatbot RAG với Gemini API & Pinecone vector database..."
+            class="w-full bg-surface-container p-space-sm rounded-xl border border-outline-variant/40 text-on-surface font-body-sm outline-none focus:ring-2 focus:ring-primary"
+            required
+          ></textarea>
+
+          <div class="space-y-1">
+            <span class="text-[11px] font-label-code text-on-surface-variant font-semibold">Gợi ý mẫu:</span>
+            <div class="flex flex-wrap gap-1">
+              <button type="button" class="preset-prompt-chip text-[11px] font-label-code px-2 py-1 bg-surface-container hover:bg-surface-container-high rounded-lg cursor-pointer">
+                💬 Chatbot RAG Gemini
+              </button>
+              <button type="button" class="preset-prompt-chip text-[11px] font-label-code px-2 py-1 bg-surface-container hover:bg-surface-container-high rounded-lg cursor-pointer">
+                💳 Thanh toán Stripe
+              </button>
+              <button type="button" class="preset-prompt-chip text-[11px] font-label-code px-2 py-1 bg-surface-container hover:bg-surface-container-high rounded-lg cursor-pointer">
+                📡 Webhook RabbitMQ
+              </button>
+            </div>
+          </div>
+
+          <div class="pt-space-xs flex justify-end gap-space-xs">
+            <button
+              type="button"
+              id="btn-cancel-prompt"
+              class="px-space-md py-1.5 rounded-full bg-surface-container text-on-surface font-label-code text-label-code cursor-pointer"
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              class="px-space-md py-1.5 rounded-full bg-primary text-on-primary font-label-code text-label-code font-bold hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-md"
+            >
+              🚀 Phân rã & Chạy Pipeline
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/sfx.js"></script>
     <script src="js/hud.js"></script>
+    <script src="js/agents.js"></script>
   </body>
 </html>

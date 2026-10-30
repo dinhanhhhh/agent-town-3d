@@ -1,6 +1,32 @@
-.DS_Store
-Thumbs.db
+# dependencies
 node_modules/
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js build output
+.next/
+out/
+build/
+dist/
+
+# misc
+.DS_Store
+*.pem
+Thumbs.db
 *.log
 .vscode/
 .idea/
+
+# local env files (do NOT commit secrets)
+.env*.local
+.env
+
+# temporary test screenshots
+screenshot_*.png
+
+# vercel & turbopack
+.vercel/
+.turbo/

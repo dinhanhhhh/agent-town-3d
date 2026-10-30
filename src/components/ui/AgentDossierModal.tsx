@@ -1,0 +1,203 @@
+'use client';
+
+import React, { useState } from 'react';
+import { useTownStore } from '../../store/useTownStore';
+import { AgentRole, STAGE_ORDER } from '../../lib/pipeline/stages';
+import { STATIONS_LAYOUT } from '../../lib/scene/layout';
+import { sfx } from '../../lib/audio/sfx';
+import { GitDiffViewer } from './GitDiffViewer';
+
+// Danh mục Tech Stack chuyên môn của từng Agent
+const AGENT_TECH_STACK: Record<AgentRole, string[]> = {
+  orchestrator: ['Claude 3.7 Sonnet', 'Gemini 2.5 Flash', 'DAG Milestones', 'Orchestrator Hub', 'Multi-Agent Bus'],
+  pm: ['Notion Specs', 'Jira Software', 'Gherkin BDD', 'PRD RFC', 'User Story Mapping'],
+  dev: ['Next.js 16', 'TypeScript 5.6', 'Tailwind CSS', 'Clean Architecture', 'REST & GraphQL'],
+  review: ['GitHub PR Review', 'SonarQube', 'ESLint', 'Code Smells Audit', 'Boundary Safety'],
+  qa: ['Playwright', 'Jest / Vitest', 'Coverage 98%', 'Edge Case Suite', 'K6 Load Test'],
+  security: ['Trivy Scanner', 'OWASP Top 10', 'SAST Audit', 'Secret Leak Check', 'CVE Watchdog'],
+  devops: ['Docker Multi-Stage', 'Kubernetes / K8s', 'ArgoCD GitOps', 'Canary Rollout', 'GitHub Actions'],
+  monitor: ['Prometheus APM', 'Grafana Dashboard', 'P99 Latency Watcher', 'SRE Alertmanager', 'SLO / SLI'],
+};
+
+export const AgentDossierModal: React.FC = () => {
+  const isDossierModalOpen = useTownStore((s) => s.isDossierModalOpen);
+  const openDossierModal = useTownStore((s) => s.openDossierModal);
+  const selectedAgentRole = useTownStore((s) => s.selectedAgentRole);
+  const selectAgent = useTownStore((s) => s.selectAgent);
+  const agents = useTownStore((s) => s.agents);
+  const realArtifacts = useTownStore((s) => s.realArtifacts);
+
+  const [copied, setCopied] = useState(false);
+
+  if (!isDossierModalOpen || !selectedAgentRole) return null;
+
+  const agent = agents[selectedAgentRole];
+  const layout = STATIONS_LAYOUT[selectedAgentRole];
+  const techStack = AGENT_TECH_STACK[selectedAgentRole] || [];
+  const currentArtifact = realArtifacts[selectedAgentRole];
+  const hexColor = '#' + layout.accentColor.toString(16).padStart(6, '0');
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    sfx.playPop();
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownload = (filename: string, content: string) => {
+    sfx.playDeliveryChime();
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+      <div className="relative w-full max-w-2xl bg-[#0f172a]/95 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-100">
+        {/* HEADER BAR */}
+        <div
+          className="p-5 flex items-center justify-between border-b border-slate-700/60"
+          style={{ backgroundColor: `${hexColor}15` }}
+        >
+          <div className="flex items-center gap-3.5">
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold shadow-lg"
+              style={{ backgroundColor: hexColor, color: '#ffffff' }}
+            >
+              {layout.tag.split(' ')[0] === 'HUB' ? '🏰' : '🏢'}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                  {layout.tag}
+                </span>
+                <h2 className="text-lg font-bold text-white">{layout.name}</h2>
+                <span
+                  className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                    agent.status === 'working'
+                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                      : agent.status === 'debugging'
+                      ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                      : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                  }`}
+                >
+                  ● {agent.status.toUpperCase()}
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5">{agent.category}</p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              openDossierModal(false);
+              selectAgent(null);
+            }}
+            className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* BODY CONTENT - SCROLLABLE */}
+        <div className="flex-1 overflow-y-auto p-5 space-y-4 text-xs">
+          {/* LỜI THOẠI / SUY NGHĨ HIỆN TẠI */}
+          <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700/60">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 block mb-1">
+              💬 Trạng thái & Lời thoại hiện tại:
+            </span>
+            <p className="text-sm font-medium text-slate-200 italic">
+              &ldquo;{agent.speech}&rdquo;
+            </p>
+          </div>
+
+          {/* TECH STACK CHUYÊN MÔN */}
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
+              🛠️ Bộ Công Nghệ & Trách Nhiệm Kỹ Thuật (Tech Stack):
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {techStack.map((tech, idx) => (
+                <span
+                  key={idx}
+                  className="px-2.5 py-1 rounded-md text-xs font-medium bg-slate-800 text-slate-200 border border-slate-700/80 flex items-center gap-1 shadow-sm"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: hexColor }} />
+                  {tech}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* SYSTEM PROMPT CORE */}
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
+              🧠 System Prompt Chỉ Đạo (Agent Core):
+            </span>
+            <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 font-mono text-[11px] leading-relaxed select-text">
+              {agent.systemPrompt}
+            </div>
+          </div>
+
+          {/* ARTIFACT GẦN NHẤT */}
+          {currentArtifact && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1">
+                  📦 Artifact Vừa Tạo ({currentArtifact.filename}):
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleCopy(currentArtifact.content)}
+                    className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition"
+                  >
+                    {copied ? '✓ Đã chép' : 'Sao chép mã'}
+                  </button>
+                  <button
+                    onClick={() => handleDownload(currentArtifact.filename, currentArtifact.content)}
+                    className="px-2.5 py-1 rounded bg-indigo-600/80 hover:bg-indigo-600 text-white transition"
+                  >
+                    Tải file
+                  </button>
+                </div>
+              </div>
+              {currentArtifact.language === 'diff' || currentArtifact.filename.endsWith('.diff') ? (
+                <div className="max-h-60 overflow-y-auto">
+                  <GitDiffViewer diffText={currentArtifact.content} filename={currentArtifact.filename} />
+                </div>
+              ) : (
+                <div className="max-h-48 overflow-y-auto p-3 rounded-lg bg-slate-950 border border-slate-800 font-mono text-[11px] text-emerald-300/90 whitespace-pre leading-relaxed select-text">
+                  {currentArtifact.content}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* FOOTER SWITCHER GIỮA CÁC TRẠM */}
+        <div className="p-3.5 bg-slate-900/90 border-t border-slate-800 flex items-center justify-between text-xs">
+          <span className="text-slate-400">Xem nhanh trạm khác:</span>
+          <div className="flex gap-1 overflow-x-auto">
+            {STAGE_ORDER.map((r) => (
+              <button
+                key={r}
+                onClick={() => selectAgent(r)}
+                className={`px-2 py-1 rounded text-[11px] font-medium transition ${
+                  selectedAgentRole === r
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {r === 'orchestrator' ? 'Hub' : r.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

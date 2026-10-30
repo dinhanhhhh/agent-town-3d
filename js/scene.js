@@ -195,9 +195,14 @@
     townGroup.add(spoke);
   }
 
+  // Station Spotlights & Clickable Registry
+  const stationLights = {};
+  const clickableObjects = [];
+
   // 2. CENTER: CLAUDE CODE CASTLE (The Orchestrator)
   const castleGroup = new THREE.Group();
   castleGroup.position.set(0, 0.6, 0);
+  castleGroup.userData = { agentId: 'orchestrator', role: 'Claude Code' };
 
   // Main Keep
   const castleBody = new THREE.Mesh(
@@ -258,7 +263,14 @@
   door.position.set(0, 0.9, 1.82);
   castleGroup.add(door);
 
+  // Castle Station Light
+  const castleBeacon = new THREE.PointLight(0xffbe0b, 0, 12);
+  castleBeacon.position.set(0, 6.8, 0);
+  castleGroup.add(castleBeacon);
+  stationLights['orchestrator'] = castleBeacon;
+
   townGroup.add(castleGroup);
+  clickableObjects.push(castleGroup);
 
   // Helper to make cute low-poly trees
   function createCuteTree(x, z, type = 0) {
@@ -536,8 +548,15 @@
       }
     }
 
+    bg.userData = { agentId: b.decor, role: b.role, angle: b.angle };
+    const bBeacon = new THREE.PointLight(0xffbe0b, 0, 9);
+    bBeacon.position.set(0, (b.decor === "monitoring" ? 6.8 : 3.6), 0);
+    bg.add(bBeacon);
+    stationLights[b.decor] = bBeacon;
+
     townGroup.add(bg);
     buildingMeshes.push(bg);
+    clickableObjects.push(bg);
 
     const agentChar = createCharacter(idx, false);
     const charX = Math.cos(b.angle) * (radius - 2.4);
@@ -597,10 +616,133 @@
       c.position.y = 0.6 + Math.sin(animTime * 2.2 + i) * 0.03;
     });
 
+    // Pulse active station beacon lights
+    Object.keys(stationLights).forEach((id) => {
+      const l = stationLights[id];
+      if (l && l.userData && l.userData.baseIntensity > 0) {
+        l.intensity = l.userData.baseIntensity + Math.sin(animTime * 6) * 0.45;
+      }
+    });
+
+    // Smoothly ease rotation towards focused station if requested
+    if (targetRotationY !== null) {
+      townGroup.rotation.y += (targetRotationY - townGroup.rotation.y) * 0.08;
+      if (Math.abs(targetRotationY - townGroup.rotation.y) < 0.002) {
+        townGroup.rotation.y = targetRotationY;
+        targetRotationY = null;
+      }
+    }
+
     renderer.render(scene, camera);
   }
 
+  let targetRotationY = null;
+
   animate();
+
+  // 3D Raycasting (Click building to open Agent Workspace)
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+
+  function onCanvasClick(event) {
+    const rect = renderer.domElement.getBoundingClientRect();
+    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects(clickableObjects, true);
+
+    if (intersects.length > 0) {
+      let curr = intersects[0].object;
+      while (curr && curr !== townGroup && curr !== scene) {
+        if (curr.userData && curr.userData.agentId) {
+          const agentId = curr.userData.agentId;
+          if (window.AgentTownSFX && typeof window.AgentTownSFX.click === 'function') {
+            window.AgentTownSFX.click();
+          }
+          if (window.AgentTownEngine && typeof window.AgentTownEngine.openArtifact === 'function') {
+            window.AgentTownEngine.openArtifact(agentId);
+          }
+          window.dioramaScene.highlightStation(agentId, 'WORKING');
+          break;
+        }
+        curr = curr.parent;
+      }
+    }
+  }
+
+  function onCanvasMouseMove(event) {
+    const rect = renderer.domElement.getBoundingClientRect();
+    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects(clickableObjects, true);
+    renderer.domElement.style.cursor = intersects.length > 0 ? 'pointer' : 'default';
+  }
+
+  renderer.domElement.addEventListener('click', onCanvasClick);
+  renderer.domElement.addEventListener('mousemove', onCanvasMouseMove);
+
+  // Lighting Mode Presets
+  let currentLightingMode = 'day';
+  const LIGHTING_CONFIGS = {
+    day: {
+      ambient: { color: 0xfff5ea, intensity: 0.95 },
+      hemi: { sky: 0xe8f4f8, ground: 0x88d49e, intensity: 0.55 },
+      sun: { color: 0xfffaed, intensity: 1.4, pos: [28, 42, 18] },
+      fill: { color: 0xd4e4ff, intensity: 0.45 },
+      exposure: 1.15
+    },
+    sunset: {
+      ambient: { color: 0xffb896, intensity: 0.85 },
+      hemi: { sky: 0xff8866, ground: 0x662244, intensity: 0.65 },
+      sun: { color: 0xff7033, intensity: 1.6, pos: [35, 18, 15] },
+      fill: { color: 0x994488, intensity: 0.6 },
+      exposure: 1.2
+    },
+    night: {
+      ambient: { color: 0x18233c, intensity: 0.8 },
+      hemi: { sky: 0x1b2845, ground: 0x091428, intensity: 0.45 },
+      sun: { color: 0x5b7fff, intensity: 0.6, pos: [-20, 30, -20] },
+      fill: { color: 0x2e3d70, intensity: 0.4 },
+      exposure: 1.05
+    }
+  };
+
+  function setLightingMode(mode) {
+    if (!LIGHTING_CONFIGS[mode]) return;
+    currentLightingMode = mode;
+    const cfg = LIGHTING_CONFIGS[mode];
+
+    ambientLight.color.setHex(cfg.ambient.color);
+    ambientLight.intensity = cfg.ambient.intensity;
+
+    hemiLight.color.setHex(cfg.hemi.sky);
+    hemiLight.groundColor.setHex(cfg.hemi.ground);
+    hemiLight.intensity = cfg.hemi.intensity;
+
+    sunLight.color.setHex(cfg.sun.color);
+    sunLight.intensity = cfg.sun.intensity;
+    sunLight.position.set(cfg.sun.pos[0], cfg.sun.pos[1], cfg.sun.pos[2]);
+
+    fillLight.color.setHex(cfg.fill.color);
+    fillLight.intensity = cfg.fill.intensity;
+
+    renderer.toneMappingExposure = cfg.exposure;
+
+    if (mode === 'night') {
+      mats.windowBlue.color.setHex(0xffea78);
+      mats.accentGlow.color.setHex(0x00f0ff);
+      if (coreCrystal) mats.gold.color.setHex(0xe056fd);
+    } else {
+      mats.windowBlue.color.setHex(0xd6f0fc);
+      mats.accentGlow.color.setHex(0x38ef7d);
+      if (coreCrystal) mats.gold.color.setHex(0xfbd043);
+    }
+
+    return currentLightingMode;
+  }
 
   function updateCameraFrustum() {
     const newW = containerElem.clientWidth || window.innerWidth;
@@ -646,8 +788,65 @@
       camera.position.set(defaultPos.x, defaultPos.y, defaultPos.z);
       camera.lookAt(0, 0, 0);
       townGroup.rotation.y = 0;
+      targetRotationY = null;
       return d;
     },
+    focusStation: function (agentId) {
+      if (agentId === 'orchestrator') {
+        targetRotationY = 0;
+        return;
+      }
+      const b = buildingsData.find((item) => item.decor === agentId);
+      if (b) {
+        // Calculate target rotation angle so building is oriented facing isometric view
+        targetRotationY = -b.angle + Math.PI / 4;
+      }
+    },
+    highlightStation: function (agentId, status = 'WORKING') {
+      Object.keys(stationLights).forEach((id) => {
+        const l = stationLights[id];
+        if (!l) return;
+        if (id === agentId) {
+          if (status === 'WORKING' || status === 'DEBUGGING') {
+            l.color.setHex(status === 'DEBUGGING' ? 0xf39c12 : 0xffbe0b);
+            l.userData = { baseIntensity: 2.8 };
+            l.intensity = 2.8;
+          } else if (status === 'SUCCESS') {
+            l.color.setHex(0x2ecc71);
+            l.userData = { baseIntensity: 3.2 };
+            l.intensity = 3.2;
+          } else if (status === 'FAIL') {
+            l.color.setHex(0xe74c3c);
+            l.userData = { baseIntensity: 3.5 };
+            l.intensity = 3.5;
+          } else {
+            l.userData = { baseIntensity: 0 };
+            l.intensity = 0;
+          }
+        } else {
+          if (l.userData) l.userData.baseIntensity = 0;
+          l.intensity = 0;
+        }
+      });
+    },
+    resetStationHighlights: function () {
+      Object.keys(stationLights).forEach((id) => {
+        const l = stationLights[id];
+        if (l) {
+          if (l.userData) l.userData.baseIntensity = 0;
+          l.intensity = 0;
+        }
+      });
+    },
+    setLightingMode: setLightingMode,
+    getLightingMode: function () {
+      return currentLightingMode;
+    },
+    toggleLightingMode: function () {
+      const modes = ['day', 'sunset', 'night'];
+      const nextIdx = (modes.indexOf(currentLightingMode) + 1) % modes.length;
+      return setLightingMode(modes[nextIdx]);
+    }
   };
 
   // Listen for custom postMessage controls
