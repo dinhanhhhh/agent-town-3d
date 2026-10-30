@@ -26,9 +26,13 @@ export const StationAgent: React.FC<StationAgentProps> = ({ role }) => {
   const leftArmRef = useRef<THREE.Mesh>(null);
   const rightArmRef = useRef<THREE.Mesh>(null);
 
-  // Vị trí đứng trước bàn làm việc trong phòng
-  const offsetDistance = role === 'orchestrator' ? 0.95 : 1.3;
-  const baseY = role === 'orchestrator' ? 0.84 : layout.position[1] + 0.24;
+  // Vị trí ngồi trực tiếp trên ghế công thái học ngay trước bàn làm việc:
+  // - Orchestrator (Hub 0): ngồi trên Captain's Chair (z = -0.92), quay mặt +Z nhìn vào bàn Hologram trung tâm
+  // - 7 Trạm chuyên môn: ngồi trên Ergonomic Mesh Chair (z = -0.05), quay mặt -Z nhìn thẳng vào màn hình & gõ phím
+  const isOrchestrator = role === 'orchestrator';
+  const offsetDistance = isOrchestrator ? -0.92 : -0.05;
+  const baseY = isOrchestrator ? layout.position[1] + 0.48 : layout.position[1] + 0.52;
+  const seatRotationY = isOrchestrator ? layout.rotationY : layout.rotationY + Math.PI;
   const agentPos: [number, number, number] = [
     layout.position[0] + Math.sin(layout.rotationY) * offsetDistance,
     baseY,
@@ -40,42 +44,54 @@ export const StationAgent: React.FC<StationAgentProps> = ({ role }) => {
     const t = state.clock.elapsedTime;
 
     if (isSelected) {
-      // Nhảy cẫng lên ăn mừng và vẫy hai tay khi được chọn (Jumping cheer)
+      // Nhảy cẫng lên ăn mừng và giơ cao hai tay vẫy khi được chọn (Jumping cheer)
       groupRef.current.position.y = baseY + Math.abs(Math.sin(t * 9)) * 0.16;
-      if (headRef.current) headRef.current.rotation.y = Math.sin(t * 8) * 0.2;
+      if (headRef.current) headRef.current.rotation.y = Math.sin(t * 8) * 0.22;
       if (leftArmRef.current && rightArmRef.current) {
-        leftArmRef.current.rotation.x = -2.2 + Math.sin(t * 12) * 0.35;
-        rightArmRef.current.rotation.x = -2.2 - Math.sin(t * 12) * 0.35;
+        leftArmRef.current.position.set(-0.24, 0.64 + Math.sin(t * 14) * 0.06, 0.16);
+        rightArmRef.current.position.set(0.24, 0.64 - Math.sin(t * 14) * 0.06, 0.16);
       }
     } else if (agent.status === 'working') {
-      // Nhún nhảy gõ phím hăng say
-      groupRef.current.position.y = baseY + Math.abs(Math.sin(t * 6)) * 0.08;
-      if (headRef.current) headRef.current.rotation.x = Math.sin(t * 8) * 0.12;
+      // Ngồi nhún nhẹ theo nhịp và hai tay gõ bàn phím cơ liên hồi
+      groupRef.current.position.y = baseY + Math.abs(Math.sin(t * 6)) * 0.04;
+      if (headRef.current) {
+        headRef.current.rotation.x = 0.08 + Math.sin(t * 8) * 0.08;
+        headRef.current.rotation.y = Math.sin(t * 4) * 0.12;
+      }
       if (leftArmRef.current && rightArmRef.current) {
-        leftArmRef.current.rotation.x = -0.5 + Math.sin(t * 12) * 0.3;
-        rightArmRef.current.rotation.x = -0.5 - Math.sin(t * 12) * 0.3;
+        leftArmRef.current.position.set(-0.18, 0.41 + Math.sin(t * 20) * 0.035, 0.27);
+        rightArmRef.current.position.set(0.18, 0.41 - Math.sin(t * 20) * 0.035, 0.27);
       }
     } else if (agent.status === 'debugging') {
-      // Nghiêng đầu suy nghĩ, bối rối
-      groupRef.current.position.y = baseY + Math.sin(t * 3) * 0.03;
+      // Nghiêng đầu suy nghĩ, một tay chống cằm một tay gõ nhịp trên bàn
+      groupRef.current.position.y = baseY + Math.sin(t * 3) * 0.02;
       if (headRef.current) {
         headRef.current.rotation.z = Math.sin(t * 2) * 0.2;
         headRef.current.rotation.y = Math.sin(t * 3) * 0.25;
       }
+      if (leftArmRef.current && rightArmRef.current) {
+        leftArmRef.current.position.set(-0.14, 0.52, 0.26);
+        rightArmRef.current.position.set(0.20, 0.40 + Math.sin(t * 10) * 0.02, 0.25);
+      }
     } else if (agent.status === 'error') {
-      // Rung rinh hoảng loạn
+      // Rung rinh hoảng loạn trước màn hình báo động
       groupRef.current.position.x = agentPos[0] + (Math.random() - 0.5) * 0.03;
+      if (leftArmRef.current && rightArmRef.current) {
+        leftArmRef.current.position.set(-0.24, 0.56, 0.20);
+        rightArmRef.current.position.set(0.24, 0.56, 0.20);
+      }
     } else {
-      // Thở nhẹ nhàng êm ái
-      groupRef.current.position.y = baseY + Math.sin(t * 2.2) * 0.03;
+      // Ngồi thư giãn trên ghế công thái học, hai tay đặt nhẹ lên bàn phím
+      groupRef.current.position.y = baseY + Math.sin(t * 2.2) * 0.02;
+      groupRef.current.position.x = agentPos[0];
       if (headRef.current) {
-        headRef.current.rotation.x = 0;
+        headRef.current.rotation.x = 0.04;
         headRef.current.rotation.z = 0;
-        headRef.current.rotation.y = 0;
+        headRef.current.rotation.y = Math.sin(t * 1.2) * 0.08;
       }
       if (leftArmRef.current && rightArmRef.current) {
-        leftArmRef.current.rotation.x = Math.sin(t * 2) * 0.05;
-        rightArmRef.current.rotation.x = -Math.sin(t * 2) * 0.05;
+        leftArmRef.current.position.set(-0.19, 0.40 + Math.sin(t * 2.2) * 0.01, 0.25);
+        rightArmRef.current.position.set(0.19, 0.40 + Math.sin(t * 2.2) * 0.01, 0.25);
       }
     }
   });
@@ -84,7 +100,7 @@ export const StationAgent: React.FC<StationAgentProps> = ({ role }) => {
     <group
       ref={groupRef}
       position={agentPos}
-      rotation={[0, layout.rotationY + Math.PI, 0]}
+      rotation={[0, seatRotationY, 0]}
       onClick={(e) => {
         e.stopPropagation();
         selectAgent(role);
@@ -98,7 +114,7 @@ export const StationAgent: React.FC<StationAgentProps> = ({ role }) => {
     >
       {/* THÂN BÉO MẬP (Chubby Pastel Hoodie) */}
       <mesh position={[0, 0.42, 0]} castShadow>
-        <sphereGeometry args={[0.3, 20, 20]} />
+        <sphereGeometry args={[0.28, 20, 20]} />
         <meshStandardMaterial
           color={layout.accentColor}
           roughness={0.4}
@@ -106,23 +122,23 @@ export const StationAgent: React.FC<StationAgentProps> = ({ role }) => {
         />
       </mesh>
 
-      {/* TAY TRÒN NGẮN CUTE */}
-      <mesh ref={leftArmRef} position={[-0.26, 0.42, 0.08]} castShadow>
-        <sphereGeometry args={[0.1, 14, 14]} />
+      {/* HAI TAY TRÒN NGẮN Vươn Ra Trước Đặt Lên Bàn Phím */}
+      <mesh ref={leftArmRef} position={[-0.19, 0.40, 0.25]} castShadow>
+        <sphereGeometry args={[0.095, 14, 14]} />
         <meshStandardMaterial color={layout.accentColor} roughness={0.4} />
       </mesh>
-      <mesh ref={rightArmRef} position={[0.26, 0.42, 0.08]} castShadow>
-        <sphereGeometry args={[0.1, 14, 14]} />
+      <mesh ref={rightArmRef} position={[0.19, 0.40, 0.25]} castShadow>
+        <sphereGeometry args={[0.095, 14, 14]} />
         <meshStandardMaterial color={layout.accentColor} roughness={0.4} />
       </mesh>
 
-      {/* CHÂN MẬP NGẮN */}
-      <mesh position={[-0.12, 0.14, 0]} castShadow>
-        <sphereGeometry args={[0.11, 14, 14]} />
+      {/* HAI CHÂN MẬP NGẮN Gập Về Phía Trước Đặt Trên Đệm Ghế Công Thái Học */}
+      <mesh position={[-0.13, 0.18, 0.16]} castShadow>
+        <sphereGeometry args={[0.105, 14, 14]} />
         <meshStandardMaterial color={0x1e293b} roughness={0.5} />
       </mesh>
-      <mesh position={[0.12, 0.14, 0]} castShadow>
-        <sphereGeometry args={[0.11, 14, 14]} />
+      <mesh position={[0.13, 0.18, 0.16]} castShadow>
+        <sphereGeometry args={[0.105, 14, 14]} />
         <meshStandardMaterial color={0x1e293b} roughness={0.5} />
       </mesh>
 

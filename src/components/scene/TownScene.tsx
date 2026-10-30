@@ -52,26 +52,31 @@ export const TownScene: React.FC = () => {
   const isNight = themeMode === 'night';
   const isSunset = themeMode === 'sunset';
 
-  const bgColor = isNight ? '#0b0f19' : isSunset ? '#fed7aa' : '#f8fafc';
-  const ambientColor = isNight ? '#1e1b4b' : isSunset ? '#fed7aa' : '#fff5ea';
-  const ambientIntensity = isNight ? 0.38 : isSunset ? 0.85 : 0.95;
+  const bgStyle = isNight
+    ? 'radial-gradient(circle at 50% 35%, #1e293b 0%, #0b0f19 75%)'
+    : isSunset
+      ? 'linear-gradient(180deg, #fdba74 0%, #fed7aa 55%, #fde68a 100%)'
+      : 'linear-gradient(180deg, #38bdf8 0%, #7dd3fc 48%, #bae6fd 100%)';
 
-  const hemiSky = isNight ? '#312e81' : isSunset ? '#fbcfe8' : '#e8f4f8';
-  const hemiGround = isNight ? '#064e3b' : isSunset ? '#ca8a04' : '#88d49e';
-  const hemiIntensity = isNight ? 0.32 : isSunset ? 0.6 : 0.55;
+  const ambientColor = isNight ? '#1e1b4b' : isSunset ? '#fed7aa' : '#f0f9ff';
+  const ambientIntensity = isNight ? 0.38 : isSunset ? 0.72 : 0.65;
 
-  const sunColor = isNight ? '#93c5fd' : isSunset ? '#f97316' : '#fffaed';
-  const sunIntensity = isNight ? 0.65 : isSunset ? 1.5 : 1.4;
+  const hemiSky = isNight ? '#312e81' : isSunset ? '#fbcfe8' : '#7dd3fc';
+  const hemiGround = isNight ? '#064e3b' : isSunset ? '#ca8a04' : '#34d399';
+  const hemiIntensity = isNight ? 0.32 : isSunset ? 0.5 : 0.42;
+
+  const sunColor = isNight ? '#93c5fd' : isSunset ? '#f97316' : '#fffbeb';
+  const sunIntensity = isNight ? 0.65 : isSunset ? 1.35 : 1.18;
   const sunPos: [number, number, number] = isSunset ? [35, 22, 12] : [28, 42, 18];
 
-  const fillColor = isNight ? '#6366f1' : isSunset ? '#c084fc' : '#d4e4ff';
-  const fillIntensity = isNight ? 0.28 : isSunset ? 0.5 : 0.45;
+  const fillColor = isNight ? '#6366f1' : isSunset ? '#c084fc' : '#93c5fd';
+  const fillIntensity = isNight ? 0.28 : isSunset ? 0.42 : 0.32;
 
   return (
     <div
       ref={containerRef}
-      className="w-full h-full relative select-none transition-colors duration-700"
-      style={{ backgroundColor: bgColor }}
+      className="w-full h-full relative select-none transition-all duration-700"
+      style={{ background: bgStyle }}
     >
       <Canvas
         eventSource={containerRef}
@@ -85,8 +90,9 @@ export const TownScene: React.FC = () => {
         }}
         gl={{
           toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: isNight ? 1.35 : 1.15,
+          toneMappingExposure: isNight ? 1.3 : isSunset ? 1.08 : 0.96,
           antialias: true,
+          alpha: true,
           preserveDrawingBuffer: true,
         }}
         dpr={[1, 2]}

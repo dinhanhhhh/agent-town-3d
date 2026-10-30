@@ -259,20 +259,20 @@ export const CommandCenter: React.FC = () => {
       {/* ========================================================
           6. GHẾ XOAY THUYỀN TRƯỞNG / CHỈ HUY (CAPTAIN'S CHAIR)
           ======================================================== */}
-      <group position={[0, 0.22, -1.05]}>
+      <group position={[0, 0.22, -0.95]}>
         {/* Đệm ngồi công thái học màu đỏ rượu vang Claude Code */}
         <mesh position={[0, 0.38, 0]} castShadow>
           <cylinderGeometry args={[0.32, 0.35, 0.1, 20]} />
           <meshStandardMaterial color={0x8b2635} roughness={0.4} />
         </mesh>
-        {/* Tựa lưng cao quyền lực */}
-        <mesh position={[0, 0.72, -0.22]} rotation={[-0.1, 0, 0]} castShadow>
-          <boxGeometry args={[0.5, 0.6, 0.08]} />
+        {/* Tựa lưng cao quyền lực ôm sát lưng ghế */}
+        <mesh position={[0, 0.68, -0.28]} rotation={[-0.1, 0, 0]} castShadow>
+          <boxGeometry args={[0.48, 0.52, 0.08]} />
           <meshStandardMaterial color={0x8b2635} roughness={0.4} />
         </mesh>
-        {/* Gối đệm đầu vàng kim */}
-        <mesh position={[0, 1.05, -0.25]}>
-          <boxGeometry args={[0.32, 0.15, 0.06]} />
+        {/* Gối đệm lưng vàng kim */}
+        <mesh position={[0, 0.88, -0.26]}>
+          <boxGeometry args={[0.32, 0.14, 0.06]} />
           <meshStandardMaterial color={0xfbbf24} roughness={0.3} />
         </mesh>
         {/* Chân ghế kim loại */}

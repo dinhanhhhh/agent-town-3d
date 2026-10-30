@@ -319,13 +319,13 @@ export const Building: React.FC<BuildingProps> = ({ role }) => {
             position={[0, 0.38, 0.35]}
           />
 
-          {/* Bàn phím cơ Tenkeyless LED & Chuột công nghệ */}
-          <mesh position={[0, 0.015, 0.28]}>
+          {/* Bàn phím cơ Tenkeyless LED & Chuột công nghệ đặt vừa tầm tay nhân vật */}
+          <mesh position={[0, 0.015, 0.36]}>
             <boxGeometry args={[0.46, 0.018, 0.16]} />
             <meshStandardMaterial color={0x1e293b} metalness={0.6} />
           </mesh>
           {/* Đèn nền bàn phím */}
-          <mesh position={[0, 0.025, 0.28]}>
+          <mesh position={[0, 0.025, 0.36]}>
             <boxGeometry args={[0.42, 0.005, 0.14]} />
             <meshStandardMaterial
               color={layout.accentColor}
@@ -333,14 +333,14 @@ export const Building: React.FC<BuildingProps> = ({ role }) => {
               emissiveIntensity={0.6}
             />
           </mesh>
-          <mesh position={[0.32, 0.015, 0.28]}>
+          <mesh position={[0.32, 0.015, 0.36]}>
             <boxGeometry args={[0.07, 0.02, 0.11]} />
             <meshStandardMaterial color={0x1e293b} metalness={0.6} />
           </mesh>
         </group>
 
         {/* 7. GHẾ CÔNG THÁI HỌC LƯỚI CAO CẤP (Ergonomic Mesh Chair) */}
-        <group position={[0, 0.15, 0.65]}>
+        <group position={[0, 0.15, 0.55]}>
           {/* Chân sao 5 cánh kim loại */}
           <mesh position={[0, 0.04, 0]}>
             <cylinderGeometry args={[0.26, 0.26, 0.02, 5]} />
@@ -355,17 +355,17 @@ export const Building: React.FC<BuildingProps> = ({ role }) => {
             <cylinderGeometry args={[0.26, 0.28, 0.07, 20]} />
             <meshStandardMaterial color={0x0f172a} roughness={0.4} />
           </mesh>
-          {/* Tựa lưng lưới cong thoáng khí viền accent */}
-          <mesh position={[0, 0.6, 0.2]} castShadow>
-            <boxGeometry args={[0.44, 0.46, 0.04]} />
+          {/* Tựa lưng lưới lumbar công thái học ôm sát lưng nhân vật */}
+          <mesh position={[0, 0.52, 0.26]} castShadow>
+            <boxGeometry args={[0.42, 0.32, 0.04]} />
             <meshStandardMaterial
               color={0x1e293b}
               roughness={0.5}
               wireframe={false}
             />
           </mesh>
-          <mesh position={[0, 0.6, 0.21]}>
-            <planeGeometry args={[0.4, 0.42]} />
+          <mesh position={[0, 0.52, 0.27]}>
+            <planeGeometry args={[0.38, 0.28]} />
             <meshStandardMaterial
               color={layout.accentColor}
               emissive={layout.accentColor}

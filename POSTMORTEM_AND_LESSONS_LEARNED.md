@@ -229,6 +229,25 @@
 
 ---
 
+## 13. Sự cố 13: Nền ban ngày trắng xóa làm nhạt ốc đảo & Nhân vật đứng ngoài thảm cửa thay vì ngồi ghế làm việc
+
+### 🔴 Triệu chứng (Symptom)
+1. **Nền ban ngày quá chói:** Ở chế độ Ban ngày (`themeMode === 'day'`), toàn bộ phông nền có màu trắng xám (`#f8fafc`) trùng với màu sàn Cleanroom (`#ffffff`, `#f8fafc`) và độ phơi sáng cao (`toneMappingExposure: 1.15`, `ambientIntensity: 0.95`), làm ốc đảo và các phòng kính bị chìm, thiếu chiều sâu.
+2. **Nhân viên đứng ngoài cửa thay vì ngồi vào bàn:** Cả 8 kỹ sư AI đều đứng ở thảm chùi chân ngoài cửa (`z = +0.95m` và `z = +1.3m`) thay vì ngồi trên ghế công thái học ngay trước bàn làm việc.
+
+### 🔍 Nguyên nhân gốc rễ (Root Cause)
+1. `TownScene.tsx` dùng màu nền đơn sắc `#f8fafc` kết hợp tổng cường độ nguồn sáng quá lớn (`ambient 0.95 + sun 1.4 + hemi 0.55 + fill 0.45`) khiến ACES Filmic Tone Mapping đẩy các bề mặt sáng của đảo và sàn phòng lab về vùng cháy sáng (white clipping).
+2. `Character.tsx` vẫn giữ tọa độ `offsetDistance = 1.3` (và `0.95` cho Hub) từ phiên bản nhà gỗ đóng kín v1.0 (nhân vật đứng ngoài hiên nhà), chưa cập nhật về tọa độ ghế công thái học bên trong phòng sau khi nâng cấp nội thất High-Tech Labs (`Castle.tsx` ghế tại `z = -0.95`, `Building.tsx` ghế tại `z = -0.05`). Ngoài ra, chuyển động tay gõ phím cũ dùng `mesh.rotation.x` trên khối cầu đồng tâm (`<sphereGeometry>`) nên không tạo ra dịch chuyển thị giác.
+
+### ✅ Giải pháp chuẩn hóa (Solution & Prevention)
+1. **Cân bằng phơi sáng & Bầu trời Ban ngày (`TownScene.tsx`, `tokens.ts`):** Thay nền trắng `#f8fafc` bằng dải gradient bầu trời xanh da trời dịu mắt (`linear-gradient(180deg, #38bdf8 0%, #7dd3fc 48%, #bae6fd 100%)`), hạ `toneMappingExposure` ban ngày về `0.96`, `ambientIntensity` về `0.65`, và nâng sắc độ thảm cỏ sang xanh ngọc lục bảo (`0x52c48a`) để tạo độ tương phản nổi khối sắc nét.
+2. **Đồng bộ tọa độ ghế ngồi & tư thế làm việc (`Character.tsx`, `Building.tsx`, `Castle.tsx`):**
+   - Đặt `Claude Code` (`orchestrator`) ngồi trên ghế Captain's Chair (`offsetDistance = -0.92`, `baseY = layout.position[1] + 0.48`, hướng `+Z` nhìn vào bàn Hologram).
+   - Đặt 7 kỹ sư chuyên môn ngồi trực tiếp trên đệm ghế công thái học (`offsetDistance = -0.05`, `baseY = layout.position[1] + 0.52`, hướng `-Z` nhìn thẳng vào màn hình máy tính).
+   - Điều chỉnh tư thế 2 chân gập về phía trước trên đệm ghế (`z = +0.16`) và 2 tay đặt lên bàn phím cơ (`z = +0.25`), cập nhật trực tiếp `position.y` của 2 bàn tay trong `useFrame` để tạo hiệu ứng gõ phím cơ liên hồi chân thực.
+
+---
+
 > **Quy tắc vàng cho tương lai:**
 > 1. Mọi đối tượng 3D đặt trên đảo phải tuân theo hệ tọa độ Radial Polar ($R, \theta$) với tâm là Lâu Đài $[0, 0]$.
 > 2. Mọi đường đi của nhân vật phải bám theo các nan hoa đại lộ và vòng xuyến trung tâm, tuyệt đối không tự nối chéo qua góc các phòng.
