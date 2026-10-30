@@ -25,6 +25,12 @@ Tất cả các thay đổi đáng chú ý của dự án **Agent Town 3D** sẽ
   - Tự động chụp lại ảnh snapshot 3D thị trấn chân thực từ Three.js WebGL Canvas thông qua `preserveDrawingBuffer: true`.
   - Tổng hợp số liệu kiểm thử QA (48/48 passed, coverage 98.4%), an ninh SAST (0 CVEs) và telemetry APM thời gian thực.
   - Hỗ trợ sao chép Markdown vào clipboard hoặc tải file `.md` và file ảnh `.png` chất lượng cao.
+- **Cải Tạo 7 Trạm Chuyên Môn Độc Bản (High-Tech Autonomous Labs - `Building.tsx`)**:
+  - Đồng bộ hoàn toàn ngôn ngữ thiết kế công nghệ cao với AI Command Center trung tâm.
+  - Vách kính mờ cường lực khung nhôm graphite tối giản (Frosted Glass & Dark Aluminum Frame) thay cho tường thô pastel cũ.
+  - Sàn phòng thí nghiệm Cleanroom trắng bóng tương phản cao, làm nổi bật bàn nâng công thái học (Smart Standing Desk) viền LED neon phát sáng theo `accentColor`.
+  - Hệ thống đèn ray treo trần thông minh (Suspended Modern Luminaire) tự động tăng cường luồng sáng rọi xuống bàn khi agent đang lập trình.
+  - Trang bị đạo cụ chuyên môn riêng biệt: Dev (Triple curved monitors, PC tản nhiệt nước RGB), QA (Server rack 3 tầng, ống nghiệm lượng tử), Security (Cyber Vault, tia laser quét an ninh), DevOps (2 thùng Docker container, cụm Kubernetes rack), PM (Digital glass whiteboard, roadmap), Review (Split diff display, thấu kính hologram), Monitor (Tháp radar, màn hình NOC Grafana).
 - **Tối Giản Hóa Cấu Trúc Tài Liệu (Clean Docs Architecture)**:
   - Gom các file kế hoạch lịch sử (`UPGRADE_PLAN.md`, `UPGRADE_PLAN_PHASE_2.md`, `PROPOSAL_5_UPGRADES.md`, `SYSTEM_DESIGN.md`) vào thư mục `docs/archive/`.
   - Chuẩn hóa thư mục gốc chỉ giữ lại đúng 4 tài liệu cốt lõi của dự án (`README.md`, `CHANGELOG.md`, `AGENTS.md`, `POSTMORTEM_AND_LESSONS_LEARNED.md`).
