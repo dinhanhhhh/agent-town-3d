@@ -14,6 +14,7 @@ export const ExportModal: React.FC = () => {
   const latencyMs = useTownStore((s) => s.latencyMs);
   const tps = useTownStore((s) => s.tps);
   const realArtifacts = useTownStore((s) => s.realArtifacts);
+  const stageMetrics = useTownStore((s) => s.stageMetrics);
 
   const [snapshot, setSnapshot] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -240,6 +241,52 @@ ${telemetrySummary.artifactRows.join('\n')}
     link.click();
   };
 
+  const handleDownloadArtifactsBundle = () => {
+    const timestamp = new Date().toLocaleString('vi-VN');
+    const sections = STAGE_ORDER.map((role, idx) => {
+      const art = realArtifacts[role];
+      const filename =
+        art?.filename ||
+        (role === 'orchestrator'
+          ? 'MilestonePlan.json'
+          : role === 'pm'
+          ? 'PRD.md'
+          : role === 'dev'
+          ? 'source-code.diff'
+          : role === 'review'
+          ? 'ReviewComments.json'
+          : role === 'qa'
+          ? 'test-suite.spec.ts'
+          : role === 'security'
+          ? 'SecurityAudit.json'
+          : role === 'devops'
+          ? 'Dockerfile'
+          : 'ClusterHealth.json');
+      const language = art?.language || (role === 'dev' ? 'diff' : 'json');
+      const content = art?.content || `// (Chưa có nội dung sinh từ trạm ${role})`;
+
+      return `## Trạm ${idx}: ${role.toUpperCase()} · \`${filename}\`\n\`\`\`${language}\n${content}\n\`\`\`\n`;
+    }).join('\n---\n\n');
+
+    const bundleMd = `# 📦 BỘ HỒ SƠ TOÀN DIỆN 8 ARTIFACTS (AGENT TOWN 3D)
+> **Task / Pull Request:** ${taskTitle}  
+> **Thời gian xuất:** ${timestamp}  
+> **Hệ thống:** Agent Town 3D Multi-Agent SDLC Platform  
+
+---
+
+${sections}
+`;
+
+    const blob = new Blob([bundleMd], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Agent_Town_Artifacts_Bundle_${Date.now()}.md`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="fixed inset-0 z-[1100] flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in overflow-hidden overscroll-contain">
       <div className="w-full max-w-3xl bg-slate-900 border border-slate-700/90 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[94dvh] sm:max-h-[90vh] animate-scale-up overscroll-contain">
@@ -369,33 +416,96 @@ ${telemetrySummary.artifactRows.join('\n')}
               {telemetrySummary.reviewSummary}
             </p>
           </div>
+
+          {/* FinOps DAG Performance Telemetry Table */}
+          <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-white flex items-center gap-1.5 uppercase tracking-wider">
+                <span>⚡</span>
+                <span>FinOps & DAG Performance Telemetry</span>
+              </span>
+              <span className="text-[10px] text-cyan-300 font-mono bg-cyan-950/60 px-2 py-0.5 rounded-full border border-cyan-800/40">
+                QA ∥ DevSecOps Song song
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-[11px] font-mono text-left">
+                <thead>
+                  <tr className="border-b border-slate-800 text-slate-400 text-[10px] uppercase">
+                    <th className="pb-2 font-semibold">Trạm (Stage)</th>
+                    <th className="pb-2 font-semibold">Thời gian (Duration)</th>
+                    <th className="pb-2 font-semibold">Ước tính Token</th>
+                    <th className="pb-2 font-semibold">Mô hình DAG</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-900/60 text-slate-300">
+                  {STAGE_ORDER.map((role) => {
+                    const m = stageMetrics[role];
+                    const isParallel = role === 'qa' || role === 'security';
+                    return (
+                      <tr key={role} className="hover:bg-slate-900/40">
+                        <td className="py-1.5 font-semibold capitalize text-slate-200">
+                          {role}
+                        </td>
+                        <td className="py-1.5 text-cyan-300 font-mono">
+                          {m ? `${(m.durationMs / 1000).toFixed(2)}s` : '--'}
+                        </td>
+                        <td className="py-1.5 text-emerald-400 font-mono">
+                          {m ? `~${m.tokens.toLocaleString()} tok` : '--'}
+                        </td>
+                        <td className="py-1.5">
+                          {isParallel ? (
+                            <span className="px-1.5 py-0.2 rounded text-[9px] bg-purple-500/20 text-purple-300 border border-purple-500/30 font-semibold">
+                              Song song (Parallel ∥)
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-slate-500">Tuần tự (Seq ➔)</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
 
         {/* Footer Actions Bar */}
-        <div className="px-6 py-4 bg-slate-950/90 border-t border-slate-800 flex items-center justify-between gap-3 shrink-0">
-          <div className="text-xs text-slate-400 hidden sm:block">
+        <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-slate-950/90 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
+          <div className="text-xs text-slate-400 hidden xl:block">
             Tương thích dán ngay vào Jira, Confluence, Slack hoặc PR description.
           </div>
 
-          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 w-full sm:w-auto justify-end">
             <button
               onClick={handleCopyMarkdown}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
                 copied
                   ? 'bg-emerald-600 text-white border-emerald-400'
                   : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
               }`}
             >
               <span>{copied ? '✅' : '📋'}</span>
-              <span>{copied ? 'Đã sao chép Markdown!' : 'Sao chép Markdown'}</span>
+              <span>{copied ? 'Đã sao chép!' : 'Sao chép Markdown'}</span>
+            </button>
+
+            <button
+              onClick={handleDownloadArtifactsBundle}
+              className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-cyan-300 hover:text-white border border-cyan-500/40 shadow-sm transition-all"
+              title="Tải toàn bộ 8 Artifacts đã sinh về 1 file Markdown đầy đủ"
+            >
+              <span>📦</span>
+              <span>Tải Bundle 8 Artifacts</span>
             </button>
 
             <button
               onClick={handleDownloadMarkdown}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white border border-blue-400/40 shadow-lg shadow-blue-900/30 transition-all hover:scale-[1.02]"
+              className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white border border-blue-400/40 shadow-lg shadow-blue-900/30 transition-all hover:scale-[1.02]"
             >
               <span>📥</span>
-              <span>Tải file Báo cáo (.md)</span>
+              <span>Tải Báo cáo (.md)</span>
             </button>
           </div>
         </div>

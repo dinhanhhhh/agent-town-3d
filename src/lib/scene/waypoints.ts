@@ -66,6 +66,9 @@ export function getStationNavPoints(role: AgentRole): StationNavPoints {
   return { handover, door, street, plaza, angle };
 }
 
+const routeCache = new Map<string, THREE.Vector3[]>();
+const curveCache = new WeakMap<THREE.Vector3[], THREE.CatmullRomCurve3>();
+
 /**
  * Tạo danh sách waypoints di chuyển liên tục từ bàn làm việc trạm A tới tận bàn làm việc trạm B:
  * 1. Nhận kiện hàng từ mép bàn làm việc trạm A (Handover A) -> bước qua cửa (Door A)
@@ -73,8 +76,14 @@ export function getStationNavPoints(role: AgentRole): StationNavPoints {
  * 3. Chạy theo cung tròn êm ái trên vòng xuyến đại lộ đá (R = 4.4m)
  * 4. Rẽ vào đại lộ nhánh của trạm đích (Plaza B -> Street B -> Door B)
  * 5. Bước vào trong phòng và đặt kiện hàng lên bàn trạm B (Handover B)
+ * 
+ * Được memoize để không phân bổ lại mảng Vector3 giữa 8 trạm cố định.
  */
 export function getRouteWaypoints(from: AgentRole, to: AgentRole): THREE.Vector3[] {
+  const cacheKey = `${from}->${to}`;
+  const existing = routeCache.get(cacheKey);
+  if (existing) return existing;
+
   const start = getStationNavPoints(from);
   const end = getStationNavPoints(to);
 
@@ -100,20 +109,35 @@ export function getRouteWaypoints(from: AgentRole, to: AgentRole): THREE.Vector3
   }
 
   waypoints.push(end.plaza, end.street, end.door, end.handover);
+  routeCache.set(cacheKey, waypoints);
   return waypoints;
+}
+
+/**
+ * Trả về CatmullRomCurve3 được tái sử dụng (WeakMap cache) để tránh
+ * tạo mới hàng trăm đối tượng Curve mỗi giây trên render loop (60fps).
+ */
+export function getCurveForWaypoints(waypoints: THREE.Vector3[]): THREE.CatmullRomCurve3 {
+  let curve = curveCache.get(waypoints);
+  if (!curve) {
+    curve = new THREE.CatmullRomCurve3(waypoints, false, 'centripetal');
+    curveCache.set(waypoints, curve);
+  }
+  return curve;
 }
 
 /**
  * Nội suy vị trí và góc xoay của shipper theo phương pháp Centripetal Spline:
  * - Không bao giờ bị vồng (overshoot) hay cắt ngang tường
  * - Shipper luôn bám sát tim đường đá và xoay người theo hướng di chuyển
+ * - Tối ưu 60fps với zero allocation
  */
 export function interpolateCourierPosition(
   waypoints: THREE.Vector3[],
   progress: number
 ): { position: THREE.Vector3; rotationY: number } {
-  // Dùng centripetal spline để triệt tiêu hiện tượng vồng góc (no overshoot)
-  const curve = new THREE.CatmullRomCurve3(waypoints, false, 'centripetal');
+  // Dùng centripetal spline được cache để triệt tiêu hiện tượng vồng góc và rác bộ nhớ
+  const curve = getCurveForWaypoints(waypoints);
   const clamped = Math.max(0, Math.min(1, progress));
   const position = curve.getPointAt(clamped);
 

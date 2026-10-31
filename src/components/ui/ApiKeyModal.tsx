@@ -20,6 +20,16 @@ export const ApiKeyModal: React.FC = () => {
     }
   }, [isApiKeyModalOpen, currentKey]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isApiKeyModalOpen) {
+        openApiKeyModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isApiKeyModalOpen, openApiKeyModal]);
+
   if (!isApiKeyModalOpen) return null;
 
   const isDeepSeek = inputKey.trim().startsWith('sk-');
@@ -39,7 +49,12 @@ export const ApiKeyModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in overflow-hidden overscroll-contain">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) openApiKeyModal(false);
+      }}
+      className="fixed inset-0 z-[1100] flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in overflow-hidden overscroll-contain"
+    >
       <div className="w-full max-w-md bg-slate-900 border border-slate-700/80 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[94dvh] animate-scale-up overscroll-contain">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 bg-slate-950/80 border-b border-slate-800">

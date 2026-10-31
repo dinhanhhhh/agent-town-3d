@@ -18,6 +18,8 @@
 10. [Sự cố 10: Xung đột Double Courier Ticker làm treo cứng Pipeline tự động (Race Condition)](#10-sự-cố-10-xung-đột-double-courier-ticker-làm-treo-cứng-pipeline-tự-động-race-condition)
 11. [Sự cố 11: Mở chồng 2 Modal cùng lúc và rò rỉ nhãn 3D phía sau Backdrop](#11-sự-cố-11-mở-chồng-2-modal-cùng-lúc-và-rò-rỉ-nhãn-3d-phía-sau-backdrop)
 12. [Sự cố 12: Hạt xung dữ liệu (Photon Pulse) trên cáp quang đứng yên tại điểm giữa](#12-sự-cố-12-hạt-xung-dữ-liệu-photon-pulse-trên-cáp-quang-đứng-yên-tại-điểm-giữa)
+13. [Sự cố 13: Nền ban ngày trắng xóa làm nhạt ốc đảo & Nhân vật đứng ngoài thảm cửa thay vì ngồi ghế làm việc](#13-sự-cố-13-nền-ban-ngày-trắng-xóa-làm-nhạt-ốc-đảo--nhân-vật-đứng-ngoài-thảm-cửa-thay-vì-ngồi-ghế-làm-việc)
+14. [Sự cố 14: Lệch nhịp giữa Shipper và AI Stream; Tái cấp phát Spline liên tục 60fps; Vòng lặp phản hồi thiếu AI tự sửa thật](#14-sự-cố-14-lệch-nhịp-giữa-shipper-và-ai-stream-tái-cấp-phát-spline-liên-tục-60fps-vòng-lặp-phản-hồi-thiếu-ai-tự-sửa-thật)
 
 ---
 
@@ -254,9 +256,78 @@
 
 ---
 
+## 14. Sự cố 14: Lệch nhịp giữa Shipper và AI Stream; Tái cấp phát Spline liên tục 60fps; Vòng lặp phản hồi thiếu AI tự sửa thật
+
+### 🔴 Triệu chứng (Symptom)
+1. **Lệch nhịp hiển thị:** Khi chạy real AI hoặc GitHub PR audit, trạm kế tiếp bắt đầu stream token ngay lập tức trong khi nhân vật Shipper 3D mới chỉ vừa rời trạm trước đó vài bước chân trên đại lộ.
+2. **Áp lực bộ nhớ (GC Pressure):** Hàm `interpolateCourierPosition` khởi tạo `new THREE.CatmullRomCurve3(waypoints, false, 'centripetal')` liên tục trong mỗi frame tại 60fps cho từng shipper đang di chuyển.
+3. **Kịch bản Feedback Loop thụ động:** Khi QA báo test fail hoặc DevSecOps cảnh báo SAST/OWASP, hệ thống chỉ dùng `setTimeout` sleep giả lập rồi tự chuyển trạng thái thay vì gọi AI thật để sửa file diff.
+4. **Trải nghiệm đóng Modal thiếu tiện lợi:** Người dùng không thể nhấn phím `Esc` hoặc bấm click-outside ra ngoài vùng backdrop mờ để đóng nhanh các modal (`ArtifactModal`, `AgentDossierModal`, `ApprovalModal`, `ApiKeyModal`).
+
+### 🔍 Nguyên nhân gốc rễ (Root Cause)
+1. Vòng lặp `for` trong `runRealPipeline` và `runGitHubPrAudit` gọi `addCourier()` dạng asynchronous fire-and-forget mà không có cơ chế `await` theo dõi khi nào kiện hàng đạt `progress >= 1` (đã đặt lên bàn làm việc trạm đích).
+2. Chưa áp dụng cơ chế memoization cho mảng waypoints giữa 8 trạm cố định ($8 \times 8 = 64$ cặp đường) và chưa dùng `WeakMap` cache cho `CatmullRomCurve3`.
+3. Server route `/api/pipeline` và `STAGE_CONFIGS.dev` chưa hỗ trợ tham số `feedbackNote` trong `PipelineContext` để hướng dẫn AI sinh bản vá hotfix Unified Git Diff xử lý đúng lỗi được báo cáo.
+
+### ✅ Giải pháp chuẩn hóa (Solution & Prevention)
+1. **Đồng bộ hóa thể chất Shipper & AI Stream (`useTownStore.ts`, `TownScene.tsx`):**
+   - Thiết lập cơ chế `registerCourierArrival` và `waitForCourierArrival(courierId)`: khi shipper di chuyển đến bàn làm việc trạm đích (`progress >= 1`), `CourierTicker` gọi `removeCourier()` kích hoạt thông báo hoàn tất, lúc đó trạm mới bắt đầu khởi động AI stream.
+2. **Zero-Allocation Spline Engine (`waypoints.ts`):**
+   - Memoize kết quả `getRouteWaypoints(from, to)` bằng `Map<string, THREE.Vector3[]>`.
+   - Lưu trữ đường cong bằng `WeakMap<THREE.Vector3[], THREE.CatmullRomCurve3>` qua hàm `getCurveForWaypoints()`, triệt tiêu hoàn toàn việc cấp phát Curve mới trong render loop 60fps.
+3. **AI Self-Healing Feedback Loop thực tế (`route.ts`, `useTownStore.ts`, `ApprovalModal.tsx`):**
+   - Bổ sung `feedbackNote` vào `PipelineContext`. Khi QA bắt bug hoặc DevSecOps cảnh báo SAST, Dev nhận shipper bug, gọi real AI stream tạo `source-code.diff` vá lỗi, rồi gửi lại cho QA/Sec kiểm định.
+   - Thêm biểu mẫu phản hồi kỹ thuật của Tech Lead tại Cổng Phê Duyệt Production: khi từ chối, Tech Lead nhập góp ý hoặc chọn gợi ý nhanh, Dev tự động đọc phản hồi và stream bản vá mới.
+4. **Session History & Persistence (`useTownStore.ts`, `PromptModal.tsx`):**
+   - Lưu trữ tối đa 5 phiên chạy gần nhất vào `localStorage` (`AGENT_TOWN_SESSIONS`), cho phép khôi phục tức thì toàn bộ artifacts, telemetry và log mà không tốn thêm token AI.
+5. **Tiến độ trực quan (`RoleChips.tsx`):**
+   - Hiển thị huy hiệu `✓` màu xanh lá cho các trạm đã hoàn thành và viền phát sáng xanh dương nhấp nháy cho trạm đang stream dữ liệu.
+6. **Chuẩn hóa Modal Keyboard & Click-Outside:**
+   - Bổ sung phím tắt `Escape` và `onClick` backdrop dismissal đồng bộ cho toàn bộ modal trong ứng dụng.
+
+---
+
+## 15. Sự cố 15: Trùng lặp ký hiệu Git Diff (+/+); Tràn chữ Split View; Thiếu thực thi song song DAG (QA ∥ DevSecOps) & Thiếu Playground Prompt
+
+### 🔴 Triệu chứng (Symptom)
+1. **Lỗi hiển thị Git Diff (`GitDiffViewer.tsx`):** Dòng code thêm mới hoặc xóa hiển thị thừa ký hiệu đầu dòng thành `+ +const x = 1` hoặc `- -return null`. Ở chế độ Split 2 cột (Before / After), thuộc tính `truncate` cắt mất phần đuôi dòng code dài.
+2. **Lỗi cuộn & Lọc Log Drawer (`LogDrawer.tsx`):** Drawer cuộn xuống đáy hiển thị log cũ thay vì hiển thị log mới nhất ở đầu; thiếu bộ lọc nhanh theo trạm hoặc mức độ cảnh báo; khi bấm vào dòng log không bay camera tới trạm tương ứng.
+3. **Lệch trục Sparkline trong bão Chaos (`StatusBar.tsx`):** Khi kích hoạt Chaos Surge (độ trễ vọt 168ms), trục đồ thị cố định mức trần 40ms khiến đường cong vẽ tràn ra ngoài viewBox SVG; thời tiết hiển thị tĩnh "Nắng nhẹ 24°C" ngay cả khi đang ban đêm hoặc xảy ra bão tải.
+4. **Pipeline thực thi tuần tự tuyến tính:** Sau khâu Tech Review, QA và DevSecOps chạy tuần tự (review ➔ qa ➔ sec) thay vì rẽ nhánh song song đồng thời theo chuẩn DAG Pipeline.
+5. **Thiếu AI Playground & Re-run trạm:** Người dùng không thể chỉnh sửa `systemPrompt` của từng Agent trực tiếp trên UI và không có nút chạy lại riêng biệt cho một trạm với ngữ cảnh hiện tại.
+
+### 🔍 Nguyên nhân gốc rễ (Root Cause)
+1. `GitDiffViewer.tsx` parse dòng `content: line` (đã có dấu `+`/`-` ở đầu) nhưng trong JSX lại render thêm `<span className="w-4">{isAdd ? '+' : '-'}</span>`, gây ra hiệu ứng nhân đôi ký hiệu. Split View áp dụng class `truncate` trên thẻ `<span>` mà không có thanh cuộn ngang `overflow-x-auto`.
+2. `LogDrawer.tsx` dùng `useEffect` đặt `scrollTop = scrollHeight` (cuộn xuống đáy log cũ nhất) thay vì `scrollTop = 0` (mới nhất trên cùng).
+3. `StatusBar.tsx` fix cứng trục Y của SVG Sparkline ở giá trị `40 - (val / 40) * 20`, không co dãn động khi `val > 40ms`.
+4. `useTownStore.ts` duyệt mảng tuyến tính `pipelineStages` mà không sử dụng `Promise.all` cho các trạm độc lập về dữ liệu (`qa` và `security` đều chỉ cần bản diff đã qua review).
+
+### ✅ Giải pháp chuẩn hóa (Solution & Prevention)
+1. **Chuẩn hóa Git Diff & Inline Review Comments (`GitDiffViewer.tsx`, `ArtifactModal.tsx`):**
+   - Cắt bỏ ký hiệu đầu dòng qua `line.slice(1)` khi parse dòng `add` và `delete`.
+   - Thay `truncate` bằng `overflow-x-auto scrollbar-none` ở Split View.
+   - Hiển thị trực quan các bình luận kiến trúc (`ReviewComments.json`) trực tiếp dưới đúng số dòng code tương ứng với huy hiệu Tech Reviewer.
+2. **Nâng cấp Glassmorphism Log Drawer & Auto-Scale Sparkline (`LogDrawer.tsx`, `StatusBar.tsx`):**
+   - Đặt `scrollTop = 0` khi mở drawer; bổ sung bộ lọc nhanh `Tất cả`, `Lỗi & Cảnh báo` và lọc theo từng trạm; thêm click-to-fly-to-station qua `selectAgent(role, 'none')`.
+   - Tính toán động `min` và `max` cho Sparkline (`Math.min(10, ...points)`, `Math.max(35, ...points)`); tự động đổi thời tiết sinh động theo `themeMode` và trạng thái `isChaosRunning`.
+3. **Mô hình thực thi DAG Parallel (`QA` ∥ `DevSecOps`) & FinOps Telemetry (`useTownStore.ts`, `LiveStreamConsole.tsx`, `ExportModal.tsx`):**
+   - Sau khi Tech Review duyệt PR, hệ thống phóng đồng thời 2 Shipper về trạm QA và Security (`Promise.all([waitForCourierArrival(cQa), waitForCourierArrival(cSec)])`).
+   - Kích hoạt `qa` và `security` chạy suy luận song song qua `Promise.all([streamStageFromApi('qa'), streamStageFromApi('security')])`.
+   - Sau khi hoàn thành, 2 Shipper từ QA và Security đồng thời mang test suite và security audit về bàn làm việc của DevOps.
+   - Đo lường và hiển thị thời gian thực hiện (`durationMs`), số lượng token và tốc độ suy luận (`tok/s`) trên console và bảng FinOps trong `ExportModal`.
+4. **Chế độ Đạo diễn 3D Camera (`CameraRig.tsx`, `Topbar.tsx`):**
+   - Nút bật/tắt `🎥 Đạo diễn` trên Topbar; camera tự động bám theo tọa độ vị trí thực của Shipper đang chạy trên các nan hoa đại lộ hoặc trạm AI đang stream dữ liệu.
+5. **AI Agent Playground & Re-run Stage (`ArtifactModal.tsx`, `route.ts`, `useTownStore.ts`):**
+   - Cho phép tinh chỉnh trực tiếp System Prompt của từng Agent trong tab `🧠 System Prompt` kèm nút "Khôi phục mặc định".
+   - Nút `🔄 Chạy lại trạm này` gọi API với `customSystemPrompt` và ngữ cảnh hiện tại để sinh lại artifact riêng biệt mà không cần chạy lại toàn bộ pipeline.
+   - Bổ sung nút `📦 Tải trọn bộ 8 Artifacts Bundle (.md)` trong `ExportModal.tsx`.
+
+---
+
 > **Quy tắc vàng cho tương lai:**
 > 1. Mọi đối tượng 3D đặt trên đảo phải tuân theo hệ tọa độ Radial Polar ($R, \theta$) với tâm là Lâu Đài $[0, 0]$.
 > 2. Mọi đường đi của nhân vật phải bám theo các nan hoa đại lộ và vòng xuyến trung tâm, tuyệt đối không tự nối chéo qua góc các phòng.
 > 3. Tuyệt đối không để container UI mở rộng tự do theo dữ liệu mà luôn cố định kích thước và dùng nội cuộn (`overflow-y-auto min-h-0`).
 > 4. Màu số nguyên Three.js (`0x...`) luôn chuyển sang chuỗi hex CSS (`#...`) trước khi dùng trong React inline style.
 > 5. Luôn chụp WebGL Canvas thông qua thuộc tính `gl={{ preserveDrawingBuffer: true }}` của Three.js Canvas để tránh màn hình đen khi trích xuất hình ảnh `toDataURL()`.
+> 6. Mọi animation di chuyển giữa các trạm phải hoàn tất bàn giao hàng tại bàn làm việc trước khi kích hoạt logic xử lý tiếp theo của trạm đó.

@@ -2,9 +2,17 @@
 
 import React, { useState } from 'react';
 
+export interface ReviewComment {
+  file?: string;
+  line?: number;
+  note?: string;
+  status?: string;
+}
+
 interface GitDiffViewerProps {
   diffText: string;
   filename?: string;
+  reviewComments?: ReviewComment[];
 }
 
 interface DiffLine {
@@ -17,10 +25,16 @@ interface DiffLine {
 /**
  * Trình xem Diff Git chuẩn GitHub (Interactive Git Diff Viewer):
  * - Tô màu dòng thêm mới (+) màu xanh lá, dòng xóa (-) màu đỏ, header (@@) màu tím.
+ * - Loại bỏ lỗi trùng lặp dấu +/+ hoặc -/-.
+ * - Hiển thị bình luận đánh giá trực quan (Inline Tech Review Comments).
  * - Đánh số thứ tự dòng chuẩn xác.
  * - Nút chuyển đổi Unified View / Split View và thống kê số dòng thay đổi.
  */
-export const GitDiffViewer: React.FC<GitDiffViewerProps> = ({ diffText, filename = 'source-code.diff' }) => {
+export const GitDiffViewer: React.FC<GitDiffViewerProps> = ({
+  diffText,
+  filename = 'source-code.diff',
+  reviewComments = [],
+}) => {
   const [viewMode, setViewMode] = useState<'unified' | 'split'>('unified');
 
   // Phân tích cú pháp diff text thành danh sách dòng
@@ -42,13 +56,13 @@ export const GitDiffViewer: React.FC<GitDiffViewerProps> = ({ diffText, filename
       } else if (line.startsWith('+') && !line.startsWith('+++')) {
         parsed.push({
           type: 'add',
-          content: line,
+          content: line.slice(1),
           newLine: newNum++,
         });
       } else if (line.startsWith('-') && !line.startsWith('---')) {
         parsed.push({
           type: 'delete',
-          content: line,
+          content: line.slice(1),
           oldLine: oldNum++,
         });
       } else if (
@@ -93,6 +107,12 @@ export const GitDiffViewer: React.FC<GitDiffViewerProps> = ({ diffText, filename
               -{deleteCount}
             </span>
           </div>
+          {reviewComments.length > 0 && (
+            <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-semibold flex items-center gap-1">
+              <span>💬</span>
+              <span>{reviewComments.length} bình luận</span>
+            </span>
+          )}
         </div>
 
         {/* Nút chuyển đổi Unified / Split View */}
@@ -129,44 +149,76 @@ export const GitDiffViewer: React.FC<GitDiffViewerProps> = ({ diffText, filename
             const isChunk = line.type === 'chunk';
             const isMeta = line.type === 'meta';
 
+            const matchingComments = reviewComments.filter(
+              (c) =>
+                c.line !== undefined &&
+                ((line.newLine !== undefined && c.line === line.newLine) ||
+                  (line.oldLine !== undefined && c.line === line.oldLine))
+            );
+
             return (
-              <div
-                key={idx}
-                className={`flex items-start text-[11px] font-mono px-2 py-0.5 transition-colors ${
-                  isAdd
-                    ? 'bg-emerald-950/40 text-emerald-300 border-l-2 border-emerald-500'
-                    : isDel
-                    ? 'bg-rose-950/40 text-rose-300 border-l-2 border-rose-500'
-                    : isChunk
-                    ? 'bg-indigo-950/50 text-indigo-300 font-bold border-l-2 border-indigo-500'
-                    : isMeta
-                    ? 'bg-slate-900/40 text-slate-400 font-semibold'
-                    : 'text-slate-300 hover:bg-slate-900/40'
-                }`}
-              >
-                {/* Số thứ tự dòng cũ */}
-                <span className="w-8 shrink-0 text-right pr-2 text-slate-600 select-none text-[10px]">
-                  {line.oldLine || ''}
-                </span>
-                {/* Số thứ tự dòng mới */}
-                <span className="w-8 shrink-0 text-right pr-2.5 text-slate-600 select-none text-[10px] border-r border-slate-800/80 mr-2">
-                  {line.newLine || ''}
-                </span>
-                {/* Ký hiệu + / - */}
-                <span className="w-4 shrink-0 text-center font-bold select-none text-slate-500">
-                  {isAdd ? '+' : isDel ? '-' : isChunk ? ' ' : ' '}
-                </span>
-                {/* Nội dung code */}
-                <span className="whitespace-pre flex-1 pl-1">{line.content}</span>
-              </div>
+              <React.Fragment key={idx}>
+                <div
+                  className={`flex items-start text-[11px] font-mono px-2 py-0.5 transition-colors ${
+                    isAdd
+                      ? 'bg-emerald-950/40 text-emerald-300 border-l-2 border-emerald-500'
+                      : isDel
+                      ? 'bg-rose-950/40 text-rose-300 border-l-2 border-rose-500'
+                      : isChunk
+                      ? 'bg-indigo-950/50 text-indigo-300 font-bold border-l-2 border-indigo-500'
+                      : isMeta
+                      ? 'bg-slate-900/40 text-slate-400 font-semibold'
+                      : 'text-slate-300 hover:bg-slate-900/40'
+                  }`}
+                >
+                  {/* Số thứ tự dòng cũ */}
+                  <span className="w-8 shrink-0 text-right pr-2 text-slate-600 select-none text-[10px]">
+                    {line.oldLine || ''}
+                  </span>
+                  {/* Số thứ tự dòng mới */}
+                  <span className="w-8 shrink-0 text-right pr-2.5 text-slate-600 select-none text-[10px] border-r border-slate-800/80 mr-2">
+                    {line.newLine || ''}
+                  </span>
+                  {/* Ký hiệu + / - */}
+                  <span className="w-4 shrink-0 text-center font-bold select-none text-slate-500">
+                    {isAdd ? '+' : isDel ? '-' : isChunk ? ' ' : ' '}
+                  </span>
+                  {/* Nội dung code */}
+                  <span className="whitespace-pre flex-1 pl-1">{line.content}</span>
+                </div>
+
+                {/* Inline Review Comments Bubble */}
+                {matchingComments.map((c, cIdx) => (
+                  <div
+                    key={`cmt-${cIdx}`}
+                    className="my-1.5 ml-14 sm:ml-20 mr-2 sm:mr-4 p-2 sm:p-2.5 rounded-xl bg-slate-900 border border-amber-500/40 text-amber-200 text-[11px] font-sans flex items-start gap-2 shadow-lg"
+                  >
+                    <span className="text-sm shrink-0">🔍</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-amber-300">Tech Reviewer</span>
+                        <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-[9px] uppercase font-bold text-amber-300 border border-amber-500/30">
+                          {c.status || 'COMMENT'}
+                        </span>
+                        {c.line !== undefined && (
+                          <span className="text-[10px] text-slate-400 font-mono">Dòng {c.line}</span>
+                        )}
+                      </div>
+                      <p className="mt-0.5 text-slate-300 leading-relaxed font-mono text-[11px] whitespace-pre-wrap">
+                        {c.note}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </React.Fragment>
             );
           })}
         </div>
       ) : (
-        /* SPLIT VIEW (2 CỘT BEFORE / AFTER - Tự động xếp 1 cột trên màn hình nhỏ < 768px) */
+        /* SPLIT VIEW (2 CỘT BEFORE / AFTER) */
         <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-800 text-[11px] font-mono select-text overflow-x-auto">
           {/* CỘT BEFORE (BEFORE / DELETE) */}
-          <div className="divide-y divide-slate-900/60">
+          <div className="divide-y divide-slate-900/60 overflow-x-auto">
             <div className="px-3 py-1 bg-slate-900/80 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800">
               Trước (Original)
             </div>
@@ -186,13 +238,15 @@ export const GitDiffViewer: React.FC<GitDiffViewerProps> = ({ diffText, filename
                   <span className="w-6 shrink-0 text-right pr-2 text-slate-600 select-none text-[10px]">
                     {line.oldLine || ''}
                   </span>
-                  <span className="whitespace-pre flex-1 pl-1 truncate">{line.content}</span>
+                  <span className="whitespace-pre flex-1 pl-1 overflow-x-auto scrollbar-none">
+                    {line.content}
+                  </span>
                 </div>
               ))}
           </div>
 
           {/* CỘT AFTER (AFTER / ADD) */}
-          <div className="divide-y divide-slate-900/60">
+          <div className="divide-y divide-slate-900/60 overflow-x-auto">
             <div className="px-3 py-1 bg-slate-900/80 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800">
               Sau (Pull Request Patch)
             </div>
@@ -212,7 +266,9 @@ export const GitDiffViewer: React.FC<GitDiffViewerProps> = ({ diffText, filename
                   <span className="w-6 shrink-0 text-right pr-2 text-slate-600 select-none text-[10px]">
                     {line.newLine || ''}
                   </span>
-                  <span className="whitespace-pre flex-1 pl-1 truncate">{line.content}</span>
+                  <span className="whitespace-pre flex-1 pl-1 overflow-x-auto scrollbar-none">
+                    {line.content}
+                  </span>
                 </div>
               ))}
           </div>

@@ -159,9 +159,33 @@ export const ArtifactModal: React.FC = () => {
   const agents = useTownStore((s) => s.agents);
   const events = useTownStore((s) => s.events);
   const realArtifacts = useTownStore((s) => s.realArtifacts);
+  const isRealRunning = useTownStore((s) => s.isRealRunning);
+  const streamingStage = useTownStore((s) => s.streamingStage);
+  const updateAgentSystemPrompt = useTownStore((s) => s.updateAgentSystemPrompt);
+  const resetAgentSystemPrompt = useTownStore((s) => s.resetAgentSystemPrompt);
+  const rerunStage = useTownStore((s) => s.rerunStage);
 
   const [activeTab, setActiveTab] = useState<'artifact' | 'prompt' | 'events'>('artifact');
   const [copied, setCopied] = useState(false);
+
+  const reviewComments = React.useMemo(() => {
+    if (!realArtifacts.review?.content) return [];
+    try {
+      const parsed = JSON.parse(realArtifacts.review.content);
+      if (Array.isArray(parsed.comments)) return parsed.comments;
+    } catch {}
+    return [];
+  }, [realArtifacts.review]);
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isArtifactModalOpen) {
+        openArtifactModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isArtifactModalOpen, openArtifactModal]);
 
   if (!isArtifactModalOpen) return null;
 
@@ -192,7 +216,12 @@ export const ArtifactModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in overflow-hidden overscroll-contain">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) openArtifactModal(false);
+      }}
+      className="fixed inset-0 z-[1000] flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in overflow-hidden overscroll-contain"
+    >
       <div className="w-full max-w-2xl bg-slate-900 border border-slate-700/80 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[85vh] animate-scale-up overscroll-contain">
         {/* Modal Header */}
         <div className="flex items-center justify-between gap-2 px-4 py-3 sm:px-6 sm:py-4 bg-slate-950/80 border-b border-slate-800">
@@ -307,7 +336,11 @@ export const ArtifactModal: React.FC = () => {
               </div>
 
               {artifact?.language === 'diff' || artifact?.filename.endsWith('.diff') ? (
-                <GitDiffViewer diffText={artifact.content} filename={artifact.filename} />
+                <GitDiffViewer
+                  diffText={artifact.content}
+                  filename={artifact.filename}
+                  reviewComments={reviewComments}
+                />
               ) : (
                 <pre className="whitespace-pre font-mono text-xs leading-relaxed text-emerald-400 select-text overflow-x-auto">
                   {artifact?.content}
@@ -325,13 +358,57 @@ export const ArtifactModal: React.FC = () => {
                 <p className="text-sm font-semibold text-slate-200">"{agent?.speech}"</p>
               </div>
 
-              <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-2">
-                <span className="text-slate-400 uppercase font-bold text-[10px] tracking-wider">
-                  Core System Prompt
-                </span>
-                <p className="text-xs text-slate-300 leading-relaxed font-mono whitespace-pre-wrap">
-                  {agent?.systemPrompt}
-                </p>
+              <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400 uppercase font-bold text-[10px] tracking-wider">
+                    Core System Prompt (AI Playground)
+                  </span>
+                  <button
+                    onClick={() => resetAgentSystemPrompt(selectedAgentRole)}
+                    className="text-[10px] font-semibold text-slate-400 hover:text-white underline underline-offset-2 transition-colors"
+                    title="Khôi phục prompt mặc định của hệ thống"
+                  >
+                    ↩️ Khôi phục mặc định
+                  </button>
+                </div>
+
+                <textarea
+                  value={agent?.systemPrompt || ''}
+                  onChange={(e) => updateAgentSystemPrompt(selectedAgentRole, e.target.value)}
+                  rows={6}
+                  className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 font-mono text-xs leading-relaxed focus:outline-none focus:border-cyan-500 transition-colors resize-y"
+                  placeholder="Nhập System Prompt tùy chỉnh cho Agent này..."
+                />
+
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-[10px] text-slate-500 font-sans">
+                    💡 Prompt được lưu ngay lập tức vào phiên chạy.
+                  </span>
+                  <button
+                    onClick={() => rerunStage(selectedAgentRole)}
+                    disabled={isRealRunning}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-xs transition-all ${
+                      isRealRunning && streamingStage === selectedAgentRole
+                        ? 'bg-amber-600/30 text-amber-300 border border-amber-500/50 cursor-not-allowed animate-pulse'
+                        : isRealRunning
+                        ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white border border-blue-400/40 shadow-md shadow-blue-900/30'
+                    }`}
+                    title="Chạy lại khâu này với System Prompt mới"
+                  >
+                    {isRealRunning && streamingStage === selectedAgentRole ? (
+                      <>
+                        <div className="w-3 h-3 border-2 border-amber-300 border-t-transparent rounded-full animate-spin" />
+                        <span>Đang chạy lại...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>🔄</span>
+                        <span>Chạy lại trạm này</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           )}

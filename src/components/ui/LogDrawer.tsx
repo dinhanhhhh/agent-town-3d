@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useTownStore } from '../../store/useTownStore';
 import { STATIONS_LAYOUT } from '../../lib/scene/layout';
-import { AgentRole } from '../../lib/pipeline/stages';
+import { AgentRole, STAGE_ORDER } from '../../lib/pipeline/stages';
 
 export const LogDrawer: React.FC = () => {
   const isLogDrawerOpen = useTownStore((s) => s.isLogDrawerOpen);
@@ -11,19 +11,19 @@ export const LogDrawer: React.FC = () => {
   const events = useTownStore((s) => s.events);
   const tasks = useTownStore((s) => s.tasks);
   const activeTaskId = useTownStore((s) => s.activeTaskId);
+  const selectAgent = useTownStore((s) => s.selectAgent);
 
-  const listRef = React.useRef<HTMLDivElement>(null);
+  const [filterType, setFilterType] = useState<'all' | 'errors' | AgentRole>('all');
+  const [copied, setCopied] = useState(false);
 
-  // Tự động cuộn xuống dòng mới nhất khi có sự kiện phát sinh
-  React.useEffect(() => {
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // Tự động cuộn mượt lên dòng sự kiện mới nhất (events[0])
+  useEffect(() => {
     if (listRef.current) {
-      listRef.current.scrollTop = listRef.current.scrollHeight;
+      listRef.current.scrollTop = 0;
     }
   }, [events.length]);
-
-  if (!isLogDrawerOpen) {
-    return null;
-  }
 
   const getAgentRole = (agentId: string): AgentRole => {
     const role = agentId.replace('agent-', '') as AgentRole;
@@ -35,21 +35,44 @@ export const LogDrawer: React.FC = () => {
     return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
   };
 
+  const filteredEvents = useMemo(() => {
+    if (filterType === 'all') return events;
+    if (filterType === 'errors') {
+      return events.filter((e) => e.kind === 'fail' || e.kind === 'alert' || e.severity === 'error' || e.severity === 'warn');
+    }
+    return events.filter((e) => getAgentRole(e.agentId) === filterType);
+  }, [events, filterType]);
+
+  if (!isLogDrawerOpen) {
+    return null;
+  }
+
+  const handleCopyAll = async () => {
+    const text = events.map((e) => `[${formatTime(e.createdAt)}] ${e.agentId}: ${e.message}`).join('\n');
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <aside
       aria-label="Nhật ký công việc thực tế"
-      className="fixed bottom-24 lg:bottom-14 right-2 sm:right-4 z-40 w-[420px] max-w-[calc(100vw-16px)] h-[340px] sm:h-[380px] max-h-[60vh] bg-[#fbf6ea] border-2 border-[#d97706]/40 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-slate-800 pointer-events-auto select-none overscroll-contain"
-      style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+      className="fixed bottom-24 lg:bottom-14 right-2 sm:right-4 z-40 w-[440px] max-w-[calc(100vw-16px)] h-[380px] sm:h-[420px] max-h-[65vh] bg-slate-950/95 backdrop-blur-xl border border-slate-700/80 rounded-3xl shadow-2xl shadow-black/60 flex flex-col overflow-hidden text-slate-200 pointer-events-auto select-none overscroll-contain animate-scale-up"
     >
-      {/* Header bar phong cách giấy da retro Solomi */}
-      <div className="flex items-center justify-between px-4 py-3 bg-[#f5ebd6] border-b border-[#e6d6b8] shrink-0">
-        <div className="flex items-center gap-2">
-          <span className="text-base">📋</span>
+      {/* Header bar Dark Glassmorphism */}
+      <div className="flex items-center justify-between px-4 py-3 bg-slate-900/90 border-b border-slate-800 shrink-0">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-sm">
+            📋
+          </div>
           <div>
-            <h2 className="text-xs font-black tracking-wider uppercase text-[#78350f]">
-              Nhật ký việc (Nhật ký thật)
-            </h2>
-            <p className="text-[10px] text-amber-800/80 font-medium">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xs font-bold tracking-wider uppercase text-white">
+                Nhật ký việc (Live Audit Logs)
+              </h2>
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            </div>
+            <p className="text-[10px] text-slate-400 font-medium">
               Theo dõi telemetry & feedback loop giữa 8 AI Agents
             </p>
           </div>
@@ -57,62 +80,104 @@ export const LogDrawer: React.FC = () => {
 
         <button
           onClick={() => toggleLogDrawer(false)}
-          className="w-7 h-7 flex items-center justify-center rounded-xl bg-amber-200/60 hover:bg-amber-300 text-amber-900 font-bold text-xs transition-colors"
+          className="w-7 h-7 flex items-center justify-center rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white font-bold text-xs transition-colors"
           title="Đóng bảng nhật ký"
         >
           ✕
         </button>
       </div>
 
-      {/* Task tóm tắt đang chạy */}
-      {activeTaskId && (
-        <div className="px-4 py-2 bg-amber-50/80 border-b border-amber-200/50 flex items-center justify-between text-[11px] shrink-0">
-          <span className="font-semibold text-amber-950 truncate max-w-[300px]">
-            ⚡ Task: {tasks.find((t) => t.id === activeTaskId)?.title || 'Đang thực thi...'}
-          </span>
-          <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-300">
-            Realtime
-          </span>
-        </div>
-      )}
+      {/* Filter Tabs & Task info */}
+      <div className="px-3 py-2 bg-slate-900/60 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-1.5 shrink-0 text-[11px]">
+        {/* Bộ lọc nhanh */}
+        <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5">
+          <button
+            onClick={() => setFilterType('all')}
+            className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold transition-colors ${
+              filterType === 'all'
+                ? 'bg-purple-600 text-white shadow-sm'
+                : 'bg-slate-800/80 text-slate-400 hover:text-white'
+            }`}
+          >
+            Tất cả ({events.length})
+          </button>
+          <button
+            onClick={() => setFilterType('errors')}
+            className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold transition-colors flex items-center gap-1 ${
+              filterType === 'errors'
+                ? 'bg-rose-600 text-white shadow-sm'
+                : 'bg-slate-800/80 text-rose-300 hover:text-white'
+            }`}
+          >
+            <span>⚠️</span>
+            <span>Lỗi / Feedback</span>
+          </button>
 
-      {/* Bảng danh sách nhật ký cuộn mượt (Kích thước cố định, nội dung cuộn bên trong) */}
+          {/* Quick station selector */}
+          <select
+            value={STAGE_ORDER.includes(filterType as AgentRole) ? filterType : ''}
+            onChange={(e) => {
+              if (e.target.value) setFilterType(e.target.value as AgentRole);
+            }}
+            className="px-1.5 py-0.5 rounded-lg text-[10px] font-medium bg-slate-800 text-slate-300 border border-slate-700 focus:outline-none"
+          >
+            <option value="">Lọc theo Trạm...</option>
+            {STAGE_ORDER.map((role) => (
+              <option key={role} value={role}>
+                {STATIONS_LAYOUT[role]?.name || role}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {activeTaskId && (
+          <span className="text-[10px] text-amber-300 font-mono font-medium truncate max-w-[150px]">
+            {tasks.find((t) => t.id === activeTaskId)?.title || 'Task'}
+          </span>
+        )}
+      </div>
+
+      {/* Bảng danh sách nhật ký (Newest first, click to fly camera) */}
       <div
         ref={listRef}
-        className="flex-1 min-h-0 overflow-y-auto divide-y divide-amber-200/60 text-xs"
+        className="flex-1 min-h-0 overflow-y-auto divide-y divide-slate-800/70 text-xs"
       >
-        {events.length === 0 ? (
-          <div className="p-8 text-center text-slate-400 text-xs">
-            Chưa có sự kiện nào. Hãy bấm "✨ Giao việc AI" để khởi chạy pipeline!
+        {filteredEvents.length === 0 ? (
+          <div className="p-8 text-center text-slate-500 text-xs">
+            Không có sự kiện nào phù hợp bộ lọc.
           </div>
         ) : (
-          events.map((evt) => {
+          filteredEvents.map((evt) => {
             const role = getAgentRole(evt.agentId);
             const layout = STATIONS_LAYOUT[role];
 
             return (
               <div
                 key={evt.id}
-                className="p-3 hover:bg-[#fef9ee] transition-colors flex items-start gap-3"
+                onClick={() => {
+                  selectAgent(role, 'none');
+                }}
+                className="p-3 hover:bg-slate-900/80 transition-colors flex items-start gap-2.5 cursor-pointer group"
+                title="Bấm để đưa camera bay tới vị trí trạm này"
               >
                 {/* Thời gian */}
-                <div className="font-mono text-[10px] text-amber-900/60 font-semibold pt-0.5 shrink-0">
+                <div className="font-mono text-[10px] text-slate-500 font-semibold pt-0.5 shrink-0">
                   {formatTime(evt.createdAt)}
                 </div>
 
                 {/* Agent Tag */}
                 <div className="shrink-0">
                   <span
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold text-white shadow-sm"
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold text-white shadow-sm"
                     style={{ backgroundColor: `#${layout.accentColor.toString(16).padStart(6, '0')}` }}
                   >
-                    {layout.name}
+                    {layout.tag || layout.name}
                   </span>
                 </div>
 
                 {/* Nội dung việc */}
                 <div className="flex-1 min-w-0">
-                  <div className="text-[11px] font-medium text-slate-800 leading-snug break-words">
+                  <div className="text-[11px] font-medium text-slate-300 group-hover:text-white leading-snug break-words">
                     {evt.message}
                   </div>
                 </div>
@@ -120,22 +185,22 @@ export const LogDrawer: React.FC = () => {
                 {/* Trạng thái tag */}
                 <div className="shrink-0 pt-0.5">
                   {evt.kind === 'pass' && (
-                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                       ✓ Đạt
                     </span>
                   )}
                   {evt.kind === 'fail' && (
-                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-100 text-rose-800 border border-rose-300">
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 animate-pulse">
                       ⚠ Lỗi
                     </span>
                   )}
                   {evt.kind === 'start' && (
-                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-100 text-blue-800 border border-blue-300">
-                      ▶ Bắt đầu
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                      ▶ Chạy
                     </span>
                   )}
                   {evt.kind === 'approve_needed' && (
-                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-100 text-purple-800 border border-purple-300 animate-pulse">
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 animate-pulse">
                       ⏱ Chờ duyệt
                     </span>
                   )}
@@ -147,17 +212,15 @@ export const LogDrawer: React.FC = () => {
       </div>
 
       {/* Footer bar */}
-      <div className="px-4 py-2 bg-[#f5ebd6] border-t border-[#e6d6b8] flex items-center justify-between text-[10px] text-amber-900/70 font-medium shrink-0">
-        <span>Tổng cộng: {events.length} sự kiện</span>
+      <div className="px-4 py-2.5 bg-slate-900/90 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400 font-medium shrink-0">
+        <span>
+          Hiển thị: {filteredEvents.length} / {events.length} sự kiện
+        </span>
         <button
-          onClick={() => {
-            const text = events.map((e) => `[${formatTime(e.createdAt)}] ${e.agentId}: ${e.message}`).join('\n');
-            navigator.clipboard.writeText(text);
-            alert('Đã sao chép nhật ký sự kiện vào clipboard!');
-          }}
-          className="hover:text-amber-950 font-bold underline"
+          onClick={handleCopyAll}
+          className="hover:text-white text-indigo-400 font-semibold underline underline-offset-2 flex items-center gap-1"
         >
-          Sao chép tất cả
+          <span>{copied ? '✅ Đã chép!' : '📋 Sao chép tất cả'}</span>
         </button>
       </div>
     </aside>

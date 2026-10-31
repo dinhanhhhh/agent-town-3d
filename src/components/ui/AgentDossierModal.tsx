@@ -30,6 +30,16 @@ export const AgentDossierModal: React.FC = () => {
 
   const [copied, setCopied] = useState(false);
 
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isDossierModalOpen) {
+        openDossierModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isDossierModalOpen, openDossierModal]);
+
   if (!isDossierModalOpen || !selectedAgentRole) return null;
 
   const agent = agents[selectedAgentRole];
@@ -57,7 +67,12 @@ export const AgentDossierModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-sm animate-fade-in overflow-hidden overscroll-contain">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) openDossierModal(false);
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-sm animate-fade-in overflow-hidden overscroll-contain"
+    >
       <div className="relative w-full max-w-2xl bg-[#0f172a]/95 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[85vh] text-slate-100 overscroll-contain">
         {/* HEADER BAR */}
         <div

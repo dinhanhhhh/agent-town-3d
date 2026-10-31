@@ -8,6 +8,7 @@ interface PipelineContext {
   sourceCode?: string;
   reviewComments?: string;
   testReport?: string;
+  feedbackNote?: string;
   scenario?: 'feature' | 'bug' | 'security' | 'chaos' | 'github';
 }
 
@@ -17,6 +18,7 @@ interface RequestBody {
   apiKey?: string;
   stream?: boolean;
   context?: PipelineContext;
+  customSystemPrompt?: string;
 }
 
 /**
@@ -126,11 +128,15 @@ Nhiệm vụ: Chuyển hóa yêu cầu và Milestone thành tài liệu đặc t
     filename: 'source-code.diff',
     language: 'diff',
     systemPrompt: `Bạn là Senior Full-Stack Engineer.
-Nhiệm vụ: Dựa trên tài liệu PRD, viết mã nguồn TypeScript sạch (Clean Architecture, validation, try/catch error handling, boundary checks, không hardcode secrets) dưới định dạng Git Unified Diff Patch chuẩn (bắt đầu bằng diff --git a/src/... b/src/..., có ---, +++, @@ -...,... +...,... @@ và tiền tố + cho các dòng thêm mới, - cho các dòng cũ được refactor).
+Nhiệm vụ: Dựa trên tài liệu PRD hoặc báo cáo lỗi (Bug Report / SAST CVE / Phản hồi Tech Lead), viết mã nguồn TypeScript sạch (Clean Architecture, validation, try/catch error handling, boundary checks, không hardcode secrets) dưới định dạng Git Unified Diff Patch chuẩn (bắt đầu bằng diff --git a/src/... b/src/..., có ---, +++, @@ -...,... +...,... @@ và tiền tố + cho các dòng thêm mới, - cho các dòng cũ được refactor).
 Định dạng: Trả về bản Git Unified Diff hoàn chỉnh (không bọc ngoài markdown). Cuối phản hồi thêm dòng:
 ---SPEECH---: [1 câu ngắn dưới 15 từ thông báo đã lập trình xong và tạo Pull Request diff]`,
-    formatUserPrompt: (prompt, ctx) =>
-      `Dựa trên PRD sau đây, hãy tạo bản Git Unified Diff (.diff) triển khai mã nguồn TypeScript hoàn chỉnh:\n\n${ctx?.prd || prompt}`,
+    formatUserPrompt: (prompt, ctx) => {
+      if (ctx?.feedbackNote) {
+        return `YÊU CẦU VÁ LỖI / PHẢN HỒI KỸ THUẬT:\n"${ctx.feedbackNote}"\n\nMã nguồn ban đầu:\n\`\`\`diff\n${ctx.sourceCode || ''}\n\`\`\`\n\nHãy tạo bản Git Unified Diff (.diff) vá lỗi hoàn chỉnh để giải quyết triệt để phản hồi trên và đáp ứng chuẩn Clean Code.`;
+      }
+      return `Dựa trên PRD sau đây, hãy tạo bản Git Unified Diff (.diff) triển khai mã nguồn TypeScript hoàn chỉnh:\n\n${ctx?.prd || prompt}`;
+    },
   },
 
   review: {
@@ -221,7 +227,7 @@ Nhiệm vụ: Đọc telemetry sau khi tính năng đã release lên Production,
 export async function POST(req: NextRequest) {
   try {
     const body: RequestBody = await req.json();
-    const { prompt, stage, apiKey, stream, context } = body;
+    const { prompt, stage, apiKey, stream, context, customSystemPrompt } = body;
 
     if (!prompt || !stage) {
       return NextResponse.json(
@@ -237,6 +243,11 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    const effectiveSystemPrompt =
+      typeof customSystemPrompt === 'string' && customSystemPrompt.trim().length > 0
+        ? customSystemPrompt.trim()
+        : config.systemPrompt;
 
     const userPromptFormatted = config.formatUserPrompt(prompt, context);
     const activeKey =
@@ -268,14 +279,14 @@ export async function POST(req: NextRequest) {
             const generator = activeKey.startsWith('sk-')
               ? streamDeepSeek({
                   prompt: userPromptFormatted,
-                  systemInstruction: config.systemPrompt,
+                  systemInstruction: effectiveSystemPrompt,
                   apiKey: activeKey,
                   temperature: 0.3,
                   signal: req.signal,
                 })
               : streamGemini({
                   prompt: userPromptFormatted,
-                  systemInstruction: config.systemPrompt,
+                  systemInstruction: effectiveSystemPrompt,
                   apiKey: activeKey,
                   temperature: 0.3,
                   signal: req.signal,
@@ -322,7 +333,7 @@ export async function POST(req: NextRequest) {
     if (activeKey.startsWith('sk-')) {
       rawResult = await callDeepSeek({
         prompt: userPromptFormatted,
-        systemInstruction: config.systemPrompt,
+        systemInstruction: effectiveSystemPrompt,
         apiKey: activeKey,
         temperature: 0.3,
         signal: req.signal,
@@ -330,7 +341,7 @@ export async function POST(req: NextRequest) {
     } else {
       rawResult = await callGemini({
         prompt: userPromptFormatted,
-        systemInstruction: config.systemPrompt,
+        systemInstruction: effectiveSystemPrompt,
         apiKey: activeKey,
         temperature: 0.3,
         signal: req.signal,

@@ -31,6 +31,8 @@ export const RoleChips: React.FC = () => {
   const agents = useTownStore((s) => s.agents);
   const selectedAgentRole = useTownStore((s) => s.selectedAgentRole);
   const selectAgent = useTownStore((s) => s.selectAgent);
+  const realArtifacts = useTownStore((s) => s.realArtifacts);
+  const streamingStage = useTownStore((s) => s.streamingStage);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -55,6 +57,8 @@ export const RoleChips: React.FC = () => {
           const layout = STATIONS_LAYOUT[role];
           const isSelected = selectedAgentRole === role;
           const shortName = ROLE_SHORT_NAMES[role];
+          const hasArtifact = Boolean(realArtifacts[role]);
+          const isStreaming = streamingStage === role;
 
           return (
             <button
@@ -65,12 +69,19 @@ export const RoleChips: React.FC = () => {
               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap border ${
                 isSelected
                   ? 'bg-slate-700/90 text-white border-blue-400 shadow-lg scale-105'
+                  : isStreaming
+                  ? 'bg-blue-950/70 text-blue-200 border-blue-400 ring-2 ring-blue-400/50 animate-pulse shadow-md'
                   : 'bg-slate-800/60 text-slate-300 border-slate-700/60 hover:bg-slate-700/70 hover:text-white'
               }`}
               title={`${layout.name} (${agent?.status}) - Bấm để phóng to và xem artifact`}
             >
               <span>{ROLE_ICONS[role]}</span>
               <span className="font-bold">{shortName}</span>
+              {hasArtifact && (
+                <span className="px-1 py-0.2 text-[9px] font-extrabold bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 rounded-full leading-none">
+                  ✓
+                </span>
+              )}
               <span
                 className={`w-2 h-2 rounded-full shadow-sm ${getStatusColor(
                   agent?.status || 'idle'

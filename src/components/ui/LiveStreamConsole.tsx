@@ -18,7 +18,22 @@ export const LiveStreamConsole: React.FC = () => {
   const abortPipeline = useTownStore((s) => s.abortPipeline);
 
   const [isMinimized, setIsMinimized] = useState(false);
+  const [startTime, setStartTime] = useState<number>(Date.now());
+  const [elapsedSec, setElapsedSec] = useState<number>(0);
   const scrollRef = useRef<HTMLPreElement>(null);
+
+  useEffect(() => {
+    setStartTime(Date.now());
+    setElapsedSec(0);
+  }, [streamingStage]);
+
+  useEffect(() => {
+    if (!isRealRunning || !streamingStage) return;
+    const interval = setInterval(() => {
+      setElapsedSec((Date.now() - startTime) / 1000);
+    }, 200);
+    return () => clearInterval(interval);
+  }, [isRealRunning, streamingStage, startTime]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -30,6 +45,8 @@ export const LiveStreamConsole: React.FC = () => {
 
   const layout = STATIONS_LAYOUT[streamingStage];
   const lineCount = streamingContent ? streamingContent.split('\n').length : 0;
+  const estimatedTokens = Math.max(1, Math.round(streamingContent.length / 3.8));
+  const tokenSpeed = elapsedSec > 0.5 ? (estimatedTokens / elapsedSec).toFixed(1) : '--';
 
   return (
     <div
@@ -86,9 +103,15 @@ export const LiveStreamConsole: React.FC = () => {
               <span className="inline-block w-1.5 h-3.5 ml-0.5 align-middle bg-cyan-400 animate-pulse" />
             </pre>
 
-            <div className="px-3.5 py-1.5 bg-slate-900/70 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400 font-mono">
-              <span>{streamingContent.length} chars · {lineCount} lines</span>
-              <span className="text-cyan-400">SSE Stream Active ⚡</span>
+            <div className="px-3.5 py-1.5 bg-slate-900/80 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400 font-mono">
+              <span className="flex items-center gap-1.5 truncate">
+                <span className="text-emerald-400 font-bold">~{estimatedTokens} tokens</span>
+                <span>·</span>
+                <span className="text-cyan-300 font-semibold">{tokenSpeed} tok/s</span>
+                <span>·</span>
+                <span>{elapsedSec.toFixed(1)}s</span>
+              </span>
+              <span className="text-cyan-400 shrink-0">SSE Active ⚡</span>
             </div>
           </>
         )}

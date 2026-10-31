@@ -14,6 +14,8 @@ export const Topbar: React.FC = () => {
 
   const isRotating = useTownStore((s) => s.isRotating);
   const toggleRotating = useTownStore((s) => s.toggleRotating);
+  const isAutoFollow = useTownStore((s) => s.isAutoFollow);
+  const toggleAutoFollow = useTownStore((s) => s.toggleAutoFollow);
   const showLabels = useTownStore((s) => s.showLabels);
   const toggleLabels = useTownStore((s) => s.toggleLabels);
   const showBubbles = useTownStore((s) => s.showBubbles);
@@ -32,8 +34,13 @@ export const Topbar: React.FC = () => {
   const isChaosRunning = useTownStore((s) => s.isChaosRunning);
   const runChaosSimulation = useTownStore((s) => s.runChaosSimulation);
   const openExportModal = useTownStore((s) => s.openExportModal);
+  const initClientStorage = useTownStore((s) => s.initClientStorage);
 
   const pendingApprovals = approvals.filter((a) => a.status === 'pending');
+
+  React.useEffect(() => {
+    initClientStorage();
+  }, [initClientStorage]);
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -164,6 +171,20 @@ export const Topbar: React.FC = () => {
           <span className="hidden xl:inline ml-1">Xoay</span>
         </button>
 
+        {/* Director Auto-Follow Toggle */}
+        <button
+          onClick={toggleAutoFollow}
+          className={`px-2 sm:px-2.5 py-1 text-xs font-semibold rounded-xl border transition-colors whitespace-nowrap ${
+            isAutoFollow
+              ? 'bg-cyan-600/30 text-cyan-300 border-cyan-500/50'
+              : 'bg-slate-800/80 text-slate-400 border-slate-700 hover:bg-slate-700/80'
+          }`}
+          title="Bật/Tắt chế độ Đạo diễn: Camera tự động lia mượt bám theo Shipper di chuyển và Trạm AI"
+        >
+          <span>🎥</span>
+          <span className="hidden xl:inline ml-1">{isAutoFollow ? 'Đạo diễn' : 'Tự do'}</span>
+        </button>
+
         {/* Speed Multiplier Button (1x / 2x / 4x) */}
         <button
           onClick={cycleSimSpeed}
@@ -171,6 +192,26 @@ export const Topbar: React.FC = () => {
           title="Tốc độ di chuyển Shipper & Animation: 1x, 2x, 4x"
         >
           ⚡ {simSpeed}x
+        </button>
+
+        {/* Auto-Demo Simulator Toggle Button */}
+        <button
+          onClick={() => {
+            if (isSimulating) {
+              simulator.pause();
+            } else {
+              simulator.start();
+            }
+          }}
+          className={`px-2 sm:px-2.5 py-1 text-xs font-semibold rounded-xl border transition-all whitespace-nowrap ${
+            isSimulating
+              ? 'bg-emerald-600/30 text-emerald-300 border-emerald-500/50 animate-pulse'
+              : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-700/80'
+          }`}
+          title={isSimulating ? 'Tạm dừng Auto-Demo mô phỏng' : 'Bật Auto-Demo mô phỏng tự động không tốn token'}
+        >
+          <span>{isSimulating ? '⏸️' : '🎬'}</span>
+          <span className="hidden xl:inline ml-1">{isSimulating ? 'Demo On' : 'Demo'}</span>
         </button>
 
         {/* Names Toggle */}

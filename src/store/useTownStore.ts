@@ -15,7 +15,79 @@ export interface Courier {
 export type ThemeMode = 'day' | 'sunset' | 'night';
 export type ScenarioMode = 'feature' | 'bug' | 'security' | 'chaos' | 'github';
 
+export interface PipelineSession {
+  id: string;
+  timestamp: number;
+  prompt: string;
+  scenario: ScenarioMode;
+  artifacts: Record<AgentRole, { filename: string; language: string; content: string } | null>;
+  metrics?: { latencyMs: number; tps: number; cpuUsage: number };
+}
+
 let activePipelineAbortController: AbortController | null = null;
+
+const courierArrivalListeners = new Map<string, () => void>();
+
+export function registerCourierArrival(courierId: string, cb: () => void) {
+  courierArrivalListeners.set(courierId, cb);
+}
+
+export function notifyCourierArrived(courierId: string) {
+  const cb = courierArrivalListeners.get(courierId);
+  if (cb) {
+    courierArrivalListeners.delete(courierId);
+    cb();
+  }
+}
+
+export function waitForCourierArrival(courierId: string, signal?: AbortSignal, maxWaitMs = 12000): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException('Aborted', 'AbortError'));
+      return;
+    }
+    const onAbort = () => {
+      courierArrivalListeners.delete(courierId);
+      clearTimeout(timer);
+      reject(new DOMException('Aborted', 'AbortError'));
+    };
+    signal?.addEventListener('abort', onAbort, { once: true });
+
+    const timer = setTimeout(() => {
+      courierArrivalListeners.delete(courierId);
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, maxWaitMs);
+
+    registerCourierArrival(courierId, () => {
+      clearTimeout(timer);
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    });
+  });
+}
+
+function saveSessionToStorage(session: PipelineSession) {
+  if (typeof window === 'undefined') return;
+  try {
+    const raw = localStorage.getItem('AGENT_TOWN_SESSIONS');
+    const existing: PipelineSession[] = raw ? JSON.parse(raw) : [];
+    const updated = [session, ...existing.filter((s) => s.id !== session.id)].slice(0, 5);
+    localStorage.setItem('AGENT_TOWN_SESSIONS', JSON.stringify(updated));
+  } catch (err) {
+    console.error('Failed to save session to storage', err);
+  }
+}
+
+function loadSessionsFromStorage(): PipelineSession[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem('AGENT_TOWN_SESSIONS');
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
 
 function abortableSleep(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -47,6 +119,7 @@ export interface TownState {
   // 3D & HUD Settings
   themeMode: ThemeMode;
   isRotating: boolean;
+  isAutoFollow: boolean;
   showLabels: boolean;
   showBubbles: boolean;
   isSoundEnabled: boolean;
@@ -69,11 +142,13 @@ export interface TownState {
 
   // Real LLM Pipeline & Live Token Stream
   apiKey: string;
+  sessions: PipelineSession[];
   isRealRunning: boolean;
   streamingStage: AgentRole | null;
   streamingFilename: string;
   streamingContent: string;
   realArtifacts: Record<AgentRole, { filename: string; language: string; content: string } | null>;
+  stageMetrics: Record<AgentRole, { durationMs: number; tokens: number } | null>;
 
   // Telemetry
   weather: string;
@@ -98,6 +173,8 @@ export interface TownState {
   abortPipeline: () => void;
   setRotating: (isRotating: boolean) => void;
   toggleRotating: () => void;
+  setAutoFollow: (isAutoFollow: boolean) => void;
+  toggleAutoFollow: () => void;
   setShowLabels: (show: boolean) => void;
   toggleLabels: () => void;
   setShowBubbles: (show: boolean) => void;
@@ -106,6 +183,10 @@ export interface TownState {
   toggleSimulating: () => void;
   setSimSpeed: (speed: number) => void;
   cycleSimSpeed: () => void;
+
+  updateAgentSystemPrompt: (role: AgentRole, prompt: string) => void;
+  resetAgentSystemPrompt: (role: AgentRole) => void;
+  rerunStage: (stage: AgentRole) => Promise<void>;
 
   setCameraPreset: (preset: 'default' | 'panoramic' | 'overview') => void;
   setCameraTarget: (target: [number, number, number] | null) => void;
@@ -127,12 +208,16 @@ export interface TownState {
   setActiveTaskId: (id: string | null) => void;
 
   addEvent: (event: Omit<PipelineEvent, 'id' | 'createdAt'>) => void;
-  addCourier: (courier: Omit<Courier, 'id' | 'progress'>) => void;
+  addCourier: (courier: Omit<Courier, 'id' | 'progress'>) => string;
   updateCourierProgress: (id: string, progress: number) => void;
   removeCourier: (id: string) => void;
 
   createApproval: (taskId: string) => void;
-  resolveApproval: (approvalId: string, status: 'approved' | 'rejected') => void;
+  resolveApproval: (approvalId: string, status: 'approved' | 'rejected', feedbackNote?: string) => Promise<void> | void;
+
+  loadSession: (session: PipelineSession) => void;
+  deleteSession: (id: string) => void;
+  initClientStorage: () => void;
 
   updateTelemetry: (metrics: Partial<{ latencyMs: number; tps: number; cpuUsage: number; weather: string }>) => void;
 }
@@ -236,6 +321,7 @@ export const useTownStore = create<TownState>((set, get) => {
     error?: string;
   }> => {
     const { prompt, stage, defaultFilename, context, signal } = params;
+    const startTime = Date.now();
     set({
       streamingStage: stage,
       streamingFilename: defaultFilename,
@@ -245,6 +331,7 @@ export const useTownStore = create<TownState>((set, get) => {
     const activeKey =
       get().apiKey ||
       (typeof window !== 'undefined' ? localStorage.getItem('AGENT_TOWN_GEMINI_KEY') || '' : '');
+    const customPrompt = get().agents[stage]?.systemPrompt;
 
     const res = await fetch('/api/pipeline', {
       method: 'POST',
@@ -255,6 +342,7 @@ export const useTownStore = create<TownState>((set, get) => {
         apiKey: activeKey,
         stream: true,
         context,
+        customSystemPrompt: customPrompt,
       }),
       signal,
     });
@@ -317,6 +405,18 @@ export const useTownStore = create<TownState>((set, get) => {
       processLine(buffer);
     }
 
+    const durationMs = Math.max(100, Date.now() - startTime);
+    const payloadContent = (finalPayload as { content?: string } | null)?.content;
+    const resolvedContent = payloadContent || accText;
+    const tokens = Math.max(1, Math.round(resolvedContent.length / 3.8));
+
+    set((s) => ({
+      stageMetrics: {
+        ...s.stageMetrics,
+        [stage]: { durationMs, tokens },
+      },
+    }));
+
     if (finalPayload) {
       return finalPayload;
     }
@@ -354,6 +454,7 @@ export const useTownStore = create<TownState>((set, get) => {
     // 3D & HUD Settings
     themeMode: 'day',
     isRotating: false,
+    isAutoFollow: true,
     showLabels: true,
     showBubbles: true,
     isSoundEnabled: true,
@@ -373,12 +474,23 @@ export const useTownStore = create<TownState>((set, get) => {
     isExportModalOpen: false,
     isChaosRunning: false,
 
-    apiKey: typeof window !== 'undefined' ? localStorage.getItem('AGENT_TOWN_GEMINI_KEY') || '' : '',
+    apiKey: '',
+    sessions: [],
     isRealRunning: false,
     streamingStage: null,
     streamingFilename: '',
     streamingContent: '',
     realArtifacts: {
+      orchestrator: null,
+      pm: null,
+      dev: null,
+      review: null,
+      qa: null,
+      security: null,
+      devops: null,
+      monitor: null,
+    },
+    stageMetrics: {
       orchestrator: null,
       pm: null,
       dev: null,
@@ -414,6 +526,8 @@ export const useTownStore = create<TownState>((set, get) => {
       })),
     setRotating: (isRotating) => set({ isRotating }),
     toggleRotating: () => set((s) => ({ isRotating: !s.isRotating })),
+    setAutoFollow: (isAutoFollow) => set({ isAutoFollow }),
+    toggleAutoFollow: () => set((s) => ({ isAutoFollow: !s.isAutoFollow })),
     setShowLabels: (showLabels) => set({ showLabels }),
     toggleLabels: () => set((s) => ({ showLabels: !s.showLabels })),
     setShowBubbles: (showBubbles) => set({ showBubbles }),
@@ -545,16 +659,18 @@ export const useTownStore = create<TownState>((set, get) => {
 
     addCourier: (courierData) => {
       sfx.playDeliveryChime();
+      const id = `courier-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       set((state) => ({
         couriers: [
           ...state.couriers,
           {
-            id: `courier-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            id,
             progress: 0,
             ...courierData,
           },
         ],
       }));
+      return id;
     },
 
     updateCourierProgress: (id, progress) =>
@@ -562,10 +678,12 @@ export const useTownStore = create<TownState>((set, get) => {
         couriers: state.couriers.map((c) => (c.id === id ? { ...c, progress } : c)),
       })),
 
-    removeCourier: (id) =>
+    removeCourier: (id) => {
+      notifyCourierArrived(id);
       set((state) => ({
         couriers: state.couriers.filter((c) => c.id !== id),
-      })),
+      }));
+    },
 
     createApproval: (taskId) =>
       set((state) => {
@@ -580,7 +698,7 @@ export const useTownStore = create<TownState>((set, get) => {
         };
       }),
 
-    resolveApproval: (approvalId, status) => {
+    resolveApproval: async (approvalId, status, feedbackNote) => {
       const state = get();
       const currentApproval = state.approvals.find((a) => a.id === approvalId);
 
@@ -597,7 +715,7 @@ export const useTownStore = create<TownState>((set, get) => {
           const prompt = state.tasks.find((t) => t.id === currentApproval.taskId)?.title || 'Tính năng mới';
           state.updateTask(currentApproval.taskId, { state: 'passed', stage: 'monitor' });
           state.setAgentStatus('devops', 'working', 'Tech Lead đã phê duyệt! Đang Canary deploy lên Production...');
-          state.addCourier({
+          const courierId = state.addCourier({
             type: 'forward',
             fromRole: 'devops',
             toRole: 'monitor',
@@ -605,72 +723,208 @@ export const useTownStore = create<TownState>((set, get) => {
             label: 'Production Release',
           });
 
-          fetch('/api/pipeline', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              prompt,
-              stage: 'monitor',
-              apiKey:
-                state.apiKey ||
-                (typeof window !== 'undefined' ? localStorage.getItem('AGENT_TOWN_GEMINI_KEY') : ''),
-            }),
-          })
-            .then((r) => r.json())
-            .then((data) => {
-              if (data.content) {
-                try {
-                  const parsed = JSON.parse(data.content);
-                  state.updateTelemetry({
-                    cpuUsage: parseInt(parsed.cpuUsage, 10) || 24,
-                    latencyMs: parseInt(parsed.p99Latency, 10) || 14,
-                    tps: parsed.tps || 342,
-                  });
-                } catch {
-                  // Keep existing telemetry if non-numeric
-                }
-                set((s) => ({
-                  realArtifacts: {
-                    ...s.realArtifacts,
-                    monitor: {
-                      filename: data.filename,
-                      language: data.language,
-                      content: data.content,
-                    },
-                  },
-                }));
-                state.setAgentStatus('monitor', 'idle', data.speech || 'Hệ thống vận hành ổn định.');
-                state.setAgentStatus('devops', 'idle', 'Đã release lên Production thành công! 🚀');
-                state.addEvent({
-                  agentId: 'agent-monitor',
-                  taskId: currentApproval.taskId,
-                  kind: 'pass',
-                  message: data.speech || 'Hệ thống ổn định 100%.',
-                  severity: 'ok',
-                });
-              }
-            })
-            .catch((err) => {
-              console.error('Monitor stage error:', err);
-            })
-            .finally(() => {
-              set({ isRealRunning: false, streamingStage: null });
+          if (courierId) {
+            await waitForCourierArrival(courierId);
+          }
+
+          try {
+            const r = await fetch('/api/pipeline', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                prompt,
+                stage: 'monitor',
+                apiKey:
+                  state.apiKey ||
+                  (typeof window !== 'undefined' ? localStorage.getItem('AGENT_TOWN_GEMINI_KEY') : ''),
+              }),
             });
+            const data = await r.json();
+            if (data.content) {
+              try {
+                const parsed = JSON.parse(data.content);
+                state.updateTelemetry({
+                  cpuUsage: parseInt(parsed.cpuUsage, 10) || 24,
+                  latencyMs: parseInt(parsed.p99Latency, 10) || 14,
+                  tps: parsed.tps || 342,
+                });
+              } catch {
+                // Keep existing telemetry if non-numeric
+              }
+              set((s) => ({
+                realArtifacts: {
+                  ...s.realArtifacts,
+                  monitor: {
+                    filename: data.filename,
+                    language: data.language,
+                    content: data.content,
+                  },
+                },
+              }));
+              state.setAgentStatus('monitor', 'idle', data.speech || 'Hệ thống vận hành ổn định.');
+              state.setAgentStatus('devops', 'idle', 'Đã release lên Production thành công! 🚀');
+              state.addEvent({
+                agentId: 'agent-monitor',
+                taskId: currentApproval.taskId,
+                kind: 'pass',
+                message: data.speech || 'Hệ thống ổn định 100%.',
+                severity: 'ok',
+              });
+
+              // Lưu phiên hoàn tất vào bộ nhớ Session History
+              const fullSession: PipelineSession = {
+                id: currentApproval.taskId,
+                timestamp: Date.now(),
+                prompt,
+                scenario:
+                  (state.tasks.find((t) => t.id === currentApproval.taskId)?.payload?.scenario as ScenarioMode) ||
+                  'feature',
+                artifacts: get().realArtifacts,
+                metrics: {
+                  latencyMs: get().latencyMs,
+                  tps: get().tps,
+                  cpuUsage: get().cpuUsage,
+                },
+              };
+              saveSessionToStorage(fullSession);
+              set((s) => ({
+                sessions: [fullSession, ...s.sessions.filter((ses) => ses.id !== fullSession.id)].slice(0, 5),
+              }));
+            }
+          } catch (err) {
+            console.error('Monitor stage error:', err);
+          } finally {
+            set({ isRealRunning: false, streamingStage: null });
+          }
         } else {
+          // Xử lý từ chối kèm phản hồi kỹ thuật từ Tech Lead
           sfx.playBugAlert();
-          set({ isRealRunning: false, streamingStage: null });
-          state.updateTask(currentApproval.taskId, { state: 'failed', stage: 'dev' });
-          state.setAgentStatus('devops', 'error', 'Release bị từ chối.');
-          state.setAgentStatus('dev', 'debugging', 'Bị từ chối tại cổng duyệt: đang review lại code...');
-          state.addCourier({
+          const prompt = state.tasks.find((t) => t.id === currentApproval.taskId)?.title || 'Tính năng';
+          const rejectMsg = feedbackNote || 'Release bị từ chối tại cổng duyệt: cần rà soát lại exception handling.';
+
+          state.updateTask(currentApproval.taskId, { state: 'in_progress', stage: 'dev' });
+          state.setAgentStatus('devops', 'error', `Release bị từ chối: "${rejectMsg.slice(0, 30)}..."`);
+          state.setAgentStatus('dev', 'debugging', `Tech Lead yêu cầu: "${rejectMsg.slice(0, 35)}...". Đang sửa...`);
+          state.addEvent({
+            agentId: 'agent-devops',
+            taskId: currentApproval.taskId,
+            kind: 'alert',
+            message: `Tech Lead từ chối: ${rejectMsg}`,
+            severity: 'warn',
+          });
+
+          const feedbackCourierId = state.addCourier({
             type: 'feedback',
             fromRole: 'devops',
             toRole: 'dev',
             boxType: 'bug',
-            label: 'Release Rejected',
+            label: 'Tech Lead Feedback',
           });
+
+          if (feedbackCourierId) {
+            await waitForCourierArrival(feedbackCourierId);
+          }
+
+          // Kỹ sư Dev dùng real AI để sửa code theo đúng feedbackNote
+          sfx.playTyping();
+          const curDevCode = state.realArtifacts.dev?.content || '';
+          const hotfixRes = await streamStageFromApi({
+            prompt,
+            stage: 'dev',
+            defaultFilename: 'source-code.diff',
+            context: {
+              feedbackNote: rejectMsg,
+              sourceCode: curDevCode,
+              prd: state.realArtifacts.pm?.content || '',
+            },
+            signal: activePipelineAbortController?.signal || new AbortController().signal,
+          });
+
+          if (hotfixRes.content) {
+            set((s) => ({
+              realArtifacts: {
+                ...s.realArtifacts,
+                dev: {
+                  filename: 'source-code.diff',
+                  language: 'diff',
+                  content: hotfixRes.content || '',
+                },
+              },
+            }));
+            state.setAgentStatus('dev', 'idle', 'Đã cập nhật bản vá PR theo phản hồi Tech Lead!');
+            state.addEvent({
+              agentId: 'agent-dev',
+              taskId: currentApproval.taskId,
+              kind: 'pass',
+              message: 'Dev đã cập nhật bản vá PR Diff theo yêu cầu.',
+              severity: 'ok',
+            });
+
+            const forwardCourierId = state.addCourier({
+              type: 'forward',
+              fromRole: 'dev',
+              toRole: 'devops',
+              boxType: 'pr',
+              label: 'Revised PR Diff',
+            });
+
+            if (forwardCourierId) {
+              await waitForCourierArrival(forwardCourierId);
+            }
+
+            state.setAgentStatus('devops', 'waiting', 'Bản vá mới đã cập nhật! Chờ Tech Lead duyệt lại.');
+            state.createApproval(currentApproval.taskId);
+            state.openApprovalModal(true);
+          } else {
+            set({ isRealRunning: false, streamingStage: null });
+          }
         }
       }
+    },
+
+    loadSession: (session) => {
+      sfx.playSuccessFanfare();
+      set((s) => ({
+        realArtifacts: session.artifacts,
+        latencyMs: session.metrics?.latencyMs ?? s.latencyMs,
+        tps: session.metrics?.tps ?? s.tps,
+        cpuUsage: session.metrics?.cpuUsage ?? s.cpuUsage,
+        streamingStage: null,
+        isRealRunning: false,
+        selectedAgentRole: 'dev',
+        isPromptModalOpen: false,
+      }));
+      get().setAgentStatus('orchestrator', 'idle', `Đã khôi phục phiên: "${session.prompt.slice(0, 28)}..."`);
+      get().setAgentStatus('dev', 'idle', `Bản vá "${session.artifacts.dev?.filename || 'diff'}" sẵn sàng.`);
+      get().addEvent({
+        agentId: 'agent-orchestrator',
+        taskId: session.id,
+        kind: 'pass',
+        message: `Đã khôi phục phiên: ${session.prompt}`,
+        severity: 'ok',
+      });
+    },
+
+    deleteSession: (id) => {
+      set((s) => {
+        const updated = s.sessions.filter((ses) => ses.id !== id);
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('AGENT_TOWN_SESSIONS', JSON.stringify(updated));
+          } catch {}
+        }
+        return { sessions: updated };
+      });
+    },
+
+    initClientStorage: () => {
+      if (typeof window === 'undefined') return;
+      const storedKey = localStorage.getItem('AGENT_TOWN_GEMINI_KEY') || '';
+      const storedSessions = loadSessionsFromStorage();
+      set({
+        apiKey: storedKey || get().apiKey,
+        sessions: storedSessions,
+      });
     },
 
     setApiKey: (apiKey: string) => {
@@ -682,6 +936,105 @@ export const useTownStore = create<TownState>((set, get) => {
 
     openApiKeyModal: (isApiKeyModalOpen: boolean) => set({ isApiKeyModalOpen }),
     openPromptModal: (isPromptModalOpen: boolean) => set({ isPromptModalOpen }),
+
+    updateAgentSystemPrompt: (role: AgentRole, prompt: string) => {
+      set((s) => ({
+        agents: {
+          ...s.agents,
+          [role]: { ...s.agents[role], systemPrompt: prompt },
+        },
+      }));
+    },
+
+    resetAgentSystemPrompt: (role: AgentRole) => {
+      set((s) => ({
+        agents: {
+          ...s.agents,
+          [role]: { ...s.agents[role], systemPrompt: INITIAL_AGENTS[role].systemPrompt },
+        },
+      }));
+    },
+
+    rerunStage: async (stage: AgentRole) => {
+      const state = get();
+      if (state.isRealRunning) return;
+
+      const agent = state.agents[stage];
+      if (!agent) return;
+
+      const abortController = new AbortController();
+      activePipelineAbortController = abortController;
+      const { signal } = abortController;
+
+      set({ isRealRunning: true, streamingStage: stage });
+      state.setAgentStatus(stage, 'working', `Đang chạy lại trạm với System Prompt tùy chỉnh...`);
+      sfx.playTyping();
+
+      const defaultFilename = state.realArtifacts[stage]?.filename || (
+        stage === 'orchestrator' ? 'MilestonePlan.json' :
+        stage === 'pm' ? 'PRD.md' :
+        stage === 'dev' ? 'source-code.diff' :
+        stage === 'review' ? 'ReviewComments.json' :
+        stage === 'qa' ? 'test-suite.spec.ts' :
+        stage === 'security' ? 'SecurityAudit.json' :
+        stage === 'devops' ? 'Dockerfile' : 'ClusterHealth.json'
+      );
+
+      const activeTask = state.tasks.find((t) => t.id === state.activeTaskId) || state.tasks[0];
+      const prompt = activeTask?.title || 'Tối ưu hóa và kiểm định hệ thống DevOps tự trị';
+
+      try {
+        const result = await streamStageFromApi({
+          prompt,
+          stage,
+          defaultFilename,
+          context: {
+            prd: state.realArtifacts.pm?.content || state.realArtifacts.orchestrator?.content || '',
+            sourceCode: state.realArtifacts.dev?.content || '',
+            reviewComments: state.realArtifacts.review?.content || '',
+            testReport: state.realArtifacts.qa?.content || '',
+          },
+          signal,
+        });
+
+        if (result.error) {
+          state.setAgentStatus(stage, 'error', result.error);
+          state.addEvent({
+            agentId: `agent-${stage}`,
+            taskId: state.activeTaskId || 'rerun-task',
+            kind: 'fail',
+            message: `Chạy lại thất bại tại ${stage}: ${result.error}`,
+            severity: 'error',
+          });
+        } else {
+          set((s) => ({
+            realArtifacts: {
+              ...s.realArtifacts,
+              [stage]: {
+                filename: result.filename || defaultFilename,
+                language: result.language || 'text',
+                content: result.content || '',
+              },
+            },
+          }));
+          state.setAgentStatus(stage, 'idle', result.speech || 'Đã chạy lại thành công.');
+          state.addEvent({
+            agentId: `agent-${stage}`,
+            taskId: state.activeTaskId || 'rerun-task',
+            kind: 'pass',
+            message: `Đã chạy lại thành công trạm ${stage} (${result.filename || defaultFilename})`,
+            severity: 'ok',
+          });
+          sfx.playSuccessFanfare();
+        }
+      } catch (err: unknown) {
+        if (!signal.aborted) {
+          state.setAgentStatus(stage, 'error', 'Lỗi không xác định khi chạy lại.');
+        }
+      } finally {
+        set({ isRealRunning: false, streamingStage: null });
+      }
+    },
 
     abortPipeline: () => {
       if (activePipelineAbortController) {
@@ -920,7 +1273,7 @@ ${pr.body || '_Không có mô tả chi tiết._'}
           severity: 'ok',
         });
 
-        get().addCourier({
+        const firstCourierId = get().addCourier({
           type: 'forward',
           fromRole: 'dev',
           toRole: 'review',
@@ -928,125 +1281,218 @@ ${pr.body || '_Không có mô tả chi tiết._'}
           label: `PR-${pr.number}.diff`,
         });
 
-        await abortableSleep(900, signal);
+        if (firstCourierId) {
+          await waitForCourierArrival(firstCourierId, signal);
+        }
 
-        const auditStages: {
-          stage: AgentRole;
-          defaultFilename: string;
-          workingMsg: string;
-          courierTo?: AgentRole;
-          boxType?: 'spec' | 'pr' | 'ticket' | 'deploy' | 'bug';
-          courierLabel?: string;
-        }[] = [
-          {
-            stage: 'review',
-            defaultFilename: 'ReviewComments.json',
-            workingMsg: `Đang review diff thực tế của PR #${pr.number}...`,
-            courierTo: 'qa',
-            boxType: 'pr',
-            courierLabel: 'Reviewed PR Diff',
+        // 1. Giai đoạn Tech Review diff thực tế
+        get().updateTask(taskId, { stage: 'review' });
+        get().setAgentStatus('review', 'working', `Đang review diff thực tế của PR #${pr.number}...`);
+        sfx.playTyping();
+        get().updateTelemetry({ cpuUsage: 42, latencyMs: 16, tps: 310 });
+
+        const reviewResult = await streamStageFromApi({
+          prompt: prTitle,
+          stage: 'review',
+          defaultFilename: 'ReviewComments.json',
+          context: {
+            prd: prContextMd,
+            sourceCode: diff,
+            scenario: 'github',
           },
-          {
+          signal,
+        });
+
+        if (signal.aborted) return;
+
+        if (reviewResult.error) {
+          get().setAgentStatus('review', 'error', reviewResult.error);
+          get().addEvent({
+            agentId: 'agent-review',
+            taskId,
+            kind: 'fail',
+            message: `Tạm dừng Audit tại review: ${reviewResult.error}`,
+            severity: 'error',
+          });
+          set({ isRealRunning: false, streamingStage: null });
+          return;
+        }
+
+        set((s) => ({
+          realArtifacts: {
+            ...s.realArtifacts,
+            review: {
+              filename: reviewResult.filename || 'ReviewComments.json',
+              language: reviewResult.language || 'json',
+              content: reviewResult.content || '',
+            },
+          },
+        }));
+
+        get().setAgentStatus('review', 'idle', reviewResult.speech || 'Hoàn thành Review.');
+        get().addEvent({
+          agentId: 'agent-review',
+          taskId,
+          kind: 'pass',
+          message: reviewResult.speech || 'Đã hoàn thành ReviewComments.json',
+          severity: 'ok',
+        });
+
+        // 2. DAG FORK: Phân nhánh song song Review ➔ (QA ∥ DevSecOps)
+        const qaCourierId = get().addCourier({
+          type: 'forward',
+          fromRole: 'review',
+          toRole: 'qa',
+          boxType: 'pr',
+          label: 'PR Diff for Test Suite',
+        });
+        const secCourierId = get().addCourier({
+          type: 'forward',
+          fromRole: 'review',
+          toRole: 'security',
+          boxType: 'deploy',
+          label: 'PR Diff for SAST Audit',
+        });
+
+        if (qaCourierId && secCourierId) {
+          await Promise.all([
+            waitForCourierArrival(qaCourierId, signal),
+            waitForCourierArrival(secCourierId, signal),
+          ]);
+        }
+
+        get().updateTask(taskId, { stage: 'qa' });
+        get().setAgentStatus('qa', 'working', `Đang sinh Unit Tests cho PR #${pr.number} (QA ∥ Security)...`);
+        get().setAgentStatus('security', 'working', `Đang quét SAST & OWASP cho PR #${pr.number} (QA ∥ Security)...`);
+        sfx.playTyping();
+        get().updateTelemetry({ cpuUsage: 80, latencyMs: 22, tps: 180 });
+
+        const [qaResult, secResult] = await Promise.all([
+          streamStageFromApi({
+            prompt: prTitle,
             stage: 'qa',
             defaultFilename: 'test-suite.spec.ts',
-            workingMsg: `Đang sinh bộ Regression & Unit Tests cho PR #${pr.number}...`,
-            courierTo: 'security',
-            boxType: 'ticket',
-            courierLabel: 'test-suite.spec.ts',
-          },
-          {
-            stage: 'security',
-            defaultFilename: 'SecurityAudit.json',
-            workingMsg: `Đang quét SAST & OWASP Top 10 trên diff PR #${pr.number}...`,
-            courierTo: 'devops',
-            boxType: 'deploy',
-            courierLabel: 'SecurityAudit.json',
-          },
-          {
-            stage: 'devops',
-            defaultFilename: 'Dockerfile',
-            workingMsg: `Đang chuẩn bị cấu hình Canary Release cho PR #${pr.number}...`,
-          },
-        ];
-
-        for (const step of auditStages) {
-          if (signal.aborted) return;
-
-          get().updateTask(taskId, { stage: step.stage });
-          get().setAgentStatus(step.stage, 'working', step.workingMsg);
-          sfx.playTyping();
-
-          if (step.stage === 'review') get().updateTelemetry({ cpuUsage: 42, latencyMs: 16, tps: 310 });
-          if (step.stage === 'qa') get().updateTelemetry({ cpuUsage: 76, latencyMs: 23, tps: 165 });
-          if (step.stage === 'security') get().updateTelemetry({ cpuUsage: 64, latencyMs: 19, tps: 215 });
-          if (step.stage === 'devops') get().updateTelemetry({ cpuUsage: 54, latencyMs: 17, tps: 240 });
-
-          const currentArtifacts = get().realArtifacts;
-          const result = await streamStageFromApi({
-            prompt: prTitle,
-            stage: step.stage,
-            defaultFilename: step.defaultFilename,
             context: {
               prd: prContextMd,
               sourceCode: diff,
-              reviewComments: currentArtifacts.review?.content || '',
-              testReport: currentArtifacts.qa?.content || '',
+              reviewComments: get().realArtifacts.review?.content || '',
               scenario: 'github',
             },
             signal,
-          });
-
-          if (signal.aborted) return;
-
-          if (result.error) {
-            get().setAgentStatus(step.stage, 'error', result.error);
-            get().addEvent({
-              agentId: `agent-${step.stage}`,
-              taskId,
-              kind: 'fail',
-              message: `Tạm dừng Audit tại ${step.stage}: ${result.error} (Diff PR #${pr.number} vẫn đã lưu tại trạm Dev!)`,
-              severity: 'error',
-            });
-            if (
-              result.error.toLowerCase().includes('api key') ||
-              result.error.toLowerCase().includes('gemini_api_key')
-            ) {
-              get().openApiKeyModal(true);
-            }
-            set({ isRealRunning: false, streamingStage: null });
-            return;
-          }
-
-          set((s) => ({
-            realArtifacts: {
-              ...s.realArtifacts,
-              [step.stage]: {
-                filename: result.filename || step.defaultFilename,
-                language: result.language || 'text',
-                content: result.content || '',
-              },
+          }),
+          streamStageFromApi({
+            prompt: prTitle,
+            stage: 'security',
+            defaultFilename: 'SecurityAudit.json',
+            context: {
+              prd: prContextMd,
+              sourceCode: diff,
+              reviewComments: get().realArtifacts.review?.content || '',
+              scenario: 'github',
             },
-          }));
+            signal,
+          }),
+        ]);
 
-          get().setAgentStatus(step.stage, 'idle', result.speech || 'Hoàn thành kiểm toán.');
-          get().addEvent({
-            agentId: `agent-${step.stage}`,
-            taskId,
-            kind: 'pass',
-            message: result.speech || `Hoàn thành ${step.defaultFilename}`,
-            severity: 'ok',
-          });
+        if (signal.aborted) return;
 
-          if (step.courierTo && step.boxType && step.courierLabel) {
-            get().addCourier({
-              type: 'forward',
-              fromRole: step.stage,
-              toRole: step.courierTo,
-              boxType: step.boxType,
-              label: step.courierLabel,
-            });
-          }
+        set((s) => ({
+          realArtifacts: {
+            ...s.realArtifacts,
+            qa: {
+              filename: qaResult.filename || 'test-suite.spec.ts',
+              language: qaResult.language || 'typescript',
+              content: qaResult.content || '',
+            },
+            security: {
+              filename: secResult.filename || 'SecurityAudit.json',
+              language: secResult.language || 'json',
+              content: secResult.content || '',
+            },
+          },
+        }));
+
+        get().setAgentStatus('qa', 'idle', qaResult.speech || 'Hoàn thành QA.');
+        get().setAgentStatus('security', 'idle', secResult.speech || 'Hoàn thành Security Audit.');
+        get().addEvent({
+          agentId: 'agent-qa',
+          taskId,
+          kind: 'pass',
+          message: qaResult.speech || 'Đã tạo xong test-suite.spec.ts',
+          severity: 'ok',
+        });
+        get().addEvent({
+          agentId: 'agent-security',
+          taskId,
+          kind: 'pass',
+          message: secResult.speech || 'Đã kiểm toán SAST 0 High CVEs',
+          severity: 'ok',
+        });
+
+        // 3. DAG JOIN: QA + Security đồng thời gửi Artifacts về Release Eng (DevOps)
+        const qaToDevopsId = get().addCourier({
+          type: 'forward',
+          fromRole: 'qa',
+          toRole: 'devops',
+          boxType: 'ticket',
+          label: 'test-suite.spec.ts',
+        });
+        const secToDevopsId = get().addCourier({
+          type: 'forward',
+          fromRole: 'security',
+          toRole: 'devops',
+          boxType: 'deploy',
+          label: 'SecurityAudit.json',
+        });
+
+        if (qaToDevopsId && secToDevopsId) {
+          await Promise.all([
+            waitForCourierArrival(qaToDevopsId, signal),
+            waitForCourierArrival(secToDevopsId, signal),
+          ]);
         }
+
+        // 4. Giai đoạn DevOps: Canary Dockerfile & Release
+        get().updateTask(taskId, { stage: 'devops' });
+        get().setAgentStatus('devops', 'working', `Đang cấu hình Dockerfile & Canary Release cho PR #${pr.number}...`);
+        sfx.playTyping();
+        get().updateTelemetry({ cpuUsage: 54, latencyMs: 17, tps: 240 });
+
+        const devopsResult = await streamStageFromApi({
+          prompt: prTitle,
+          stage: 'devops',
+          defaultFilename: 'Dockerfile',
+          context: {
+            prd: prContextMd,
+            sourceCode: diff,
+            reviewComments: get().realArtifacts.review?.content || '',
+            testReport: get().realArtifacts.qa?.content || '',
+            scenario: 'github',
+          },
+          signal,
+        });
+
+        if (signal.aborted) return;
+
+        set((s) => ({
+          realArtifacts: {
+            ...s.realArtifacts,
+            devops: {
+              filename: devopsResult.filename || 'Dockerfile',
+              language: devopsResult.language || 'dockerfile',
+              content: devopsResult.content || '',
+            },
+          },
+        }));
+
+        get().setAgentStatus('devops', 'idle', devopsResult.speech || 'Hoàn thành Dockerfile.');
+        get().addEvent({
+          agentId: 'agent-devops',
+          taskId,
+          kind: 'pass',
+          message: devopsResult.speech || 'Đã tạo Dockerfile cho PR',
+          severity: 'ok',
+        });
 
         set({ streamingStage: null });
         get().setAgentStatus(
@@ -1134,7 +1580,7 @@ ${pr.body || '_Không có mô tả chi tiết._'}
         severity: 'ok',
       });
 
-      const pipelineStages: {
+      const initialStages: {
         stage: AgentRole;
         defaultFilename: string;
         workingMsg: string;
@@ -1170,35 +1616,11 @@ ${pr.body || '_Không có mô tả chi tiết._'}
           stage: 'review',
           defaultFilename: 'ReviewComments.json',
           workingMsg: 'Đang kiểm tra chất lượng code & review PR diff...',
-          courierTo: 'qa',
-          boxType: 'pr',
-          courierLabel: 'Approved PR',
-        },
-        {
-          stage: 'qa',
-          defaultFilename: 'test-suite.spec.ts',
-          workingMsg: 'Đang tạo bộ test cases tự động (unit & edge cases)...',
-          courierTo: 'security',
-          boxType: 'ticket',
-          courierLabel: 'test-suite.spec.ts',
-        },
-        {
-          stage: 'security',
-          defaultFilename: 'SecurityAudit.json',
-          workingMsg: 'Đang quét SAST & kiểm tra bảo mật OWASP Top 10...',
-          courierTo: 'devops',
-          boxType: 'deploy',
-          courierLabel: 'SecurityAudit.json',
-        },
-        {
-          stage: 'devops',
-          defaultFilename: 'Dockerfile',
-          workingMsg: 'Đang đóng gói Dockerfile & cấu hình Canary rollout...',
         },
       ];
 
       try {
-        for (const step of pipelineStages) {
+        for (const step of initialStages) {
           if (signal.aborted) return;
           const { stage, defaultFilename, workingMsg, courierTo, boxType, courierLabel } = step;
 
@@ -1209,9 +1631,6 @@ ${pr.body || '_Không có mô tả chi tiết._'}
           if (stage === 'pm') get().updateTelemetry({ cpuUsage: 24, latencyMs: 14, tps: 340 });
           if (stage === 'dev') get().updateTelemetry({ cpuUsage: 48, latencyMs: 16, tps: 290 });
           if (stage === 'review') get().updateTelemetry({ cpuUsage: 36, latencyMs: 15, tps: 310 });
-          if (stage === 'qa') get().updateTelemetry({ cpuUsage: 78, latencyMs: 24, tps: 150 });
-          if (stage === 'security') get().updateTelemetry({ cpuUsage: 65, latencyMs: 19, tps: 210 });
-          if (stage === 'devops') get().updateTelemetry({ cpuUsage: 59, latencyMs: 18, tps: 220 });
 
           const currentArtifacts = get().realArtifacts;
           const data = await streamStageFromApi({
@@ -1273,106 +1692,344 @@ ${pr.body || '_Không có mô tả chi tiết._'}
             severity: 'ok',
           });
 
-          // Kịch bản Feedback Loop 1: QA bắt bug -> Shipper chạy ngược về Dev vá lỗi
-          if (scenario === 'bug' && stage === 'qa') {
-            sfx.playBugAlert();
-            get().setAgentStatus('qa', 'error', 'Test fail: 2/48 case (lỗi hết hạn token refresh) 🐛');
-            get().addEvent({
-              agentId: 'agent-qa',
-              taskId,
-              kind: 'fail',
-              message: 'QA phát hiện 2 test cases thất bại: Token refresh chưa bắt exception!',
-              severity: 'error',
-            });
-            get().addCourier({
-              type: 'feedback',
-              fromRole: 'qa',
-              toRole: 'dev',
-              boxType: 'bug',
-              label: 'Bug: Token Refresh',
-            });
-            get().setAgentStatus('dev', 'debugging', 'Nhận Bug report từ QA: Đang viết bản vá lỗi token refresh...');
-            await abortableSleep(2600, signal);
-            sfx.playTyping();
-            get().setAgentStatus('dev', 'working', 'Đang cập nhật lại diff PR và hoàn tất bản vá...');
-            get().addCourier({
-              type: 'forward',
-              fromRole: 'dev',
-              toRole: 'qa',
-              boxType: 'pr',
-              label: 'Hotfix PR Diff',
-            });
-            await abortableSleep(1300, signal);
-            get().setAgentStatus('dev', 'idle', 'Đã fix xong bug và push bản vá PR!');
-            get().setAgentStatus('qa', 'idle', '48/48 test cases PASSED (Coverage 98.4%) ✅');
-            get().addEvent({
-              agentId: 'agent-qa',
-              taskId,
-              kind: 'pass',
-              message: 'Re-test thành công sau bản vá của Dev: 100% test cases PASSED.',
-              severity: 'ok',
-            });
-          }
-
-          // Kịch bản Feedback Loop 2: AppSec Audit phát hiện rủi ro SAST/CVE -> Dev vá bảo mật OWASP
-          if (scenario === 'security' && stage === 'security') {
-            sfx.playBugAlert();
-            get().setAgentStatus(
-              'security',
-              'error',
-              'Cảnh báo SAST: Phát hiện rủi ro OWASP Injection & CVE dependency 🛡️'
-            );
-            get().addEvent({
-              agentId: 'agent-security',
-              taskId,
-              kind: 'alert',
-              message: 'DevSecOps phát hiện thiếu input sanitization & gói phụ thuộc dính CVE. Yêu cầu Dev vá gấp!',
-              severity: 'warn',
-            });
-            get().addCourier({
-              type: 'feedback',
-              fromRole: 'security',
-              toRole: 'dev',
-              boxType: 'bug',
-              label: 'SAST CVE Report',
-            });
-            get().setAgentStatus(
-              'dev',
-              'debugging',
-              'Nhận cảnh báo từ DevSecOps: Đang bổ sung sanitize input & nâng cấp package...'
-            );
-            await abortableSleep(2500, signal);
-            sfx.playTyping();
-            get().setAgentStatus('dev', 'working', 'Đang đóng gói bản vá bảo mật chuẩn OWASP Top 10...');
-            get().addCourier({
-              type: 'forward',
-              fromRole: 'dev',
-              toRole: 'security',
-              boxType: 'pr',
-              label: 'OWASP Security Patch',
-            });
-            await abortableSleep(1300, signal);
-            get().setAgentStatus('dev', 'idle', 'Đã hoàn tất bản vá bảo mật OWASP!');
-            get().setAgentStatus('security', 'idle', 'Quét lại SAST: 0 High CVEs · OWASP Top 10 Compliant 🛡️');
-            get().addEvent({
-              agentId: 'agent-security',
-              taskId,
-              kind: 'pass',
-              message: 'DevSecOps xác nhận bản vá hợp lệ: 0 High/Critical CVEs.',
-              severity: 'ok',
-            });
-          }
-
           if (courierTo && boxType && courierLabel) {
-            get().addCourier({
+            const forwardCourierId = get().addCourier({
               type: 'forward',
               fromRole: stage,
               toRole: courierTo,
               boxType,
               label: courierLabel,
             });
+            if (forwardCourierId) {
+              await waitForCourierArrival(forwardCourierId, signal);
+            }
           }
         }
+
+        if (signal.aborted) return;
+
+        // ========================================================
+        // DAG FORK: Phân nhánh song song Review ➔ (QA ∥ DevSecOps)
+        // ========================================================
+        const qaCourierId = get().addCourier({
+          type: 'forward',
+          fromRole: 'review',
+          toRole: 'qa',
+          boxType: 'ticket',
+          label: 'PR for Automation Tests',
+        });
+        const secCourierId = get().addCourier({
+          type: 'forward',
+          fromRole: 'review',
+          toRole: 'security',
+          boxType: 'deploy',
+          label: 'PR for SAST Audit',
+        });
+
+        if (qaCourierId && secCourierId) {
+          await Promise.all([
+            waitForCourierArrival(qaCourierId, signal),
+            waitForCourierArrival(secCourierId, signal),
+          ]);
+        }
+
+        get().updateTask(taskId, { stage: 'qa' });
+        get().setAgentStatus('qa', 'working', 'Đang tạo bộ test cases tự động (QA ∥ Security song song)...');
+        get().setAgentStatus('security', 'working', 'Đang quét SAST & kiểm tra OWASP Top 10 (QA ∥ Security song song)...');
+        sfx.playTyping();
+        get().updateTelemetry({ cpuUsage: 84, latencyMs: 23, tps: 175 });
+
+        const currentArtifactsAfterReview = get().realArtifacts;
+        const sharedContext = {
+          prd: currentArtifactsAfterReview.pm?.content || currentArtifactsAfterReview.orchestrator?.content || '',
+          sourceCode: currentArtifactsAfterReview.dev?.content || '',
+          reviewComments: currentArtifactsAfterReview.review?.content || '',
+          scenario,
+        };
+
+        const [qaData, secData] = await Promise.all([
+          streamStageFromApi({
+            prompt: userPrompt,
+            stage: 'qa',
+            defaultFilename: 'test-suite.spec.ts',
+            context: sharedContext,
+            signal,
+          }),
+          streamStageFromApi({
+            prompt: userPrompt,
+            stage: 'security',
+            defaultFilename: 'SecurityAudit.json',
+            context: sharedContext,
+            signal,
+          }),
+        ]);
+
+        if (signal.aborted) return;
+
+        set((s) => ({
+          realArtifacts: {
+            ...s.realArtifacts,
+            qa: {
+              filename: qaData.filename || 'test-suite.spec.ts',
+              language: qaData.language || 'typescript',
+              content: qaData.content || '',
+            },
+            security: {
+              filename: secData.filename || 'SecurityAudit.json',
+              language: secData.language || 'json',
+              content: secData.content || '',
+            },
+          },
+        }));
+
+        get().setAgentStatus('qa', 'idle', qaData.speech || 'Hoàn thành QA.');
+        get().setAgentStatus('security', 'idle', secData.speech || 'Hoàn thành Security Audit.');
+        get().addEvent({
+          agentId: 'agent-qa',
+          taskId,
+          kind: 'pass',
+          message: qaData.speech || 'Đã tạo xong test-suite.spec.ts',
+          severity: 'ok',
+        });
+        get().addEvent({
+          agentId: 'agent-security',
+          taskId,
+          kind: 'pass',
+          message: secData.speech || 'Đã kiểm toán SAST 0 High CVEs',
+          severity: 'ok',
+        });
+
+        // Kịch bản Feedback Loop 1: QA bắt bug -> Shipper chạy ngược về Dev vá lỗi thật qua AI
+        if (scenario === 'bug') {
+          sfx.playBugAlert();
+          get().setAgentStatus('qa', 'error', 'Test fail: 2/48 case (lỗi hết hạn token refresh) 🐛');
+          get().addEvent({
+            agentId: 'agent-qa',
+            taskId,
+            kind: 'fail',
+            message: 'QA phát hiện 2 test cases thất bại: Token refresh chưa bắt exception!',
+            severity: 'error',
+          });
+          const bugCourierId = get().addCourier({
+            type: 'feedback',
+            fromRole: 'qa',
+            toRole: 'dev',
+            boxType: 'bug',
+            label: 'Bug: Token Refresh',
+          });
+          if (bugCourierId) {
+            await waitForCourierArrival(bugCourierId, signal);
+          }
+
+          get().setAgentStatus('dev', 'debugging', 'Nhận Bug report từ QA: Đang viết bản vá lỗi token refresh...');
+          sfx.playTyping();
+
+          const hotfixResult = await streamStageFromApi({
+            prompt: userPrompt,
+            stage: 'dev',
+            defaultFilename: 'source-code.diff',
+            context: {
+              feedbackNote:
+                'QA Test fail 2/48: Lỗi token refresh hết hạn không bắt exception. Bổ sung catch block, renew retry và try/catch an toàn.',
+              sourceCode: get().realArtifacts.dev?.content || '',
+              prd: get().realArtifacts.pm?.content || '',
+              scenario: 'bug',
+            },
+            signal,
+          });
+
+          if (hotfixResult.content) {
+            set((s) => ({
+              realArtifacts: {
+                ...s.realArtifacts,
+                dev: {
+                  filename: 'source-code.diff',
+                  language: 'diff',
+                  content: hotfixResult.content || '',
+                },
+              },
+            }));
+          }
+
+          get().setAgentStatus('dev', 'idle', 'Đã fix xong bug và push bản vá PR!');
+          const hotfixCourierId = get().addCourier({
+            type: 'forward',
+            fromRole: 'dev',
+            toRole: 'qa',
+            boxType: 'pr',
+            label: 'Hotfix PR Diff',
+          });
+          if (hotfixCourierId) {
+            await waitForCourierArrival(hotfixCourierId, signal);
+          }
+
+          get().setAgentStatus('qa', 'idle', '48/48 test cases PASSED (Coverage 98.4%) ✅');
+          get().addEvent({
+            agentId: 'agent-qa',
+            taskId,
+            kind: 'pass',
+            message: 'Re-test thành công sau bản vá AI của Dev: 100% test cases PASSED.',
+            severity: 'ok',
+          });
+        }
+
+        // Kịch bản Feedback Loop 2: AppSec Audit phát hiện rủi ro SAST/CVE -> Dev vá bảo mật OWASP thật qua AI
+        if (scenario === 'security') {
+          sfx.playBugAlert();
+          get().setAgentStatus(
+            'security',
+            'error',
+            'Cảnh báo SAST: Phát hiện rủi ro OWASP Injection & CVE dependency 🛡️'
+          );
+          get().addEvent({
+            agentId: 'agent-security',
+            taskId,
+            kind: 'alert',
+            message: 'DevSecOps phát hiện thiếu input sanitization & gói phụ thuộc dính CVE. Yêu cầu Dev vá gấp!',
+            severity: 'warn',
+          });
+          const secCourierId = get().addCourier({
+            type: 'feedback',
+            fromRole: 'security',
+            toRole: 'dev',
+            boxType: 'bug',
+            label: 'SAST CVE Report',
+          });
+          if (secCourierId) {
+            await waitForCourierArrival(secCourierId, signal);
+          }
+
+          get().setAgentStatus(
+            'dev',
+            'debugging',
+            'Nhận cảnh báo từ DevSecOps: Đang bổ sung sanitize input & nâng cấp package...'
+          );
+          sfx.playTyping();
+
+          const secHotfixResult = await streamStageFromApi({
+            prompt: userPrompt,
+            stage: 'dev',
+            defaultFilename: 'source-code.diff',
+            context: {
+              feedbackNote:
+                'DevSecOps SAST Alert: Phát hiện rủi ro Injection & dependency lỗi thời. Hãy bổ sung validate/sanitize input, parameterized query và loại bỏ secrets.',
+              sourceCode: get().realArtifacts.dev?.content || '',
+              prd: get().realArtifacts.pm?.content || '',
+              scenario: 'security',
+            },
+            signal,
+          });
+
+          if (secHotfixResult.content) {
+            set((s) => ({
+              realArtifacts: {
+                ...s.realArtifacts,
+                dev: {
+                  filename: 'source-code.diff',
+                  language: 'diff',
+                  content: secHotfixResult.content || '',
+                },
+              },
+            }));
+          }
+
+          get().setAgentStatus('dev', 'idle', 'Đã hoàn tất bản vá bảo mật OWASP!');
+          const patchCourierId = get().addCourier({
+            type: 'forward',
+            fromRole: 'dev',
+            toRole: 'security',
+            boxType: 'pr',
+            label: 'OWASP Security Patch',
+          });
+          if (patchCourierId) {
+            await waitForCourierArrival(patchCourierId, signal);
+          }
+
+          get().setAgentStatus('security', 'idle', 'Quét lại SAST: 0 High CVEs · OWASP Top 10 Compliant 🛡️');
+          get().addEvent({
+            agentId: 'agent-security',
+            taskId,
+            kind: 'pass',
+            message: 'DevSecOps xác nhận bản vá hợp lệ: 0 High/Critical CVEs.',
+            severity: 'ok',
+          });
+        }
+
+        // ========================================================
+        // DAG JOIN: QA + Security đồng thời gửi Artifacts tới DevOps
+        // ========================================================
+        const qaToDevopsId = get().addCourier({
+          type: 'forward',
+          fromRole: 'qa',
+          toRole: 'devops',
+          boxType: 'ticket',
+          label: 'test-suite.spec.ts (Passed)',
+        });
+        const secToDevopsId = get().addCourier({
+          type: 'forward',
+          fromRole: 'security',
+          toRole: 'devops',
+          boxType: 'deploy',
+          label: 'SecurityAudit.json (0 CVE)',
+        });
+
+        if (qaToDevopsId && secToDevopsId) {
+          await Promise.all([
+            waitForCourierArrival(qaToDevopsId, signal),
+            waitForCourierArrival(secToDevopsId, signal),
+          ]);
+        }
+
+        // ========================================================
+        // Giai đoạn Release Eng (DevOps): Dockerfile & Canary Rollout
+        // ========================================================
+        get().updateTask(taskId, { stage: 'devops' });
+        get().setAgentStatus('devops', 'working', 'Đang đóng gói Dockerfile & cấu hình Canary rollout...');
+        sfx.playTyping();
+        get().updateTelemetry({ cpuUsage: 59, latencyMs: 18, tps: 220 });
+
+        const latestArtifacts = get().realArtifacts;
+        const devopsData = await streamStageFromApi({
+          prompt: userPrompt,
+          stage: 'devops',
+          defaultFilename: 'Dockerfile',
+          context: {
+            prd: latestArtifacts.pm?.content || latestArtifacts.orchestrator?.content || '',
+            sourceCode: latestArtifacts.dev?.content || '',
+            reviewComments: latestArtifacts.review?.content || '',
+            testReport: latestArtifacts.qa?.content || '',
+            scenario,
+          },
+          signal,
+        });
+
+        if (signal.aborted) return;
+
+        if (devopsData.error) {
+          get().setAgentStatus('devops', 'error', devopsData.error);
+          set({ isRealRunning: false, streamingStage: null });
+          return;
+        }
+
+        set((s) => ({
+          realArtifacts: {
+            ...s.realArtifacts,
+            devops: {
+              filename: devopsData.filename || 'Dockerfile',
+              language: devopsData.language || 'dockerfile',
+              content: devopsData.content || '',
+            },
+          },
+        }));
+
+        get().setAgentStatus('devops', 'idle', devopsData.speech || 'Hoàn thành Dockerfile.');
+        get().addEvent({
+          agentId: 'agent-devops',
+          taskId,
+          kind: 'pass',
+          message: devopsData.speech || 'Đã đóng gói Dockerfile thành công',
+          severity: 'ok',
+        });
 
         set({ streamingStage: null });
         get().setAgentStatus(

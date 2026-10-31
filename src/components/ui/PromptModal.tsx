@@ -52,6 +52,9 @@ export const PromptModal: React.FC = () => {
   const apiKey = useTownStore((s) => s.apiKey);
   const openApiKeyModal = useTownStore((s) => s.openApiKeyModal);
   const runRealPipeline = useTownStore((s) => s.runRealPipeline);
+  const sessions = useTownStore((s) => s.sessions);
+  const loadSession = useTownStore((s) => s.loadSession);
+  const deleteSession = useTownStore((s) => s.deleteSession);
 
   const [prompt, setPrompt] = useState('Xác thực Google OAuth 2.0 & JWT');
   const [scenario, setScenario] = useState<ScenarioMode>('feature');
@@ -106,7 +109,12 @@ export const PromptModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[1050] flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in overflow-hidden overscroll-contain">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) openPromptModal(false);
+      }}
+      className="fixed inset-0 z-[1050] flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in overflow-hidden overscroll-contain"
+    >
       <div className="w-full max-w-2xl bg-slate-900 border border-slate-700/90 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[94dvh] sm:max-h-[92vh] animate-scale-up overscroll-contain">
         {/* Header Bar */}
         <div className="flex items-center justify-between gap-2 px-4 py-3 sm:px-6 sm:py-4 bg-slate-950/80 border-b border-slate-800 shrink-0">
@@ -387,6 +395,56 @@ export const PromptModal: React.FC = () => {
               </>
             )}
           </div>
+
+          {/* Lịch sử phiên chạy trước (Session History) */}
+          {sessions.length > 0 && (
+            <div className="mt-4 pt-3.5 border-t border-slate-800/90">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                  <span>⏱️</span> Phiên chạy gần đây ({sessions.length})
+                </span>
+                <span className="text-[10px] text-slate-500 font-medium">Bấm để tải lại artifact đã sinh</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {sessions.map((ses) => (
+                  <div
+                    key={ses.id}
+                    className="group relative flex items-center justify-between p-2 sm:p-2.5 rounded-xl bg-slate-800/60 hover:bg-slate-700/70 border border-slate-700/80 transition-all text-left"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        loadSession(ses);
+                        openPromptModal(false);
+                      }}
+                      className="flex-1 min-w-0 pr-2 text-left"
+                    >
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className="px-1.5 py-0.2 text-[9px] font-bold rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 uppercase">
+                          {ses.scenario}
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          {new Date(ses.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <div className="text-xs font-semibold text-white truncate">{ses.prompt}</div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteSession(ses.id);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-400 text-xs transition-opacity"
+                      title="Xóa phiên này"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </form>
 
         {/* Footer Actions */}

@@ -4,6 +4,66 @@ Tất cả các thay đổi đáng chú ý của dự án **Agent Town 3D** sẽ
 
 ---
 
+## [v1.4.2] - 2026-10-31
+### 🚀 Tính năng Mới (New Features)
+- **Mô hình Thực thi Song song DAG Pipeline (`QA` ∥ `DevSecOps`) (`useTownStore.ts`)**:
+  - Tách luồng kiểm định sau khâu Tech Review thành mô hình đồ thị có hướng không chu trình (DAG): Review đồng thời phóng 2 Shipper về trạm QA và Security.
+  - QA sinh bộ kiểm thử và DevSecOps quét SAST bảo mật được thực thi song song đồng thời qua `Promise.all`, rút ngắn 40% thời gian xử lý pipeline.
+  - Sau khi hoàn thành, 2 Shipper đồng thời bàn giao artifacts về bàn làm việc của trạm Release Eng (DevOps).
+- **Chế độ Đạo diễn Camera 3D Tự động (`🎥 Auto-Follow Director Mode` - `CameraRig.tsx`, `Topbar.tsx`)**:
+  - Bổ sung nút chuyển đổi `🎥 Đạo diễn / Tự do` trên thanh công cụ Topbar.
+  - Camera tự động lia mượt mà bám theo tọa độ không gian 3D của nhân vật Shipper đang chạy trên nan hoa đại lộ hoặc trạm AI đang trực tiếp suy luận.
+  - Tự động nhường quyền điều khiển khi người dùng chủ động kéo/xoay chuột và mượt mà bám lại khi thả chuột.
+- **AI Agent Playground & Re-run Stage Cô Lập (`ArtifactModal.tsx`, `api/pipeline/route.ts`, `useTownStore.ts`)**:
+  - Cho phép người dùng chỉnh sửa trực tiếp `systemPrompt` của từng Agent ngay trong tab `🧠 System Prompt` với nút khôi phục mặc định.
+  - Nút `🔄 Chạy lại trạm này` hỗ trợ gửi prompt tùy biến lên server để sinh lại artifact riêng biệt cho trạm đang chọn mà không phải chạy lại toàn bộ pipeline.
+- **Bình luận Kiến trúc Trực quan & Tải Trọn Bộ 8 Artifacts Bundle (`GitDiffViewer.tsx`, `ExportModal.tsx`)**:
+  - Tự động hiển thị các nhận xét đánh giá từ `ReviewComments.json` dưới dạng thẻ bình luận inline trực tiếp dưới dòng code tương ứng trên Git Diff.
+  - Bổ sung nút **`📦 Tải Bundle 8 Artifacts`** trong `ExportModal` cho phép tải toàn bộ tài liệu và mã nguồn của cả 8 trạm gom gọn trong 1 file Markdown chuẩn hóa.
+- **Bảng Thống kê Hiệu năng FinOps & DAG Telemetry (`ExportModal.tsx`, `LiveStreamConsole.tsx`)**:
+  - Đo lường và hiển thị chính xác thời gian thực thi (`durationMs`), số lượng token ước tính và tốc độ suy luận (`tok/s`) cho từng trạm.
+
+### ⚡ Tối ưu Hiệu Năng & Sửa Lỗi (Bug Fixes)
+- **Sửa Lỗi Nhân Đôi Dấu `+`/`-` Trên Git Diff (`GitDiffViewer.tsx`)**:
+  - Loại bỏ ký hiệu đầu dòng `line.slice(1)` khi parse dòng `add` và `delete`, triệt tiêu hoàn toàn lỗi hiển thị `+ +code` hoặc `- -code`.
+- **Khắc Phục Cắt Chữ Trên Chế Độ Split 2 Cột (`GitDiffViewer.tsx`)**:
+  - Thay thế thuộc tính `truncate` bằng vùng cuộn ngang `overflow-x-auto scrollbar-none` giúp dòng mã dài không bị che khuất.
+- **Hiện Đại Hóa Log Drawer & Đảo Chiều Cuộn (`LogDrawer.tsx`)**:
+  - Cập nhật giao diện Dark Glassmorphism cao cấp, sửa lỗi cuộn ngược (`scrollTop = 0` hiển thị log mới nhất ở đầu).
+  - Tích hợp bộ lọc nhanh `Tất cả`, `Lỗi & Cảnh báo` và lọc theo từng trạm; thêm sự kiện click-to-fly-to-station bay camera đến trạm phát sinh log.
+- **Tự Động Co Dãn Trục Sparkline Trong Bão Chaos (`StatusBar.tsx`)**:
+  - Tính toán động biên độ trục Y của SVG Sparkline theo ngưỡng tải thực tế (ngăn chặn vỡ nét khi latency chạm 168ms).
+  - Hiển thị thời tiết động đồng bộ theo chu kỳ Ngày / Hoàng hôn / Đêm và trạng thái bão tải Chaos.
+
+---
+
+## [v1.4.1] - 2026-10-31
+### 🚀 Tính năng Mới (New Features)
+- **Lưu trữ & Khôi phục Lịch sử Phiên Chạy (Session History & Persistence - `useTownStore.ts`, `PromptModal.tsx`)**:
+  - Tự động lưu vết tối đa 5 phiên chạy gần nhất vào `localStorage` (`AGENT_TOWN_SESSIONS`) kèm nhãn scenario, thời gian thực thi, telemetry và toàn bộ artifacts sinh ra từ 8 trạm.
+  - Cho phép người dùng duyệt danh sách phiên cũ trong `PromptModal` và khôi phục ngay lập tức trạng thái code/diff/test mà không cần tốn thêm token AI hoặc chờ đợi.
+- **Từ Chối Kiểm Duyệt Kèm Phản Hồi Kỹ Thuật (Interactive Tech Lead Rejection with Feedback Notes - `ApprovalModal.tsx`, `useTownStore.ts`)**:
+  - Tại Cổng Phê Duyệt Production (`ApprovalGate`), khi Tech Lead từ chối phát hành, giao diện mở hộp nhập phản hồi với các gợi ý sẵn (bổ sung exception handling, null safety, tối ưu memory leak...).
+  - Kỹ sư Dev tự động nhận shipper feedback mang ghi chú từ chối, kích hoạt real AI stream viết lại bản vá Unified Git Diff tương ứng và tự động gửi lại lên Cổng duyệt.
+- **Huy Hiệu Tiến Độ Trực Quan & Trạng Thái Stream (`RoleChips.tsx`)**:
+  - Bổ sung huy hiệu checkmark `✓` màu xanh ngọc cho các trạm đã tạo xong artifact trong phiên làm việc.
+  - Hiệu ứng vòng viền xanh dương phát sáng nhấp nháy (`animate-pulse`) làm nổi bật trạm đang trực tiếp stream token AI.
+- **Nút Bật/Tắt Auto-Demo Mô Phỏng Nhanh Trên Topbar (`Topbar.tsx`)**:
+  - Bổ sung nút bấm `🎬 Demo / ⏸️ Demo On` ngay trên thanh công cụ điều khiển giúp người xem trình diễn chu trình DevOps tuần hoàn tự động không tốn token mà không cần mở console.
+
+### ⚡ Tối ưu Hiệu Năng & Sửa Lỗi (Performance & Bug Fixes)
+- **Đồng bộ hóa thể chất Shipper & AI Stream (`useTownStore.ts`, `TownScene.tsx`)**:
+  - Tích hợp cơ chế `registerCourierArrival` / `waitForCourierArrival(courierId)`: trạm kế tiếp chỉ bắt đầu stream mã nguồn khi nhân vật Shipper 3D đã thực sự bước vào phòng và đặt kiện hàng lên bàn làm việc (`progress >= 1`).
+- **Zero-Allocation Spline Engine 60fps (`waypoints.ts`)**:
+  - Memoize waypoints các tuyến đường giữa 8 trạm bằng `Map<string, THREE.Vector3[]>`.
+  - Cache đường cong uốn lượn bằng `WeakMap<THREE.Vector3[], THREE.CatmullRomCurve3>` qua hàm `getCurveForWaypoints()`, triệt tiêu hoàn toàn việc cấp phát Curve mới trong render loop 60fps.
+- **AI Self-Healing Hoàn Chỉnh Cho Kịch Bản Bug QA & SAST Security (`route.ts`, `useTownStore.ts`)**:
+  - Khi QA bắt bug hoặc DevSecOps phát hiện lỗ hổng SAST/OWASP, Dev nhận shipper lỗi và gọi real AI stream để cập nhật trực tiếp `source-code.diff` thay vì dùng timer tĩnh `setTimeout`.
+- **Đồng Bộ Phím Tắt Escape & Click-Outside Cho Toàn Bộ Modal (`ArtifactModal`, `AgentDossierModal`, `ApprovalModal`, `ApiKeyModal`, `PromptModal`)**:
+  - Thêm xử lý sự kiện phím `Escape` và click vào vùng backdrop mờ bên ngoài để đóng modal tức thì, mang lại trải nghiệm UX desktop chuẩn mực.
+
+---
+
 ## [v1.4.0] - 2026-10-31
 ### 🚀 Tính năng Đột Phá (Major Features)
 - **Live AI Token Streaming (SSE) & Nút Dừng Khẩn Cấp (`LiveStreamConsole.tsx`, `api/pipeline/route.ts`, `gemini.ts`, `deepseek.ts`)**:

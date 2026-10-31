@@ -243,6 +243,22 @@ export const ApprovalModal: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('checklist');
   const [expandedStation, setExpandedStation] = useState<AgentRole | null>('review');
   const [copied, setCopied] = useState(false);
+  const [showRejectForm, setShowRejectForm] = useState(false);
+  const [rejectFeedback, setRejectFeedback] = useState('Thiếu try/catch và input validation khi xử lý token');
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isApprovalModalOpen) {
+        if (showRejectForm) {
+          setShowRejectForm(false);
+        } else {
+          openApprovalModal(false);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isApprovalModalOpen, openApprovalModal, showRejectForm]);
 
   if (!isApprovalModalOpen) return null;
 
@@ -254,6 +270,7 @@ export const ApprovalModal: React.FC = () => {
       if (isRealRunning) {
         resolveApproval(currentApproval.id, 'approved');
       } else {
+        resolveApproval(currentApproval.id, 'approved');
         simulator.resolveApproval(currentApproval.id, 'approved');
       }
     } else {
@@ -264,8 +281,9 @@ export const ApprovalModal: React.FC = () => {
   const handleReject = () => {
     if (currentApproval) {
       if (isRealRunning) {
-        resolveApproval(currentApproval.id, 'rejected');
+        resolveApproval(currentApproval.id, 'rejected', rejectFeedback);
       } else {
+        resolveApproval(currentApproval.id, 'rejected', rejectFeedback);
         simulator.resolveApproval(currentApproval.id, 'rejected');
       }
     } else {
@@ -341,7 +359,12 @@ export const ApprovalModal: React.FC = () => {
       : null;
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in overflow-hidden overscroll-contain">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) openApprovalModal(false);
+      }}
+      className="fixed inset-0 z-[1000] flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in overflow-hidden overscroll-contain"
+    >
       <div className="w-full max-w-4xl bg-slate-900 border border-slate-700/80 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[94dvh] sm:max-h-[92vh] animate-scale-up overscroll-contain">
         {/* Header */}
         <div className="flex items-center justify-between gap-2 px-4 py-3 sm:px-6 sm:py-4 bg-gradient-to-r from-amber-950/50 via-slate-900 to-slate-900 border-b border-slate-800">
@@ -655,32 +678,88 @@ export const ApprovalModal: React.FC = () => {
         </div>
 
         {/* Action Buttons Footer */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 px-4 py-3 sm:px-6 sm:py-4 bg-slate-950/70 border-t border-slate-800">
-          <div className="flex items-center gap-2">
-            {activeTab !== 'checklist' && (
-              <button
-                onClick={() => setActiveTab('checklist')}
-                className="w-full sm:w-auto px-3.5 py-2 text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700 border border-slate-700 rounded-xl transition-all"
-              >
-                ← Quay lại Tiêu chuẩn Kiểm duyệt
-              </button>
-            )}
-          </div>
+        <div className="flex flex-col gap-2.5 px-4 py-3 sm:px-6 sm:py-4 bg-slate-950/80 border-t border-slate-800 shrink-0">
+          {showRejectForm ? (
+            <div className="flex flex-col gap-2 p-3 bg-rose-950/30 border border-rose-900/50 rounded-2xl animate-fade-in">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-rose-300 flex items-center gap-1.5">
+                  <span>📝</span> Phản hồi kỹ thuật của Tech Lead gửi cho Dev:
+                </span>
+                <span className="text-[10px] text-slate-400">Dev sẽ tự động đọc ghi chú này để sửa code</span>
+              </div>
+              
+              {/* Preset suggestion chips */}
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  'Thiếu try/catch và input validation khi xử lý token',
+                  'Cần bổ sung timeout handling và null safety',
+                  'Phát hiện nguy cơ memory leak và code smells',
+                ].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setRejectFeedback(preset)}
+                    className="px-2 py-0.5 text-[10px] font-medium rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors"
+                  >
+                    + {preset}
+                  </button>
+                ))}
+              </div>
 
-          <div className="flex items-center justify-end gap-2">
-            <button
-              onClick={handleReject}
-              className="flex-1 sm:flex-initial px-3.5 sm:px-4 py-2 text-xs font-bold text-rose-300 hover:text-white bg-rose-950/50 hover:bg-rose-900/60 border border-rose-800/70 rounded-xl transition-all shadow-md"
-            >
-              ❌ Từ chối (Trả về Dev)
-            </button>
-            <button
-              onClick={handleApprove}
-              className="flex-1 sm:flex-initial px-4 sm:px-5 py-2 text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-xl transition-all shadow-lg shadow-emerald-900/30"
-            >
-              🚀 Duyệt Release Production
-            </button>
-          </div>
+              <textarea
+                value={rejectFeedback}
+                onChange={(e) => setRejectFeedback(e.target.value)}
+                placeholder="Nhập lý do từ chối hoặc hướng dẫn sửa đổi cụ thể cho Dev..."
+                rows={2}
+                className="w-full px-3 py-2 text-xs bg-slate-900 text-slate-200 border border-slate-700 rounded-xl focus:outline-none focus:border-rose-400 resize-none font-sans"
+              />
+
+              <div className="flex items-center justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowRejectForm(false)}
+                  className="px-3 py-1.5 text-xs font-semibold text-slate-400 hover:text-slate-200 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors"
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="button"
+                  onClick={handleReject}
+                  className="px-4 py-1.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 rounded-xl shadow-md transition-all flex items-center gap-1.5"
+                >
+                  <span>📨 Gửi phản hồi & Yêu cầu Dev vá lại</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+              <div className="flex items-center gap-2">
+                {activeTab !== 'checklist' && (
+                  <button
+                    onClick={() => setActiveTab('checklist')}
+                    className="w-full sm:w-auto px-3.5 py-2 text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700 border border-slate-700 rounded-xl transition-all"
+                  >
+                    ← Quay lại Tiêu chuẩn Kiểm duyệt
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  onClick={() => setShowRejectForm(true)}
+                  className="flex-1 sm:flex-initial px-3.5 sm:px-4 py-2 text-xs font-bold text-rose-300 hover:text-white bg-rose-950/50 hover:bg-rose-900/60 border border-rose-800/70 rounded-xl transition-all shadow-md"
+                >
+                  ❌ Từ chối (Yêu cầu Dev sửa)
+                </button>
+                <button
+                  onClick={handleApprove}
+                  className="flex-1 sm:flex-initial px-4 sm:px-5 py-2 text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-xl transition-all shadow-lg shadow-emerald-900/30"
+                >
+                  🚀 Duyệt Release Production
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,19 +1,27 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { useTownStore } from '../../store/useTownStore';
 
 export const StatusBar: React.FC = () => {
-  const weather = useTownStore((s) => s.weather);
   const latencyMs = useTownStore((s) => s.latencyMs);
   const tps = useTownStore((s) => s.tps);
   const cpuUsage = useTownStore((s) => s.cpuUsage);
+  const themeMode = useTownStore((s) => s.themeMode);
+  const isChaosRunning = useTownStore((s) => s.isChaosRunning);
   const zoomIn = useTownStore((s) => s.zoomIn);
   const zoomOut = useTownStore((s) => s.zoomOut);
   const resetCamera = useTownStore((s) => s.resetCamera);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sparklineData = useRef<number[]>([18, 22, 25, 20, 24, 28, 22, 26, 30, 24, 28]);
+
+  const weatherDisplay = useMemo(() => {
+    if (isChaosRunning) return { icon: '⚡', text: 'Bão tải 10x · Báo động đỏ' };
+    if (themeMode === 'night') return { icon: '🌙', text: 'Đêm trăng · 18°C' };
+    if (themeMode === 'sunset') return { icon: '🌆', text: 'Hoàng hôn · 23°C' };
+    return { icon: '☀️', text: 'Nắng ấm · 26°C' };
+  }, [themeMode, isChaosRunning]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -27,21 +35,23 @@ export const StatusBar: React.FC = () => {
         sparklineData.current.shift();
       }
 
-      // Draw mini sparkline
+      // Draw mini sparkline with auto-scaling to prevent overflow during chaos
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.beginPath();
-      ctx.strokeStyle = '#38bdf8';
+      ctx.strokeStyle = latencyMs > 100 ? '#f43f5e' : latencyMs > 50 ? '#f59e0b' : '#38bdf8';
       ctx.lineWidth = 1.5;
 
       const points = sparklineData.current;
       const step = canvas.width / (points.length - 1);
-      const min = 10;
-      const max = 35;
+      const min = Math.min(10, ...points);
+      const max = Math.max(35, ...points);
+      const range = max === min ? 1 : max - min;
 
       points.forEach((val, i) => {
         const x = i * step;
-        const norm = (val - min) / (max - min);
-        const y = canvas.height - norm * (canvas.height - 4) - 2;
+        const norm = (val - min) / range;
+        const clampedNorm = Math.max(0, Math.min(1, norm));
+        const y = canvas.height - clampedNorm * (canvas.height - 4) - 2;
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       });
@@ -80,10 +90,10 @@ export const StatusBar: React.FC = () => {
 
       {/* APM & Weather Telemetry Bar */}
       <div className="pointer-events-auto flex items-center gap-2 sm:gap-3 px-2.5 sm:px-4 py-1.5 sm:py-2 bg-slate-900/85 backdrop-blur-md border border-slate-700/80 rounded-2xl shadow-xl text-xs whitespace-nowrap">
-        {/* Weather */}
+        {/* Weather Dynamic */}
         <div className="hidden xl:flex items-center gap-1.5 text-slate-300">
-          <span>☀️</span>
-          <span className="font-medium text-slate-300">{weather}</span>
+          <span>{weatherDisplay.icon}</span>
+          <span className="font-medium text-slate-300">{weatherDisplay.text}</span>
         </div>
 
         <div className="hidden xl:block w-[1px] h-4 bg-slate-700" />

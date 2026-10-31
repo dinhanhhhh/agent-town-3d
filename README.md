@@ -1,4 +1,4 @@
-# 🏰 Thị trấn DevOps 3D (Agent Town 3D)
+# 🏰 Thị trấn DevOps 3D (Agent Town 3D) v1.4.2
 
 > **Mô phỏng Hệ thống 8 Autonomous AI Agents & DevOps SDLC Pipeline trên Hòn đảo bay 3D Isometric Diorama**  
 > Xây dựng với **Next.js 16 (Turbopack)**, **React 19**, **Three.js / React Three Fiber v9**, **Google Gemini API**, **Zustand**, và **Web Audio API**.
@@ -7,9 +7,7 @@
 [![React](https://img.shields.io/badge/React-19.3-blue?logo=react)](https://react.dev/)
 [![React Three Fiber](https://img.shields.io/badge/R3F-v9-blue?logo=three.js)](https://docs.pmnd.rs/react-three-fiber)
 [![Gemini API](https://img.shields.io/badge/Google_Gemini-3.8_Flash_SSE-orange?logo=google)](https://ai.google.dev/)
-[![Zustand](https://img.shields.io/badge/Zustand-v4-brown)](https://github.com/pmndrs/zustand)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?logo=typescript)](https://www.typescriptlang.org/)
+[![Version](https://img.shields.io/badge/Release-v1.4.2-emerald)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ---
@@ -80,6 +78,15 @@ Hệ thống ứng dụng mô hình **Kiến trúc Đối xứng Hướng tâm (
 
 ## 🎨 4. Điểm Nhấn Đồ Họa & Trải Nghiệm Người Dùng (Visual & UX)
 
+- 🔀 **Mô Hình Thực Thi Song Song DAG Pipeline (`QA` ∥ `DevSecOps`) & FinOps Telemetry**: Sau khâu Tech Review, hệ thống đồng thời phóng 2 Shipper và kích hoạt cả 2 trạm QA Automation và DevSecOps chạy suy luận song song qua `Promise.all`. Thời gian thực thi (`durationMs`), ước tính token và tốc độ (`tok/s`) được đo lường chính xác và xuất ra bảng FinOps trong `ExportModal`.
+- 🎥 **Chế Độ Đạo Diễn Camera 3D Tự Động (`Auto-Follow Director Mode`)**: Bổ sung nút bấm `🎥 Đạo diễn / Tự do` trên Topbar. Camera tự động lia mượt mà bám sát tọa độ 3D của nhân vật Shipper đang chạy trên nan hoa đại lộ hoặc trạm AI đang trực tiếp suy luận; tự động nhường quyền khi người dùng kéo chuột và bám lại khi thả tay.
+- 🧪 **AI Agent Playground & Re-run Stage Cô Lập (`ArtifactModal`)**: Cho phép người dùng chỉnh sửa trực tiếp `systemPrompt` của từng Agent ngay trên UI và bấm nút `🔄 Chạy lại trạm này` để sinh lại artifact riêng biệt với ngữ cảnh hiện có mà không phải khởi động lại toàn bộ pipeline.
+- 🔍 **Trình Xem Git Diff Nâng Cao, Inline Review Comments & Tải Bundle 8 Artifacts**: Triệt tiêu lỗi nhân đôi dấu `+`/`-`, cuộn ngang Split View 2 cột không bị cắt chữ, tự động hiển thị nhận xét từ `ReviewComments.json` dưới dạng thẻ bình luận inline trực tiếp dưới đúng dòng code; nút `📦 Tải Bundle 8 Artifacts` cho phép tải toàn bộ 8 tài liệu đã tạo về 1 file Markdown duy nhất.
+- 📋 **Log Drawer Dark Glassmorphism & Auto-Scale Sparkline**: Giao diện nhật ký công việc Dark Glassmorphism với bộ lọc nhanh (`Tất cả`, `Lỗi & Cảnh báo`, `Lọc theo Trạm`), click dòng log để bay camera tới trạm phát sinh sự kiện, đồ thị Sparkline tự động co dãn trục Y khi bão tải 168ms và hiển thị thời tiết động theo chu kỳ Ngày / Hoàng hôn / Đêm.
+- ⏱️ **Lưu Trữ & Khôi Phục Lịch Sử Phiên Chạy (Session History & Persistence)**: Tự động lưu vết tối đa 5 phiên chạy gần nhất vào `localStorage` (`AGENT_TOWN_SESSIONS`), cho phép người dùng mở lại trong `PromptModal` để xem lại mã nguồn, báo cáo QA, và SAST Security của các phiên trước mà không tốn thêm token AI.
+- 🛡️ **Cổng Duyệt Production Tương Tác Kèm Góp Ý Kỹ Thuật (Interactive Tech Lead Rejection with Feedback Notes)**: Khi từ chối tại Cổng Phê Duyệt Production, Tech Lead có thể chọn gợi ý nhanh hoặc nhập phản hồi kỹ thuật cụ thể; kỹ sư Dev tự động nhận shipper feedback và dùng real AI stream tạo bản vá hotfix `source-code.diff` xử lý triệt để góp ý.
+- 🎬 **Huy Hiệu Tiến Độ Trực Quan & Nút Bật/Tắt Auto-Demo Nhanh Trên Topbar**: Nút `🎬 Demo / ⏸️ Demo On` trên Topbar hỗ trợ trình diễn chu trình DevOps tuần hoàn tự động không tốn token; thanh `RoleChips` gắn huy hiệu `✓` cho các trạm đã xong artifact và viền phát sáng xanh dương nhấp nháy cho trạm đang stream dữ liệu.
+- ⌨️ **Chuẩn Hóa Phím Tắt Escape & Click-Outside Cho Toàn Bộ 6 Modals**: Hỗ trợ nhấn phím `Esc` và click ra ngoài backdrop mờ để đóng nhanh tất cả modal (`PromptModal`, `ApprovalModal`, `ArtifactModal`, `AgentDossierModal`, `ExportModal`, `ApiKeyModal`).
 - ⚡ **Live AI Token Streaming (SSE) & Nút Dừng Khẩn Cấp (`LiveStreamConsole`)**: Truyền trực tiếp từng cụm token mã nguồn / đặc tả đang sinh từ AI lên màn hình Terminal nổi thời gian thực kèm con trỏ nhấp nháy và nút **`⏹ Dừng`** (`AbortController`).
 - 📱 **Tối Ưu Responsive Đa Thiết Bị Toàn Diện (Full-Project Responsive System)**:
   - Tự động co giãn tỷ lệ Orthographic Camera trong `CameraRig.tsx` theo chiều rộng màn hình (`size.width / 1200`), đảm bảo ốc đảo 3D luôn nằm trọn vẹn trong khung nhìn mà không bị cắt lề trên mọi độ phân giải.
@@ -123,13 +130,9 @@ Hệ thống ứng dụng mô hình **Kiến trúc Đối xứng Hướng tâm (
 
 ### 📸 Bộ Sưu Tập Giao Diện (UI & 3D Showcase)
 
-| 🏰 Toàn cảnh Thị trấn DevOps 3D Diorama | 📑 Xuất Báo Cáo Phát Hành (Executive Report) |
-|:---:|:---:|
-| <img src="docs/images/town_diorama.png" alt="Toàn cảnh 3D Thị trấn" width="100%" /> | <img src="docs/images/export_report_modal.png" alt="Xuất Báo Cáo Phát Hành" width="100%" /> |
-
-| 📇 Hồ Sơ Kỹ Sư AI & Tech Stack | 🔍 So Sánh Mã Nguồn Git Diff Trực Quan |
-|:---:|:---:|
-| <img src="docs/images/agent_dossier_modal.png" alt="Hồ Sơ Kỹ Sư AI" width="100%" /> | <img src="docs/images/agent_dossier_modal.png" alt="So sánh mã nguồn" width="100%" /> |
+| 🏰 Toàn cảnh Thị trấn DevOps 3D Diorama | 📑 Xuất Báo Cáo Phát Hành (Executive Report) | 📇 Hồ Sơ Kỹ Sư AI & Tech Stack |
+|:---:|:---:|:---:|
+| <img src="docs/images/town_diorama.png" alt="Toàn cảnh 3D Thị trấn" width="100%" /> | <img src="docs/images/export_report_modal.png" alt="Xuất Báo Cáo Phát Hành" width="100%" /> | <img src="docs/images/agent_dossier_modal.png" alt="Hồ Sơ Kỹ Sư AI" width="100%" /> |
 
 ---
 
