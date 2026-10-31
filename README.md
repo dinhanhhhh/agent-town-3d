@@ -81,6 +81,17 @@ Hệ thống ứng dụng mô hình **Kiến trúc Đối xứng Hướng tâm (
 ## 🎨 4. Điểm Nhấn Đồ Họa & Trải Nghiệm Người Dùng (Visual & UX)
 
 - ⚡ **Live AI Token Streaming (SSE) & Nút Dừng Khẩn Cấp (`LiveStreamConsole`)**: Truyền trực tiếp từng cụm token mã nguồn / đặc tả đang sinh từ AI lên màn hình Terminal nổi thời gian thực kèm con trỏ nhấp nháy và nút **`⏹ Dừng`** (`AbortController`).
+- 📱 **Tối Ưu Responsive Đa Thiết Bị Toàn Diện (Full-Project Responsive System)**:
+  - Tự động co giãn tỷ lệ Orthographic Camera trong `CameraRig.tsx` theo chiều rộng màn hình (`size.width / 1200`), đảm bảo ốc đảo 3D luôn nằm trọn vẹn trong khung nhìn mà không bị cắt lề trên mọi độ phân giải.
+  - Tự động tách tầng giao diện giữa thanh `RoleChips` và `StatusBar` trên màn hình tablet/mobile (`< 1024px`), tự động thu gọn danh sách task của `MilestoneWidget` trên màn hình `< 768px`.
+  - Toàn bộ 6 Modals (`PromptModal`, `ApprovalModal`, `ArtifactModal`, `AgentDossierModal`, `ExportModal`, `ApiKeyModal`) và trình xem `GitDiffViewer` (hỗ trợ chuyển từ 2 cột sang 1 cột) co giãn mượt mà với chiều cao `100dvh`.
+- 🪑 **Tư Thế Ngồi Ghế Công Thái Học & Bầu Trời Ban Ngày Dịu Mắt**:
+  - Cân bằng lại độ phơi sáng ACES Filmic ban ngày (`toneMappingExposure: 0.96`), thay nền trắng xám cũ bằng dải gradient bầu trời xanh Azure tươi mát kết hợp thảm cỏ xanh ngọc lục bảo nổi khối.
+  - Đưa toàn bộ 8 kỹ sư AI vào **ngồi ngay ngắn trên ghế công thái học** trước bàn làm việc (chân gập trên đệm ghế, hai tay vươn ra gõ bàn phím cơ Tenkeyless LED liên hồi khi trạm ở trạng thái `working`).
+- 📦 **Luồng Giao Nhận Kiện Hàng Liền Mạch (Persistent Courier Lifecycle)**:
+  - Shipper bước qua bậc thềm cửa kính vào tận bàn làm việc (`handover`) để giao nhận hàng trực tiếp với kỹ sư thay vì dừng ngoài đường.
+  - Kiện hàng Artifact được đặt ngay ngắn trên góc bàn làm việc trong suốt thời gian kỹ sư đang xử lý.
+  - Nhân vật Shipper (`StandbyCourier`) đứng chờ bàn giao ngay cạnh bàn làm việc, xóa bỏ hoàn toàn hiện tượng Shipper bị biến mất đột ngột sau khi giao hàng.
 - 🔗 **Chế Độ Audit GitHub Pull Request Thực Tế**: Nhập trực tiếp URL của bất kỳ Public GitHub PR nào (`https://github.com/owner/repo/pull/123`), tự động kéo metadata và bản vá `.diff` thật lên `GitDiffViewer` để dàn AI Agents kiểm toán Code Quality, Regression Tests và SAST Security.
 - 🎮 **Điều Khiển Camera Tự Do Bằng Chuột (Interactive OrbitControls)**: Kéo chuột trái xoay 360° quanh đảo, chuột phải pan di chuyển góc nhìn mượt mà, con lăn chuột zoom vô cấp không giật; đồng bộ hai chiều với thanh trượt zoom của HUD.
 - ⚡ **Dải Cáp Quang Dữ Liệu Phát Sáng (Glowing Neon Data Cables)**: 7 đường cáp ngầm phát quang neon chạy dọc theo 7 đại lộ nan hoa với các hạt xung photon (Data Stream Pulse) phóng dọc dây cáp theo trạng thái làm việc của từng trạm.
