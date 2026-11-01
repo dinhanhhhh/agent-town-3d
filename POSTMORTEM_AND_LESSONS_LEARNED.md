@@ -27,6 +27,9 @@
 19. [Sự cố 19: Thông báo hiển thị thiếu responsive và thẩm mỹ kém; Góc phải hiển thị tĩnh "Nắng nhẹ" không phản ánh chu kỳ đêm thời gian thực](#19-sự-cố-19-thông-báo-hiển-thị-thiếu-responsive-và-thẩm-mỹ-kém-góc-phải-hiển-thị-tĩnh-nắng-nhẹ-không-phản-ánh-chu-kỳ-đêm-thời-gian-thực)
 20. [Sự cố 20: Lỗi bố cục Cổng Phê Duyệt Production (Tab bị cắt cụt ở cạnh phải & Thẻ trạm Reviewer chiếm trọn màn hình đè mất các trạm còn lại)](#20-sự-cố-20-lỗi-bố-cục-cổng-phê-duyệt-production-tab-bị-cắt-cụt-ở-cạnh-phải--thẻ-trạm-reviewer-chiếm-trọn-màn-hình-đè-mất-các-trạm-còn-lại)
 21. [Sự cố 21: Nhấp chọn trạm AI bị pop-up Modal toàn màn hình che mất không gian 3D; Camera focus nhưng người dùng không thấy được trạm và nhân vật đang làm việc](#21-sự-cố-21-nhấp-chọn-trạm-ai-bị-pop-up-modal-toàn-màn-hình-che-mất-không-gian-3d-camera-focus-nhưng-người-dùng-không-thấy-được-trạm-và-nhân-vật-đang-làm-việc)
+22. [Sự cố 22: Nhấp chọn nhân vật/trạm bị crash giao diện (Minified React error #310) do vi phạm React Rules of Hooks](#22-sự-cố-22-nhấp-chọn-nhân-vậttrạm-bị-crash-giao-diện-minified-react-error-310--this-page-couldnt-load-do-vi-phạm-react-rules-of-hooks)
+23. [Sự cố 23: Vỡ bố cục khi xem trên điện thoại di động (Oppo A55 360×800 / iPhone 16 Pro Max 430×932) & khi thu nhỏ cửa sổ](#23-sự-cố-23-vỡ-bố-cục-khi-xem-trên-điện-thoại-di-động-oppo-a55-360800--iphone-16-pro-max-430932--khi-thu-nhỏ-cửa-sổ)
+24. [Sự cố 24: Rò rỉ Google Gemini API Key lên GitHub công khai qua file script test tạm thời (`scripts/test_models.js`)](#24-sự-cố-24-rò-rỉ-google-gemini-api-key-lên-github-công-khai-qua-file-script-test-tạm-thời-scriptstest_modelsjs)
 
 ---
 
@@ -548,6 +551,40 @@
 
 ---
 
+## 24. Sự cố 24: Rò rỉ Google Gemini API Key lên GitHub công khai qua file script test tạm thời (`scripts/test_models.js`)
+
+### 🔴 Triệu chứng (Symptom)
+- Hệ thống giám sát bảo mật **GitGuardian** gửi email cảnh báo tự động:
+  - *"[dinhanhhhh/agent-town-3d] Google API Key exposed on GitHub"*
+  - Secret type: `Google API Key` (`AIzaSy...bkU`)
+  - Vị trí: commit `e6a9673` (`feat: upgrade to v1.3.0...`) tại file `scripts/test_models.js`.
+
+### 🔍 Nguyên nhân gốc rễ (Root Cause)
+1. **Hardcode secret vào file script kiểm thử tạm thời:**
+   - Khi viết script kiểm tra kết nối các model Gemini (`gemini-2.5-flash`, `gemini-flash-latest`), API key thật được gán cứng trực tiếp vào biến `const key = 'AIzaSy...'` thay vì đọc qua biến môi trường hoặc nhập từ UI.
+2. **Cấu hình `.gitignore` bị hổng đối với thư mục scripts:**
+   - File `.gitignore` chỉ chặn `.env` và `.env*.local`, hoàn toàn chưa chặn thư mục `scripts/` hoặc các file script `test_*.js`.
+3. **Stage commit diện rộng (`git add .`) không có pre-commit scan:**
+   - Khi đóng gói commit lớn `e6a9673` (72 files), file `scripts/test_models.js` đã bị quét chung vào commit mà không qua bước kiểm tra secret. Dù toàn bộ mã nguồn `src/` lưu key an toàn trong Client LocalStorage, sự xuất hiện của file test này đã làm lộ secret.
+
+### ✅ Giải pháp chuẩn hóa (Solution & Prevention)
+1. **Thu hồi và vô hiệu hóa key cũ tại nhà cung cấp (Khẩn cấp & Triệt để):**
+   - Xóa bỏ/Revoke vĩnh viễn key bị lộ trên bảng điều khiển **Google AI Studio** / Google Cloud Console để triệt tiêu mọi khả năng lạm dụng từ commit history cũ.
+2. **Xóa hoàn toàn file test và chuẩn hóa `.gitignore`:**
+   - Xóa vĩnh viễn file `scripts/test_models.js` khỏi repository bằng `git rm`.
+   - Bổ sung quy tắc vào `.gitignore`:
+     ```gitignore
+     # local test scripts & scratch
+     scripts/test_*.js
+     scripts/temp_*.js
+     *.secret
+     *.key
+     ```
+3. **Quét kiểm toán toàn bộ codebase:**
+   - Chạy quét toàn diện regex các mẫu secret Google (`AIza[0-9A-Za-z_-]{35}`) và DeepSeek/OpenAI (`sk-[0-9A-Za-z_-]{20,}`) trên toàn bộ cây thư mục để đảm bảo không còn bất kỳ secret nào hardcode.
+
+---
+
 > **Quy tắc vàng cho tương lai:**
 > 1. Mọi đối tượng 3D đặt trên đảo phải tuân theo hệ tọa độ Radial Polar ($R, \theta$) với tâm là Lâu Đài $[0, 0]$.
 > 2. Mọi đường đi của nhân vật phải bám theo các nan hoa đại lộ và vòng xuyến trung tâm, tuyệt đối không tự nối chéo qua góc các phòng.
@@ -562,3 +599,4 @@
 > 11. Các thành phần 2D overlay chiếu từ không gian 3D bắt buộc phải được kẹp biên viewport (`Math.max` / `Math.min`) để không bao giờ bị cắt cụt ngoài màn hình trên thiết bị di động.
 > 12. Tuyệt đối tuân thủ **React Rules of Hooks**: 100% lời gọi hook (`useState`, `useEffect`, `useMemo`, `useCallback`, `useRef`, `useFrame`, Zustand `useTownStore`) BẮT BUỘC phải đặt ở cấp cao nhất phía TRƯỚC mọi câu lệnh early return (`if (...) return null;`), tuyệt đối không đặt hook sau `return` hoặc trong nhánh điều kiện/vòng lặp. Hằng số dữ liệu thuần túy tách riêng vào `src/lib/...`.
 > 13. Khi thiết kế thanh công cụ đa nút (Topbar, Dock), tuyệt đối không lạm dụng nhãn text cố định; luôn cấu hình container có `overflow-x-auto scrollbar-none`, ưu tiên icon kèm tooltip và kẹp chặn tỉ lệ thu phóng 3D (`responsiveScale` tối thiểu 0.70-0.75) để không làm teo nhỏ không gian 3D trên màn hình hẹp/dọc.
+> 14. **Tuyệt đối không hardcode API Key / Secret vào bất kỳ file nào**, kể cả file script test tạm thời (`scripts/`, `tests/`). Mọi secret thử nghiệm bắt buộc phải nạp qua biến môi trường hoặc nhập từ Client UI; mọi file script cá nhân phải có tiền tố `test_*` hoặc `temp_*` đã được chặn nghiêm ngặt trong `.gitignore` trước khi commit.

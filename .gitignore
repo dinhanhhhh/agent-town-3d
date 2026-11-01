@@ -23,6 +23,12 @@ Thumbs.db
 # local env files (do NOT commit secrets)
 .env*.local
 .env
+*.secret
+*.key
+
+# local test scripts & scratch
+scripts/test_*.js
+scripts/temp_*.js
 
 # temporary test screenshots
 screenshot_*.png
