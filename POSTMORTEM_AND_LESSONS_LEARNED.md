@@ -20,6 +20,13 @@
 12. [Sự cố 12: Hạt xung dữ liệu (Photon Pulse) trên cáp quang đứng yên tại điểm giữa](#12-sự-cố-12-hạt-xung-dữ-liệu-photon-pulse-trên-cáp-quang-đứng-yên-tại-điểm-giữa)
 13. [Sự cố 13: Nền ban ngày trắng xóa làm nhạt ốc đảo & Nhân vật đứng ngoài thảm cửa thay vì ngồi ghế làm việc](#13-sự-cố-13-nền-ban-ngày-trắng-xóa-làm-nhạt-ốc-đảo--nhân-vật-đứng-ngoài-thảm-cửa-thay-vì-ngồi-ghế-làm-việc)
 14. [Sự cố 14: Lệch nhịp giữa Shipper và AI Stream; Tái cấp phát Spline liên tục 60fps; Vòng lặp phản hồi thiếu AI tự sửa thật](#14-sự-cố-14-lệch-nhịp-giữa-shipper-và-ai-stream-tái-cấp-phát-spline-liên-tục-60fps-vòng-lặp-phản-hồi-thiếu-ai-tự-sửa-thật)
+15. [Sự cố 15: Trùng lặp ký hiệu Git Diff (+/+); Tràn chữ Split View; Thiếu thực thi song song DAG (QA ∥ DevSecOps) & Thiếu Playground Prompt](#15-sự-cố-15-trùng-lặp-ký-hiệu-git-diff--tràn-chữ-split-view-thiếu-thực-thi-song-song-dag-qa--devsecops--thiếu-playground-prompt)
+16. [Sự cố 16: Client `customSystemPrompt` ghi đè làm mất Output Schema Contract của Server; Đứt gãy ngữ cảnh bàn giao liên phòng ban & Trạm Monitor thiếu Live SSE Stream](#16-sự-cố-16-client-customsystemprompt-ghi-đè-làm-mất-output-schema-contract-của-server-đứt-gãy-ngữ-cảnh-bàn-giao-liên-phòng-ban--trạm-monitor-thiếu-live-sse-stream)
+17. [Sự cố 17: Thu hẹp kiểu dữ liệu biến trong Closure bất đồng bộ (TypeScript Control Flow Narrowing `never` trên biến cục bộ tái gán trong Closure)](#17-sự-cố-17-thu-hẹp-kiểu-dữ-liệu-biến-trong-closure-bất-đồng-bộ-typescript-control-flow-narrowing-never-trên-biến-cục-bộ-tái-gán-trong-closure)
+18. [Sự cố 18: Nút Rollback làm treo Approval Queue; Bỏ sót kiểm tra lỗi API tại DAG song song; Xung đột text stream trên Live Console & Che giấu lỗi DOM](#18-sự-cố-18-nút-rollback-làm-treo-approval-queue-bỏ-sót-kiểm-tra-lỗi-api-tại-dag-song-song-xung-đột-text-stream-trên-live-console--che-giấu-lỗi-dom)
+19. [Sự cố 19: Thông báo hiển thị thiếu responsive và thẩm mỹ kém; Góc phải hiển thị tĩnh "Nắng nhẹ" không phản ánh chu kỳ đêm thời gian thực](#19-sự-cố-19-thông-báo-hiển-thị-thiếu-responsive-và-thẩm-mỹ-kém-góc-phải-hiển-thị-tĩnh-nắng-nhẹ-không-phản-ánh-chu-kỳ-đêm-thời-gian-thực)
+20. [Sự cố 20: Lỗi bố cục Cổng Phê Duyệt Production (Tab bị cắt cụt ở cạnh phải & Thẻ trạm Reviewer chiếm trọn màn hình đè mất các trạm còn lại)](#20-sự-cố-20-lỗi-bố-cục-cổng-phê-duyệt-production-tab-bị-cắt-cụt-ở-cạnh-phải--thẻ-trạm-reviewer-chiếm-trọn-màn-hình-đè-mất-các-trạm-còn-lại)
+21. [Sự cố 21: Nhấp chọn trạm AI bị pop-up Modal toàn màn hình che mất không gian 3D; Camera focus nhưng người dùng không thấy được trạm và nhân vật đang làm việc](#21-sự-cố-21-nhấp-chọn-trạm-ai-bị-pop-up-modal-toàn-màn-hình-che-mất-không-gian-3d-camera-focus-nhưng-người-dùng-không-thấy-được-trạm-và-nhân-vật-đang-làm-việc)
 
 ---
 
@@ -324,6 +331,224 @@
 
 ---
 
+## 16. Sự cố 16: Client `customSystemPrompt` ghi đè làm mất Output Schema Contract của Server; Đứt gãy ngữ cảnh bàn giao liên phòng ban & Trạm Monitor thiếu Live SSE Stream
+
+### 🔴 Triệu chứng (Symptom)
+1. **Mất JSON Schema & Thẻ thoại `---SPEECH---:` khi gọi AI:** Khi `streamStageFromApi` gửi `customSystemPrompt: get().agents[stage]?.systemPrompt` từ Client lên `/api/pipeline`, phản hồi JSON của các trạm `orchestrator`, `review`, `security`, `monitor` dễ bị sai lệch tên trường (`comments`, `score`, `cveCount`, `speech`), hoặc các trạm `pm`, `dev`, `qa`, `devops` thiếu thẻ `---SPEECH---:` ở cuối khiến bong bóng thoại 3D chỉ hiện câu mặc định `"Hoàn thành khâu xử lý."`.
+2. **Rủi ro vỡ Parser khi dùng AI Playground:** Khi người dùng sửa `systemPrompt` trên tab `🧠 System Prompt` của `ArtifactModal`, nếu vô tình xóa mất đoạn hướng dẫn định dạng JSON / Unified Diff thì `GitDiffViewer` và `ExportModal` không thể bóc tách số liệu.
+3. **Thiếu tài liệu đối chiếu chéo giữa các phòng ban (Cross-Department Context Gap):**
+   - `PM` chưa nhận trực tiếp `MilestonePlan.json` tách biệt từ `Orchestrator`.
+   - `QA` và `Tech Review` chỉ nhận `sourceCode` của `Dev` mà không nhận `PRD.md` của `PM`, dẫn đến việc QA chỉ viết test theo code của Dev (nếu Dev làm thiếu yêu cầu Gherkin trong PRD thì QA cũng bỏ lọt).
+   - `DevOps` tại điểm hội tụ DAG Join chưa nhận báo cáo `SecurityAudit.json` từ `DevSecOps`.
+4. **Trạm `APM Monitor` không stream live & khuyết số liệu FinOps:** Sau khi Tech Lead bấm Approve tại Cổng duyệt Production, trạm `monitor` gọi `fetch('/api/pipeline')` dạng JSON tĩnh thay vì `streamStageFromApi`, khiến `LiveStreamConsole` không hiển thị luồng suy luận SRE, camera Auto-Follow không lia tới đài Radar và bảng FinOps trong `ExportModal` khuyết dòng đo lường của trạm thứ 8.
+
+### 🔍 Nguyên nhân gốc rễ (Root Cause)
+1. Prompt bị phân mảnh ở 2 nơi: `INITIAL_AGENTS` trong `useTownStore.ts` chỉ lưu 1 câu mô tả ngắn (không có Output Schema), trong khi `STAGE_CONFIGS` trong `route.ts` lưu bản đầy đủ. Khi bổ sung tính năng AI Playground (`v1.4.2`), Client luôn gửi chuỗi `agents[stage].systemPrompt` (khác rỗng) lên Server và biểu thức `customSystemPrompt?.trim() ? customSystemPrompt : config.systemPrompt` trên Server đã ghi đè toàn bộ System Prompt gốc kèm Output Contract bằng câu mô tả 1 dòng của Client.
+2. Đối tượng `context` truyền vào `streamStageFromApi` mới chỉ truyền cục bộ `prd` và `sourceCode` ở một số bước thay vì gom đầy đủ hồ sơ bàn giao (`PipelineContext`) từ `realArtifacts`.
+3. Nhánh `status === 'approved'` trong `resolveApproval` vẫn giữ lệnh `fetch` cũ từ phiên bản trước khi nâng cấp SSE Streaming.
+
+### ✅ Giải pháp chuẩn hóa (Solution & Prevention)
+1. **Thiết lập Single Source of Truth & Khóa bảo vệ Output Contract (`src/lib/pipeline/prompts.ts`, `src/app/api/pipeline/route.ts`):**
+   - Tạo module dùng chung `src/lib/pipeline/prompts.ts` chuẩn hóa quy trình nghiệp vụ thực chiến (Enterprise Department SOP) cho toàn bộ 8 phòng ban: INVEST User Stories (`orchestrator`), PRD 5 phần kèm Gherkin & NFRs (`pm`), Clean Architecture Unified Diff (`dev`), Code Review 5 trụ cột khớp số dòng `+newStart` (`review`), Vitest/Jest 4 tầng đối chiếu PRD (`qa`), OWASP Top 10 SAST & Threat Modeling (`security`), Multi-stage non-root Alpine Dockerfile + K8s Canary Rollout (`devops`), và Google SRE 4 Golden Signals & SLO Error Budget (`monitor`).
+   - Tách bạch `defaultRolePrompt` (hiển thị và cho phép người dùng tự do chỉnh sửa trên UI Playground) khỏi `outputContract` (JSON Schema / Git Diff + Speech Tag bất biến). Hàm `buildEffectiveSystemPrompt(stage, customRolePrompt)` trên Server luôn tự động ghép `outputContract` vào cuối, đảm bảo dù người dùng sửa prompt thế nào thì UI parser vẫn hoạt động chính xác 100%.
+   - Gia cố `finalizeStageOutput` tự động trích xuất khối `{ ... }` hợp lệ và dọn sạch code fence thừa cho `typescript` / `dockerfile`.
+2. **Liên thông Hồ sơ Bàn giao Liên phòng ban (`buildCurrentContext` trong `useTownStore.ts`):**
+   - Chuẩn hóa `PipelineContext` truyền xuyên suốt toàn bộ 7 artifacts (`milestonePlan`, `prd`, `sourceCode`, `reviewComments`, `testReport`, `securityAudit`, `dockerfile`, `feedbackNote`, `scenario`) qua mọi chặng của `runRealPipeline`, `runGitHubPrAudit`, `rerunStage` và `resolveApproval`.
+3. **Đồng bộ Live SSE Stream cho `APM Monitor` & Inline Review Comments toàn cục (`useTownStore.ts`, `AgentDossierModal.tsx`, `ApprovalModal.tsx`):**
+   - Chuyển trạm `monitor` trong `resolveApproval` sang `streamStageFromApi`, hoàn thiện trọn vẹn 8/8 trạm trên bảng thống kê FinOps Telemetry, Live Terminal và Camera Đạo diễn.
+   - Truyền `reviewComments` vào `GitDiffViewer` trên cả 3 modal (`ArtifactModal`, `AgentDossierModal`, `ApprovalModal`) và giữ định dạng đa dòng `whitespace-pre-wrap` cho SOP Prompt.
+
+---
+
+## 17. Sự cố 17: Thu hẹp kiểu dữ liệu biến trong Closure bất đồng bộ (TypeScript Control Flow Narrowing `never` trên biến cục bộ tái gán trong Closure)
+
+### 🔴 Triệu chứng (Symptom)
+- Khi chạy `npm run build` cho phiên bản v1.5.0, trình biên dịch Next.js TypeScript báo lỗi biên dịch tại dòng 453 của `src/store/useTownStore.ts`:
+  ```
+  src/store/useTownStore.ts(453,21): error TS2339: Property 'model' does not exist on type 'never'.
+  ```
+
+### 🔍 Nguyên nhân gốc rễ (Root Cause)
+- Biến `finalPayload` được khai báo là biến cục bộ `let finalPayload: StageOutputPayload | null = null;` trước vòng lặp đọc stream chunk.
+- Phép gán giá trị lại cho `finalPayload` nằm trong hàm nội bộ `processLine(...)`.
+- Bộ phân tích luồng điều khiển của TypeScript (Control Flow Analysis) không coi việc gọi hàm `processLine(l)` trong vòng lặp là hành động tái gán biến cục bộ `finalPayload`. Vì vậy, sau khi vòng lặp kết thúc, TypeScript đánh giá biến này vẫn giữ giá trị khởi tạo `null`. Khi xuất hiện biểu thức truy xuất, TypeScript suy luận biến rơi vào trạng thái thu hẹp `never`.
+- Cách ép kiểu lỏng lẻo `as Record<string, any>` trước đó là vá bề mặt, làm mất type safety của TypeScript.
+
+### ✅ Giải pháp chuẩn hóa (Solution & Prevention)
+- Áp dụng mẫu **Object Wrapper Container** (`captureBox`):
+  ```ts
+  const captureBox: { payload: StageOutputPayload | null } = { payload: null };
+  // Bên trong processLine:
+  captureBox.payload = { ... };
+  // Sau vòng lặp:
+  const parsedPayload = captureBox.payload;
+  ```
+  Do TypeScript hiểu thuộc tính của một object có thể bị thay đổi bởi bất kỳ lệnh gọi hàm nào, nó sẽ không thu hẹp kiểu thuộc tính về `never` và bảo toàn 100% type-safety của interface `StageOutputPayload`.
+
+---
+
+## 18. Sự cố 18: Nút Rollback làm treo Approval Queue; Bỏ sót kiểm tra lỗi API tại DAG song song; Xung đột text stream trên Live Console & Che giấu lỗi DOM
+
+### 🔴 Triệu chứng (Symptom)
+1. **Nút Rollback khẩn cấp đóng băng luồng:** Trong modal duyệt `ApprovalModal`, khi người dùng bấm nút "Kích hoạt Rollback khẩn cấp", modal bị đóng nhưng đối tượng `currentApproval` không được cập nhật trạng thái (`status: 'pending'` vĩnh viễn), `isRealRunning` giữ nguyên `true` làm người dùng không thể chạy bất kỳ task nào tiếp theo.
+2. **Lỗi API ở DAG song song bị bỏ qua:** Ở bước chạy song song `QA ∥ DevSecOps`, nếu 1 trong 2 trạm (hoặc cả 2) gặp lỗi gọi API (HTTP 429, sai key), mã nguồn không kiểm tra `qaData.error` / `secData.error` mà vẫn gán artifact rỗng và thông báo "Hoàn thành QA" / "Hoàn thành Security Audit".
+3. **Xung đột chớp giật chữ trên Live Console & Desk Cam:** Cả QA và DevSecOps cùng gọi `streamStageFromApi` song song và cùng ghi đè biến toàn cục `streamingContent` và `streamingStage`, dẫn tới việc các token stream của 2 trạm đè lẫn nhau liên tục.
+4. **Vá bề mặt DOM & che giấu lỗi React:** File `src/app/page.tsx` có đoạn monkey-patch `Node.prototype.removeChild`, `Node.prototype.insertBefore` và nuốt `console.error` (unmount root, createRoot).
+5. **Nói quá về số liệu:** Desk Cam hiển thị text tĩnh `· 60 FPS`, ma trận CI/CD Staging hiển thị số liệu tĩnh `48/48 (1.2s)` không gắn với dữ liệu artifact thật, Export Modal luôn gắn nhãn `✅ PRODUCTION READY` kể cả khi bị Tech Review từ chối.
+
+### 🔍 Nguyên nhân gốc rễ (Root Cause)
+1. Hàm `triggerRollback` chỉ phát sinh shipper và đổi telemetry, không giải quyết dứt điểm các approval đang chờ trong `approvals[]` và không dọn cờ `isRealRunning`.
+2. Khối lệnh sau `Promise.all([streamStageFromApi(qa), streamStageFromApi(security)])` thiếu nhánh kiểm tra lỗi `.error` trước khi cập nhật state và event.
+3. Không có cờ phân biệt giữa luồng stream cần trực quan hóa lên console giao diện (`visualize: true`) và luồng chạy ngầm đồng thời (`visualize: false`).
+4. Đoạn patch DOM trong `page.tsx` là tàn dư từ phiên bản cũ khi dùng thẻ Drei `<Html>` trong Canvas (nay đã chuyển hoàn toàn sang 2D DOM ngoài Canvas nên không còn cần thiết).
+
+### ✅ Giải pháp chuẩn hóa (Solution & Prevention)
+1. **Gia cố `triggerRollback`:** Tự động hủy controller pipeline đang chạy, đóng và chuyển toàn bộ pending approval sang `rejected`, cập nhật task state sang `failed`, chuyển `isRealRunning: false`, và chặn kích hoạt lặp (debounce `isRollingBack`).
+2. **Kiểm tra lỗi chặt chẽ tại các điểm DAG:** Bắt buộc kiểm tra `qaData.error`, `secData.error`, `devopsData.error` và `hotfixResult.error`, chỉ xác nhận hoàn thành khi không có lỗi.
+3. **Phân tách luồng hiển thị Live Stream Console (`visualize` flag):** Trong các giai đoạn DAG song song, trạm chính (QA) hiển thị trực tiếp dòng mã lên Live Terminal, trạm chạy song song (Security) thu thập dữ liệu ngầm mà không gây xung đột chữ trên màn hình.
+4. **Loại bỏ hoàn toàn monkey patch DOM:** Dọn dẹp các can thiệp vào `Node.prototype` trong `page.tsx`.
+5. **Đo lường thật & Minh bạch hóa:**
+   - Desk Cam đo FPS thực tế bằng `requestAnimationFrame` và tính delta time thời gian thực.
+   - CI/CD Staging Matrix trích xuất số lượng specs kiểm thử thực tế từ artifact `test-suite.spec.ts` của QA và ghi chú minh bạch.
+   - Export Modal kiểm tra kết luận review thật, tự động chuyển nhãn `⚠️ NEEDS REVISION` khi bị từ chối.
+
+---
+
+## 19. Sự cố 19: Thông báo hiển thị thiếu responsive và thẩm mỹ kém; Góc phải hiển thị tĩnh "Nắng nhẹ" không phản ánh chu kỳ đêm thời gian thực
+
+### 🔴 Triệu chứng (Symptom)
+1. **Bong bóng thoại 3D (`Labels.tsx`) bị tràn màn hình mobile và cắt cụt câu:** Trên màn hình di động (< 640px), các trạm 3D ở rìa đảo khi chiếu tọa độ 2D ra rìa màn hình khiến bong bóng thoại bị tràn ra ngoài cạnh trái/phải (`transform: translate(-50%, -100%)`), gây thanh cuộn ngang hoặc mất chữ; kiểu dáng dạng hộp vuông đơn điệu, mũi nhọn CSS bị lệch viền.
+2. **Thiếu hệ thống thông báo sự kiện (Toast Notification) thời gian thực:** Khi trạm AI phát hiện CVE an ninh, hoàn thành kiểm thử QA, yêu cầu phê duyệt hoặc kích hoạt Rollback, hệ thống chỉ âm thầm ghi vào mảng `events[]` mà không có thông báo đẩy nổi bật, người dùng khó nhận biết tiến trình nếu không mở Log Drawer.
+3. **Góc phải hiển thị tĩnh "Nắng nhẹ" bất kể thời gian thực là ban đêm:** Trạng thái `themeMode` khởi tạo mặc định là `'day'`, thanh `StatusBar.tsx` hiển thị tĩnh "Nắng ấm · 26°C" / "Nắng nhẹ" và bị ẩn (`hidden xl:flex`) trên mọi màn hình dưới 1280px (laptop 13-inch, tablet, mobile); hệ thống không có cơ chế tự động đọc giờ máy khách để chuyển chu kỳ Ngày/Hoàng hôn/Đêm.
+4. **LiveStreamConsole xung đột vị trí với thanh điều hướng đáy trên mobile:** Khi xuất hiện ở `bottom-24`, khung console đè lên thanh `RoleChips` và `StatusBar`.
+
+### 🔍 Nguyên nhân gốc rễ (Root Cause)
+1. Tọa độ chiếu 2D của Three.js Vector3 không có cơ chế kẹp biên (viewport clamping) theo kích thước màn hình `size.width` và `size.height`.
+2. Chưa có component `ToastContainer` độc lập để lắng nghe các sự kiện severity `warn`/`error` và kind `approve_needed`/`pass`.
+3. `themeMode` thiếu tùy chọn `'auto'`, chưa có hàm tính toán `getRealTimeTheme()` dựa trên giờ địa phương thực tế và thiếu bộ đếm giây hiển thị đồng hồ số.
+
+### ✅ Giải pháp chuẩn hóa (Solution & Prevention)
+1. **Kẹp biên tọa độ chiếu 3D (`OverlayProjector`):** Tự động kẹp `clampedBx = Math.max(margin, Math.min(size.width - margin, bx))` và `clampedBy`, đảm bảo 100% bong bóng thoại và nhãn trạm luôn nằm gọn gàng bên trong khung nhìn trên mọi thiết bị.
+2. **Nâng cấp thẩm mỹ Bong bóng thoại 3D:** Thiết kế kính mờ bo tròn 2xl (`backdrop-blur-xl bg-slate-950/92`), viền neon phát sáng theo màu chuyên môn của từng trạm, huy hiệu tên vai trò, chấm trạng thái nhấp nháy và mũi tên SVG hướng tâm sắc nét.
+3. **Xây dựng Hệ thống Toast Notification (`ToastContainer.tsx`):** Tự động kích hoạt khi có sự kiện quan trọng (Cảnh báo CVE, Hoàn tất QA, Cổng duyệt Production, Bão tải SRE), hỗ trợ nút hành động nhanh ("Mở Cổng Duyệt", "Xem Nhật Ký"), thanh tiến trình đếm ngược 4.5s tự hủy và tự co giãn responsive trên mobile/desktop.
+4. **Chu kỳ Thời gian thực Tự động (`themeMode: 'auto'`):**
+   - Tự động nhận diện ban đêm (`night`, 18:30 - 06:00), hoàng hôn (`sunset`, 17:00 - 18:30) hoặc ban ngày (`day`, 06:00 - 17:00).
+   - Bổ sung nút bấm `⏱️ Auto` trên Topbar cạnh các nút chỉnh tay (☀️ / 🌆 / 🌙).
+   - `StatusBar.tsx` hiển thị thời tiết chính xác và đồng hồ thời gian thực (`HH:mm:ss`), loại bỏ class `hidden xl:flex` để hiển thị mượt mà trên mọi kích cỡ màn hình.
+5. **Tối ưu vị trí LiveStreamConsole:** Trên màn hình di động, console hiển thị ở nửa trên màn hình (`top-14 left-2 right-2`), không còn đè lên thanh điều hướng trạm và telemetry ở đáy.
+
+---
+
+## 20. Sự cố 20: Lỗi bố cục Cổng Phê Duyệt Production (Tab bị cắt cụt ở cạnh phải & Thẻ trạm Reviewer chiếm trọn màn hình đè mất các trạm còn lại)
+
+### 🔴 Triệu chứng (Symptom)
+1. **Thanh Tab điều hướng bị cắt ngang mép phải (`Unit T...`):** 8 tab điều hướng có nhãn quá dài gắn tên file cụ thể (`Code Dev (oauth.service.ts)`, `Review (ReviewComments.json)`, `Unit Tests (test-suite.spec.ts)`...), chiều rộng vượt quá 1200px; class `no-scrollbar` làm ẩn thanh cuộn khiến người dùng không biết bên phải còn 3 tab khác (`Security`, `Canary`, `PRD`).
+2. **Khối chi tiết của trạm Reviewer mở bung đè mất 3 trạm còn lại:** Biến `expandedStation` khởi tạo mặc định là `'review'`, mở sẵn khung code JSON chiếm trọn hơn 300px chiều dọc; đẩy toàn bộ các trạm khác (Dev, QA, DevSecOps) xuống dưới đáy màn hình, người dùng lầm tưởng modal chỉ có mỗi 1 trạm.
+3. **Tiêu đề danh sách trạm bị chèn ép:** Dòng tiêu đề và gợi ý nằm chung một hàng flex, chữ sát rạt mép phải trên màn hình hẹp.
+
+### 🔍 Nguyên nhân gốc rễ (Root Cause)
+1. Đặt nhãn tab quá dài và lạm dụng `no-scrollbar` mà không có nút cuộn hoặc chỉ báo trực quan.
+2. Thiết lập trạng thái ban đầu của Accordion là mở bung thay vì đóng gọn gàng (`null`).
+3. Khung preview code trong accordion chiếm chiều cao quá lớn (`max-h-48`) thay vì giới hạn nhỏ gọn trong modal duyệt.
+
+### ✅ Giải pháp chuẩn hóa (Solution & Prevention)
+1. **Tinh gọn nhãn Tab & Thêm điều khiển cuộn (`ApprovalModal.tsx`):**
+   - Đổi nhãn 8 tab ngắn gọn: `📋 Tiêu chuẩn`, `🚀 CI/CD Canary`, `💻 Mã nguồn Dev`, `🔍 Tech Review`, `🧪 QA Tests`, `🛡️ Security Audit`, `📦 Dockerfile`, `📄 PRD Specs`.
+   - Bổ sung 2 nút mũi tên cuộn ngang `‹` `›` và thanh cuộn mỏng tinh tế (`scrollbar-thin`).
+2. **Mặc định đóng gọn Accordion (`expandedStation: null`):**
+   - Đưa cả 4 trạm chuẩn bị release (Dev, Review, QA, Security) hiển thị đồng thời trong 1 khung nhìn (viewport), không ai bị đẩy mất khỏi tầm mắt.
+   - Khi bấm mở trạm, khung code giới hạn `max-h-36 sm:max-h-40`, chuyển tên file lên thanh công cụ thay vì đè lên code.
+3. **Tối ưu Section Header & Độ rộng Modal:**
+   - Dùng `flex-col sm:flex-row` chống ép chữ và mở rộng chiều ngang modal lên `max-w-4xl xl:max-w-5xl`.
+
+---
+
+## 21. Sự cố 21: Nhấp chọn trạm AI bị pop-up Modal toàn màn hình che mất không gian 3D; Camera focus nhưng người dùng không thấy được trạm và nhân vật đang làm việc
+
+### 🔴 Triệu chứng (Symptom)
+- Khi người dùng bấm vào một trạm AI (ví dụ: Dev, PM, QA, hay Lâu đài Claude Code), dù hệ thống có cơ chế bay camera 3D (`cameraTarget`, `cameraZoom`), người dùng hoàn toàn không nhìn thấy được trạm đó vì một cửa sổ Modal to đùng ở chính giữa màn hình (`AgentDossierModal` hoặc `ArtifactModal`) lập tức bật lên kèm lớp nền phủ mờ xám đen che kín toàn bộ hòn đảo (`bg-slate-950/80 backdrop-blur-md`).
+- Trải nghiệm bị gián đoạn, biến một game mô phỏng DevOps 3D tương tác sống động thành ứng dụng web truyền thống đơn điệu.
+
+### 🔍 Nguyên nhân gốc rễ (Root Cause)
+1. **Mặc định ép mở Center Modal trong Store:** Hàm `selectAgent(role, modalMode = 'dossier')` trong `useTownStore.ts` mặc định kích hoạt cờ `isDossierModalOpen = true` bất cứ khi nào nhận được một `role`.
+2. **Cấu trúc Modal chiếm dụng toàn màn hình (Blocking Backdrop):** Cả `AgentDossierModal.tsx` và `ArtifactModal.tsx` đều có layout `fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm`, phong tỏa mọi tương tác 3D và phủ đen hoàn toàn khung nhìn.
+3. **Thiếu thành phần Inspector Panel chuẩn game chiến thuật (RTS / City-Builder):** Thiếu một ngăn thanh tra đặt bên cạnh màn hình (Side Panel) cho phép vừa xem mã nguồn, vừa quan sát được camera đang zoom cận cảnh vào nhân vật đang gõ bàn phím và các đường cáp quang đang phát sáng.
+
+### ✅ Giải pháp chuẩn hóa (Solution & Prevention)
+1. **Xây dựng `StationInspectorPanel.tsx` chuẩn Game RTS:**
+   - Đặt cố định ở cạnh phải màn hình (`fixed top-14 sm:top-16 right-2 sm:right-3 bottom-11 sm:bottom-12 z-30 w-[420px] max-w-[calc(100vw-16px)] pointer-events-auto`).
+   - Tuyệt đối **không dùng backdrop che mờ toàn màn hình**, giữ trọn 65-75% diện tích màn hình cho không gian 3D hoạt động mượt 60fps.
+   - Tích hợp 3 Tab chuyên sâu: 💻 Mã nguồn (hỗ trợ `GitDiffViewer` Unified & Split view cho Dev, Review Comments trực quan cho Tech Review), 📝 Quy trình SOP & System Prompt chỉnh sửa lưu trực tiếp, 📊 Chỉ số Telemetry & Tọa độ 3D.
+   - Hỗ trợ thanh điều hướng 8 trạm ở chân bảng (Carousel Strip) kèm phím tắt `Escape` và nút đóng `✕` để khép panel và tự động zoom camera trở lại toàn cảnh đảo trung tâm `[0, 0, 0]`.
+2. **Đổi mặc định `selectAgent(role, modalMode = 'none')`:**
+   - Mọi tương tác click vào công trình (`Building.tsx`), lâu đài (`Castle.tsx`), nhân vật (`Character.tsx`), bong bóng thoại (`Labels.tsx`), thẻ trạm (`RoleChips.tsx`) hay công việc (`MilestoneWidget.tsx`) đều chuyển sang chế độ RTS Game: Camera bay tới trạm và mở bảng Inspector bên cạnh.
+   - Vẫn giữ nút "⛶ Toàn màn hình" trên Inspector Panel nếu người dùng chủ động muốn phóng to dạng modal truyền thống.
+
+---
+
+## 22. Sự cố 22: Nhấp chọn nhân vật/trạm bị crash giao diện (`Minified React error #310` / "This page couldn't load") do vi phạm React Rules of Hooks
+
+### 🔴 Triệu chứng (Symptom)
+- Khi người dùng bấm vào bất kỳ nhân vật hoặc trạm nào trên giao diện 3D hoặc thanh điều hướng dock:
+  - Trước khi có `src/app/error.tsx`: toàn bộ cây React root bị sập khiến Chromium hiển thị trang lỗi hệ thống `⚠️ This page couldn't load. Reload to try again, or go back.`
+  - Sau khi bổ sung `src/app/error.tsx`: Error Boundary bắt được chính xác mã lỗi gốc `Minified React error #310` (*"Rendered more hooks than during the previous render"*).
+- Ngoài ra, khi chế độ `isAutoFollow` đang bật mặc định, ngay sau khi bấm chọn một trạm để focus camera, mỗi khi có Shipper chạy ngang (`couriers.length > 0`) camera lại bị kéo trôi khỏi trạm đang xem.
+
+### 🔍 Nguyên nhân gốc rễ (Root Cause)
+1. **Gọi React Hook (`useMemo`) phía sau câu lệnh `return null` sớm (`StationInspectorPanel.tsx`):**
+   - Trong `StationInspectorPanel.tsx`, các hook từ dòng 42–90 (28 hooks) chạy trước khối kiểm tra điều kiện `if (!selectedAgentRole || isApprovalModalOpen || ...) return null;` ở dòng 93–103.
+   - Tuy nhiên, ở dòng 119 phía dưới câu lệnh `return null` lại có thêm lời gọi hook thứ 29: `const reviewData = useMemo(...)`.
+   - Khi mới vào trang (`selectedAgentRole === null`), React ghi nhận component chỉ có **28 hooks**. Ngay khoảnh khắc người dùng click chọn bất kỳ nhân vật nào (`selectedAgentRole !== null`), luồng thực thi vượt qua dòng 103 và gọi thêm `useMemo` (**29 hooks**), vi phạm trực diện Rules of Hooks và ném lỗi `Minified React error #310`.
+2. **Lỗi logic phụ trong `reviewData` & `CameraRig`:**
+   - `reviewData` trước đó kiểm tra `if (selectedAgentRole !== 'review') return null;`, dẫn đến khi mở trạm `dev`, `GitDiffViewer` không bao giờ nhận được danh sách inline `reviewComments` từ trạm Tech Review.
+   - Trong `CameraRig.tsx`, khối `if (isAutoFollow && !isUserInteracting.current)` ưu tiên bám theo `couriers[0]` ngay cả khi `selectedAgentRole` đang khác `null`.
+3. **Thiếu Error Boundary cấp ứng dụng (`src/app/error.tsx`) & import chéo hằng số giữa các UI Modal:**
+   - Thiếu `error.tsx` làm lỗi client unmount toàn bộ trang thay vì hiện thông báo lỗi rõ ràng; hằng số `AGENT_TECH_STACK` / `ARTIFACT_PREVIEWS` đặt rải rác trong các file modal `.tsx`.
+
+### ✅ Giải pháp chuẩn hóa (Solution & Prevention)
+1. **Đưa toàn bộ Hooks lên trước mọi câu lệnh `return` sớm (`StationInspectorPanel.tsx`) & Kiểm định toàn bộ `src/` bằng TypeScript AST:**
+   - Đưa `useMemo` phân tích `reviewData` lên phía trên khối `if (!selectedAgentRole || ...) return null;`, đồng thời đọc trực tiếp dữ liệu từ artifact của trạm `review` để cả trạm `review` (thẻ đánh giá) lẫn trạm `dev` (`GitDiffViewer` inline comments) đều hiển thị chuẩn xác.
+   - Chạy kiểm định AST trên toàn bộ file `.ts`/`.tsx` trong `src/` xác nhận 0 vi phạm `[HOOK AFTER RETURN]` và 0 `[CONDITIONAL HOOK]`.
+2. **Khóa giữ tiêu điểm Camera khi đang chọn nhân vật (`CameraRig.tsx`):**
+   - Cập nhật điều kiện Auto-Follow thành `if (isAutoFollow && !selectedAgentRole && !isUserInteracting.current)` để khi người dùng click chọn nhân vật, camera giữ vững góc cận cảnh tại trạm đó cho tới khi đóng bảng thanh tra (`Esc` hoặc `✕`).
+3. **Tách hằng số sang `src/lib/pipeline/contracts.ts` & Bổ sung `src/app/error.tsx`:**
+   - Lưu trữ tập trung `AGENT_TECH_STACK` và `ARTIFACT_PREVIEWS` tại `contracts.ts` và duy trì `error.tsx` làm chốt chặn an toàn cho Next.js App Router.
+
+---
+
+## 23. Sự cố 23: Vỡ bố cục khi thu nhỏ cửa sổ (Topbar tràn mất nút, Dock cắt cụt trạm, Telemetry rớt dòng lơ lửng, Bong bóng thoại che phủ tâm đảo & Camera zoom xa quá mức)
+
+### 🔴 Triệu chứng (Symptom)
+- Khi thu nhỏ cửa sổ trình duyệt (chiều ngang hẹp hoặc màn hình dọc/split-view):
+  1. **Topbar:** Các nút bên phải (`Voice`, `Desk Cam`, `Chaos`, `Báo cáo`, `Nhật ký`) bị đẩy tràn ra ngoài màn hình và biến mất hoàn toàn mà không thể cuộn xem; ngay cả trên màn hình full, chữ "Nhật ký" cũng bị chém cụt.
+  2. **Thanh Dock (RoleChips):** Nút trạm `DevOps` bị cắt nửa, trạm `Monitor` biến mất khỏi cạnh phải màn hình.
+  3. **Thanh Telemetry & Zoom (StatusBar):** Bị rớt dòng lên tầng trên, nổi lơ lửng ngay giữa màn hình và đè lên phần chân đảo 3D.
+  4. **Bong bóng thoại 3D:** Có diện tích quá lớn (`max-w-[320px]`), nằm ngay trung tâm đè kín Lâu đài Claude Code và che mất nhãn trạm lân cận (`DevSecOps`).
+  5. **Camera 3D:** Bị thu nhỏ tít lại ở giữa, để lại 2 khoảng trời xanh bao la ở trên và dưới.
+
+### 🔍 Nguyên nhân gốc rễ (Root Cause)
+1. **Lạm dụng chữ text trên thanh Topbar:** Quá nhiều nút gắn class `hidden xl:inline` hiển thị text làm tổng chiều rộng vượt quá 1200px; thanh bar không có cơ chế cuộn ngang an toàn (`max-w-[calc(100vw-...)]` và `overflow-x-auto`).
+2. **Tên nhãn trạm dài & thiếu hỗ trợ vuốt chạm (`RoleChips.tsx`):** Nhãn tên dài (`Security`, `DevOps`, `Monitor`) khiến tổng chiều rộng dock vượt quá 550px, thiếu `touch-pan-x`.
+3. **StatusBar dùng vị trí cố định `bottom-14` trên màn hình nhỏ:** Khoảng cách quá cao tạo khoảng hở thừa lớn so với dock ở đáy.
+4. **`bubbleOffset` của các trạm đặt quá cao & bubble max-width quá lớn:** Trạm Release Eng có `bubbleOffset: [0, 5.0, 0]`, khi chiếu góc nhìn isometric sẽ rơi thẳng vào tâm đảo; bong bóng 3 dòng chiếm nhiều diện tích.
+5. **Công thức `responsiveScale` chỉ phụ thuộc vào `size.width / 1200`:** Khi chiều rộng là 600px, camera zoom giảm 50% làm ốc đảo nhỏ bất hợp lý.
+
+### ✅ Giải pháp chuẩn hóa (Solution & Prevention)
+1. **Tinh giản Topbar & Kích hoạt cuộn ngang an toàn (`Topbar.tsx`):**
+   - Loại bỏ chữ text thừa trên các nút toggle trực quan (`Xoay`, `Đạo diễn`, `Demo`, `Tên`, `Thoại`), chỉ giữ icon kèm tooltip và đổi màu nền rõ nét.
+   - Thêm `overflow-x-auto scrollbar-none max-w-[calc(100vw-190px)] sm:max-w-none` đảm bảo mọi nút đều có thể tiếp cận trên mọi độ phân giải.
+2. **Gọn hóa nhãn Dock & Cho phép vuốt ngang mượt mà (`RoleChips.tsx`):**
+   - Rút gọn nhãn ngắn gọn, súc tích: `Hub`, `PM`, `Dev`, `Review`, `QA`, `Sec`, `Ops`, `APM`. Toàn bộ 8 trạm nằm vừa vặn trong 460px; thêm `touch-pan-x`.
+3. **Đưa StatusBar sát dock (`StatusBar.tsx`):**
+   - Chuyển vị trí trên màn hình hẹp xuống `bottom-11 sm:bottom-12`, thu nhỏ các nút `+`, `-`, `Reset` gọn gàng (`w-6 h-6`).
+4. **Hạ thấp `bubbleOffset` & Thu gọn bong bóng thoại (`layout.ts`, `Labels.tsx`):**
+   - Hạ `bubbleOffset` của Release Eng xuống `4.1` (thay vì `5.0`), APM Monitor xuống `4.8` (thay vì `6.2`).
+   - Giới hạn bubble `max-w-[180px] sm:max-w-[220px] md:max-w-[250px]`, `line-clamp-2`, tăng z-index ưu tiên cho trạm được chọn.
+5. **Cân đối tỉ lệ thu phóng Camera 3D (`CameraRig.tsx`):**
+   - Kẹp chặn `responsiveScale = Math.min(1.05, Math.max(0.72, Math.min(size.width / 1080, (size.height / 720) * 0.95)))`. Đảo luôn chiếm 70-85% khung nhìn, chấm dứt tình trạng đảo bị thu teo nhỏ.
+
+---
+
 > **Quy tắc vàng cho tương lai:**
 > 1. Mọi đối tượng 3D đặt trên đảo phải tuân theo hệ tọa độ Radial Polar ($R, \theta$) với tâm là Lâu Đài $[0, 0]$.
 > 2. Mọi đường đi của nhân vật phải bám theo các nan hoa đại lộ và vòng xuyến trung tâm, tuyệt đối không tự nối chéo qua góc các phòng.
@@ -331,3 +556,10 @@
 > 4. Màu số nguyên Three.js (`0x...`) luôn chuyển sang chuỗi hex CSS (`#...`) trước khi dùng trong React inline style.
 > 5. Luôn chụp WebGL Canvas thông qua thuộc tính `gl={{ preserveDrawingBuffer: true }}` của Three.js Canvas để tránh màn hình đen khi trích xuất hình ảnh `toDataURL()`.
 > 6. Mọi animation di chuyển giữa các trạm phải hoàn tất bàn giao hàng tại bàn làm việc trước khi kích hoạt logic xử lý tiếp theo của trạm đó.
+> 7. Luôn tách biệt `Role SOP` (cho phép người dùng tùy biến trên UI Playground) khỏi `Output Contract` (JSON Schema / Git Diff + Speech Tag khóa cố định trên Server) để tránh làm vỡ bộ parser giao diện.
+> 8. Với các biến trạng thái tích lũy bên trong hàm lặp stream/closure, sử dụng **Object Wrapper Container** (`captureBox`) để giữ trọn vẹn type-safety thay vì ép kiểu lỏng lẻo.
+> 9. Mọi lệnh Rollback hoặc Hủy phải đồng bộ dọn sạch Approval Queue và cờ `isRealRunning` để không làm treo trạng thái hệ thống.
+> 10. Tuyệt đối không chèn số liệu giả hoặc nhãn tĩnh vào giao diện; nếu là mô phỏng phải ghi chú rõ ràng, nếu là đo lường phải dùng API đo lường thực tế (`requestAnimationFrame`, trích xuất artifact).
+> 11. Các thành phần 2D overlay chiếu từ không gian 3D bắt buộc phải được kẹp biên viewport (`Math.max` / `Math.min`) để không bao giờ bị cắt cụt ngoài màn hình trên thiết bị di động.
+> 12. Tuyệt đối tuân thủ **React Rules of Hooks**: 100% lời gọi hook (`useState`, `useEffect`, `useMemo`, `useCallback`, `useRef`, `useFrame`, Zustand `useTownStore`) BẮT BUỘC phải đặt ở cấp cao nhất phía TRƯỚC mọi câu lệnh early return (`if (...) return null;`), tuyệt đối không đặt hook sau `return` hoặc trong nhánh điều kiện/vòng lặp. Hằng số dữ liệu thuần túy tách riêng vào `src/lib/...`.
+> 13. Khi thiết kế thanh công cụ đa nút (Topbar, Dock), tuyệt đối không lạm dụng nhãn text cố định; luôn cấu hình container có `overflow-x-auto scrollbar-none`, ưu tiên icon kèm tooltip và kẹp chặn tỉ lệ thu phóng 3D (`responsiveScale` tối thiểu 0.70-0.75) để không làm teo nhỏ không gian 3D trên màn hình hẹp/dọc.

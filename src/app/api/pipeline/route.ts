@@ -2,20 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { callGemini, streamGemini } from '../../../lib/ai/gemini';
 import { callDeepSeek, streamDeepSeek } from '../../../lib/ai/deepseek';
 import { AgentRole } from '../../../lib/pipeline/stages';
-
-interface PipelineContext {
-  prd?: string;
-  sourceCode?: string;
-  reviewComments?: string;
-  testReport?: string;
-  feedbackNote?: string;
-  scenario?: 'feature' | 'bug' | 'security' | 'chaos' | 'github';
-}
+import {
+  buildEffectiveSystemPrompt,
+  PipelineContext,
+  STAGE_PROMPT_CONFIGS,
+} from '../../../lib/pipeline/prompts';
 
 interface RequestBody {
   prompt: string;
   stage: AgentRole;
   apiKey?: string;
+  deepseekApiKey?: string;
+  modelProvider?: 'auto' | 'gemini' | 'deepseek';
   stream?: boolean;
   context?: PipelineContext;
   customSystemPrompt?: string;
@@ -59,22 +57,49 @@ function finalizeStageOutput(
   let content = rawResult;
 
   if (config.language === 'json') {
+    const cleaned = rawResult
+      .replace(/^```json\s*/im, '')
+      .replace(/^```\s*/im, '')
+      .replace(/```\s*$/im, '')
+      .trim();
+
+    let parsedObj: Record<string, unknown> | null = null;
     try {
-      const cleaned = rawResult
-        .replace(/^```json\s*/im, '')
-        .replace(/^```\s*/im, '')
-        .replace(/```\s*$/im, '')
-        .trim();
-      const parsed = JSON.parse(cleaned);
-      if (parsed.speech) speech = parsed.speech;
-      content = JSON.stringify(parsed, null, 2);
+      parsedObj = JSON.parse(cleaned);
     } catch {
-      content = rawResult;
+      const firstBrace = cleaned.indexOf('{');
+      const lastBrace = cleaned.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace > firstBrace) {
+        try {
+          parsedObj = JSON.parse(cleaned.slice(firstBrace, lastBrace + 1));
+        } catch {
+          parsedObj = null;
+        }
+      }
     }
-  } else if (rawResult.includes('---SPEECH---:')) {
-    const parts = rawResult.split('---SPEECH---:');
-    content = parts[0].trim();
-    speech = parts[1].trim() || speech;
+
+    if (parsedObj) {
+      if (typeof parsedObj.speech === 'string' && parsedObj.speech.trim()) {
+        speech = parsedObj.speech.trim().replace(/^\[|\]$/g, '');
+      }
+      content = JSON.stringify(parsedObj, null, 2);
+    } else {
+      content = cleaned || rawResult;
+    }
+  } else {
+    if (rawResult.includes('---SPEECH---:')) {
+      const parts = rawResult.split('---SPEECH---:');
+      content = parts[0].trim();
+      const rawSpeech = parts[1].trim().replace(/^\[|\]$/g, '');
+      if (rawSpeech) speech = rawSpeech;
+    }
+
+    if (config.language === 'typescript' || config.language === 'dockerfile') {
+      content = content
+        .replace(/^```(?:typescript|ts|javascript|js|dockerfile|docker)?\s*\n?/i, '')
+        .replace(/\n?```\s*$/i, '')
+        .trim();
+    }
   }
 
   if (stage === 'dev' && config.language === 'diff') {
@@ -84,159 +109,26 @@ function finalizeStageOutput(
   return { content, speech };
 }
 
-const STAGE_CONFIGS: Record<
-  AgentRole,
-  {
-    systemPrompt: string;
-    filename: string;
-    language: string;
-    formatUserPrompt: (userPrompt: string, ctx?: PipelineContext) => string;
-  }
-> = {
-  orchestrator: {
-    filename: 'MilestonePlan.json',
-    language: 'json',
-    systemPrompt: `Bạn là Orchestrator chính của hệ thống DevOps tự trị (Claude Code Command Center). 
-Nhiệm vụ: Nhận yêu cầu tính năng từ người dùng, phân tích phạm vi bài toán, phân rã thành Milestone và danh sách User Stories có thể thực thi tuần tự.
-Định dạng đầu ra: Hãy trả về JSON hợp lệ (không kèm giải thích bên ngoài):
-{
-  "milestone": "Tên Sprint / Milestone",
-  "goal": "Mục tiêu tổng quát",
-  "userStories": [
-    { "id": "US-1", "title": "Tiêu đề story", "assignedTo": "Dev", "priority": "HIGH" }
-  ],
-  "speech": "1 câu tóm tắt ngắn (dưới 15 từ) để agent nói lên bong bóng 3D"
-}`,
-    formatUserPrompt: (prompt) => `Phân tích yêu cầu tính năng sau thành MilestonePlan: "${prompt}"`,
-  },
-
-  pm: {
-    filename: 'PRD.md',
-    language: 'markdown',
-    systemPrompt: `Bạn là Senior Product Manager & Business Analyst.
-Nhiệm vụ: Chuyển hóa yêu cầu và Milestone thành tài liệu đặc tả sản phẩm (PRD) chi tiết, chặt chẽ gồm:
-1. Mục tiêu sản phẩm (Objectives)
-2. User Flows & Functional Requirements
-3. Tiêu chí nghiệm thu chuẩn Gherkin format (Given - When - Then) bao quát cả Happy Path và Edge Cases.
-Định dạng: Trả về tài liệu Markdown chuẩn. Cuối tài liệu, hãy thêm dòng đặc biệt:
----SPEECH---: [1 câu ngắn dưới 15 từ thông báo đã hoàn thành PRD]`,
-    formatUserPrompt: (prompt, ctx) =>
-      `Viết tài liệu PRD cho tính năng sau:\n"${prompt}"\n\nKế hoạch phân rã:\n${ctx?.prd || ''}`,
-  },
-
-  dev: {
-    filename: 'source-code.diff',
-    language: 'diff',
-    systemPrompt: `Bạn là Senior Full-Stack Engineer.
-Nhiệm vụ: Dựa trên tài liệu PRD hoặc báo cáo lỗi (Bug Report / SAST CVE / Phản hồi Tech Lead), viết mã nguồn TypeScript sạch (Clean Architecture, validation, try/catch error handling, boundary checks, không hardcode secrets) dưới định dạng Git Unified Diff Patch chuẩn (bắt đầu bằng diff --git a/src/... b/src/..., có ---, +++, @@ -...,... +...,... @@ và tiền tố + cho các dòng thêm mới, - cho các dòng cũ được refactor).
-Định dạng: Trả về bản Git Unified Diff hoàn chỉnh (không bọc ngoài markdown). Cuối phản hồi thêm dòng:
----SPEECH---: [1 câu ngắn dưới 15 từ thông báo đã lập trình xong và tạo Pull Request diff]`,
-    formatUserPrompt: (prompt, ctx) => {
-      if (ctx?.feedbackNote) {
-        return `YÊU CẦU VÁ LỖI / PHẢN HỒI KỸ THUẬT:\n"${ctx.feedbackNote}"\n\nMã nguồn ban đầu:\n\`\`\`diff\n${ctx.sourceCode || ''}\n\`\`\`\n\nHãy tạo bản Git Unified Diff (.diff) vá lỗi hoàn chỉnh để giải quyết triệt để phản hồi trên và đáp ứng chuẩn Clean Code.`;
-      }
-      return `Dựa trên PRD sau đây, hãy tạo bản Git Unified Diff (.diff) triển khai mã nguồn TypeScript hoàn chỉnh:\n\n${ctx?.prd || prompt}`;
-    },
-  },
-
-  review: {
-    filename: 'ReviewComments.json',
-    language: 'json',
-    systemPrompt: `Bạn là Principal Code Reviewer / Tech Lead.
-Nhiệm vụ: Rà soát tỉ mỉ bản diff Pull Request. Đánh giá Clean Code, code smells, memory leak, boundary check, hoặc xử lý lỗi try/catch.
-Định dạng đầu ra: Trả về JSON hợp lệ:
-{
-  "pullRequest": 87,
-  "verdict": "APPROVED" | "REQUEST_CHANGES",
-  "score": 9.5,
-  "summary": "Tóm tắt đánh giá chất lượng",
-  "comments": [
-    { "file": "src/feature.ts", "line": 15, "note": "Nhận xét chi tiết" }
-  ],
-  "speech": "1 câu ngắn dưới 15 từ (VD: 'PR #87 LGTM! Đã approve (9.5/10)' hoặc 'PR cần bổ sung try/catch')"
-}`,
-    formatUserPrompt: (prompt, ctx) =>
-      `Hãy review bản Pull Request Diff sau đây cho tác vụ "${prompt}":\n\n\`\`\`diff\n${ctx?.sourceCode || '// No diff provided'}\n\`\`\``,
-  },
-
-  qa: {
-    filename: 'test-suite.spec.ts',
-    language: 'typescript',
-    systemPrompt: `Bạn là Lead QA Automation Engineer.
-Nhiệm vụ: Đọc bản diff mã nguồn và viết một bộ Unit Test tự động hoàn chỉnh (Jest / Vitest) bao phủ:
-1. Happy path (trường hợp chạy đúng)
-2. Negative path (trường hợp đầu vào sai)
-3. Boundary & edge cases (rỗng, null, timeout, expired token).
-Định dạng: Trả về code file test hoàn chỉnh. Cuối phản hồi thêm dòng:
----SPEECH---: [1 câu ngắn dưới 15 từ thông báo tổng số test cases PASSED (Coverage %)]`,
-    formatUserPrompt: (prompt, ctx) =>
-      `Hãy viết trọn bộ Unit Test tự động cho thay đổi mã nguồn (${prompt}) sau:\n\n\`\`\`diff\n${ctx?.sourceCode || '// No code'}\n\`\`\``,
-  },
-
-  security: {
-    filename: 'SecurityAudit.json',
-    language: 'json',
-    systemPrompt: `Bạn là Cybersecurity & DevSecOps Specialist.
-Nhiệm vụ: Quét bảo mật tĩnh (SAST), kiểm tra OWASP Top 10, rà soát rò rỉ API secrets, injection rủi ro trong bản diff mã nguồn.
-Định dạng đầu ra: Trả về JSON hợp lệ:
-{
-  "status": "PASSED" | "WARNING" | "CRITICAL",
-  "cveCount": 0,
-  "vulnerabilities": [],
-  "compliance": ["OWASP Top 10", "Zero Secret Leak"],
-  "speech": "1 câu ngắn dưới 15 từ thông báo kết quả audit bảo mật"
-}`,
-    formatUserPrompt: (prompt, ctx) => {
-      const extraNote =
-        ctx?.scenario === 'security'
-          ? '\nLưu ý: Đây là kịch bản AppSec Audit chuyên sâu, hãy kiểm tra thật gắt gao các nguy cơ OWASP Top 10, input sanitization, token lifecycle và ghi nhận khuyến nghị bảo mật chi tiết.'
-          : '';
-      return `Quét lỗ hổng bảo mật SAST & OWASP cho bản diff sau (${prompt}):${extraNote}\n\n\`\`\`diff\n${ctx?.sourceCode || '// No code'}\n\`\`\``;
-    },
-  },
-
-  devops: {
-    filename: 'Dockerfile',
-    language: 'dockerfile',
-    systemPrompt: `Bạn là Senior Release DevOps & SRE.
-Nhiệm vụ: Viết file Dockerfile chuẩn production (tối ưu multi-stage build, alpine, non-root user) và cấu hình triển khai Kubernetes / ArgoCD Canary.
-Định dạng: Trả về nội dung Dockerfile hoàn chỉnh. Cuối phản hồi thêm dòng:
----SPEECH---: [1 câu ngắn dưới 15 từ thông báo container đã đóng gói và sẵn sàng Canary release]`,
-    formatUserPrompt: (prompt, ctx) =>
-      `Viết Dockerfile production và tóm tắt deployment cho ứng dụng:\n"${prompt}"\nTrích đoạn diff:\n${ctx?.sourceCode?.slice(0, 700) || ''}`,
-  },
-
-  monitor: {
-    filename: 'ClusterHealth.json',
-    language: 'json',
-    systemPrompt: `Bạn là SRE Monitoring Watchdog.
-Nhiệm vụ: Đọc telemetry sau khi tính năng đã release lên Production, đánh giá độ ổn định cụm máy chủ và trạng thái các pods.
-Định dạng đầu ra: Trả về JSON:
-{
-  "cluster": "k8s-production-us-central",
-  "status": "HEALTHY",
-  "p99Latency": "14ms",
-  "cpuUsage": "24%",
-  "tps": 342,
-  "speech": "CPU 24% · Latency 14ms · Hệ thống ổn định 100% 📡"
-}`,
-    formatUserPrompt: (prompt) => `Sinh dữ liệu APM Telemetry sau khi deploy tính năng: "${prompt}"`,
-  },
-};
-
 export async function POST(req: NextRequest) {
   try {
     const body: RequestBody = await req.json();
-    const { prompt, stage, apiKey, stream, context, customSystemPrompt } = body;
+    const { prompt, stage, apiKey, deepseekApiKey, modelProvider, stream, context, customSystemPrompt } = body;
 
-    if (!prompt || !stage) {
+    if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0 || !stage) {
       return NextResponse.json(
-        { error: 'Thiếu tham số prompt hoặc stage.' },
+        { error: 'Thiếu hoặc sai định dạng tham số prompt/stage.' },
         { status: 400 }
       );
     }
 
-    const config = STAGE_CONFIGS[stage];
+    if (prompt.length > 20000) {
+      return NextResponse.json(
+        { error: 'Độ dài prompt vượt quá giới hạn tối đa cho phép (20,000 ký tự).' },
+        { status: 400 }
+      );
+    }
+
+    const config = STAGE_PROMPT_CONFIGS[stage];
     if (!config) {
       return NextResponse.json(
         { error: `Stage không hợp lệ: ${stage}` },
@@ -244,22 +136,42 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const effectiveSystemPrompt =
-      typeof customSystemPrompt === 'string' && customSystemPrompt.trim().length > 0
-        ? customSystemPrompt.trim()
-        : config.systemPrompt;
-
+    const effectiveSystemPrompt = buildEffectiveSystemPrompt(stage, customSystemPrompt);
     const userPromptFormatted = config.formatUserPrompt(prompt, context);
-    const activeKey =
-      apiKey?.trim() ||
+
+    // Resolve API Keys & Multi-Model Engine
+    const geminiKey =
+      (apiKey?.startsWith('AIza') ? apiKey.trim() : '') ||
       process.env.GEMINI_API_KEY?.trim() ||
-      process.env.DEEPSEEK_API_KEY?.trim();
+      (apiKey?.trim() && !apiKey.startsWith('sk-') ? apiKey.trim() : '');
+
+    const deepseekKey =
+      (deepseekApiKey?.startsWith('sk-') ? deepseekApiKey.trim() : '') ||
+      (apiKey?.startsWith('sk-') ? apiKey.trim() : '') ||
+      process.env.DEEPSEEK_API_KEY?.trim() ||
+      '';
+
+    let chosenProvider: 'gemini' | 'deepseek' = 'gemini';
+    if (modelProvider === 'deepseek') {
+      if (deepseekKey) chosenProvider = 'deepseek';
+      else if (geminiKey) chosenProvider = 'gemini';
+    } else if (modelProvider === 'gemini') {
+      if (geminiKey) chosenProvider = 'gemini';
+      else if (deepseekKey) chosenProvider = 'deepseek';
+    } else {
+      // Auto provider selection based on key availability
+      if (deepseekKey && !geminiKey) chosenProvider = 'deepseek';
+      else chosenProvider = 'gemini';
+    }
+
+    const activeKey = chosenProvider === 'deepseek' ? deepseekKey : geminiKey;
+    let modelName = chosenProvider === 'deepseek' ? 'DeepSeek V3' : 'Gemini 3.8 Flash';
 
     if (!activeKey) {
       return NextResponse.json(
         {
           error:
-            'Chưa cấu hình API Key. Vui lòng nhập Gemini API Key (AIza...) hoặc DeepSeek API Key (sk-...).',
+            'Chưa cấu hình API Key phù hợp. Vui lòng nhập Gemini API Key (AIza...) hoặc DeepSeek API Key (sk-...).',
         },
         { status: 400 }
       );
@@ -276,21 +188,25 @@ export async function POST(req: NextRequest) {
 
           try {
             let fullRaw = '';
-            const generator = activeKey.startsWith('sk-')
-              ? streamDeepSeek({
-                  prompt: userPromptFormatted,
-                  systemInstruction: effectiveSystemPrompt,
-                  apiKey: activeKey,
-                  temperature: 0.3,
-                  signal: req.signal,
-                })
-              : streamGemini({
-                  prompt: userPromptFormatted,
-                  systemInstruction: effectiveSystemPrompt,
-                  apiKey: activeKey,
-                  temperature: 0.3,
-                  signal: req.signal,
-                });
+            const generator =
+              chosenProvider === 'deepseek'
+                ? streamDeepSeek({
+                    prompt: userPromptFormatted,
+                    systemInstruction: effectiveSystemPrompt,
+                    apiKey: activeKey,
+                    temperature: 0.3,
+                    signal: req.signal,
+                  })
+                : streamGemini({
+                    prompt: userPromptFormatted,
+                    systemInstruction: effectiveSystemPrompt,
+                    apiKey: activeKey,
+                    temperature: 0.3,
+                    signal: req.signal,
+                    onModelResolved: (resolved) => {
+                      modelName = resolved;
+                    },
+                  });
 
             for await (const delta of generator) {
               if (req.signal.aborted) break;
@@ -304,6 +220,7 @@ export async function POST(req: NextRequest) {
                 type: 'done',
                 success: true,
                 stage,
+                model: modelName,
                 filename: config.filename,
                 language: config.language,
                 content,
@@ -330,7 +247,7 @@ export async function POST(req: NextRequest) {
 
     // 2. Chế độ JSON tiêu chuẩn (Backwards-compatible)
     let rawResult = '';
-    if (activeKey.startsWith('sk-')) {
+    if (chosenProvider === 'deepseek') {
       rawResult = await callDeepSeek({
         prompt: userPromptFormatted,
         systemInstruction: effectiveSystemPrompt,
@@ -339,13 +256,17 @@ export async function POST(req: NextRequest) {
         signal: req.signal,
       });
     } else {
-      rawResult = await callGemini({
+      const geminiRes = await callGemini({
         prompt: userPromptFormatted,
         systemInstruction: effectiveSystemPrompt,
         apiKey: activeKey,
         temperature: 0.3,
         signal: req.signal,
+        onModelResolved: (resolved) => {
+          modelName = resolved;
+        },
       });
+      rawResult = geminiRes.text;
     }
 
     const { content, speech } = finalizeStageOutput(stage, config, rawResult);
@@ -353,6 +274,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       stage,
+      model: modelName,
       filename: config.filename,
       language: config.language,
       content,

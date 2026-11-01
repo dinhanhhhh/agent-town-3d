@@ -6,18 +6,8 @@ import { AgentRole, STAGE_ORDER } from '../../lib/pipeline/stages';
 import { STATIONS_LAYOUT } from '../../lib/scene/layout';
 import { sfx } from '../../lib/audio/sfx';
 import { GitDiffViewer } from './GitDiffViewer';
-
-// Danh mục Tech Stack chuyên môn của từng Agent
-const AGENT_TECH_STACK: Record<AgentRole, string[]> = {
-  orchestrator: ['Claude Code Hub', 'Gemini 3.8 Flash', 'DAG Milestones', 'Orchestrator Hub', 'Multi-Agent Bus'],
-  pm: ['Notion Specs', 'Jira Software', 'Gherkin BDD', 'PRD RFC', 'User Story Mapping'],
-  dev: ['Next.js 16', 'TypeScript 5.6', 'Tailwind CSS', 'Clean Architecture', 'Git Unified Diff'],
-  review: ['GitHub PR Review', 'SonarQube', 'ESLint', 'Code Smells Audit', 'Boundary Safety'],
-  qa: ['Playwright', 'Jest / Vitest', 'Coverage 98%', 'Edge Case Suite', 'K6 Load Test'],
-  security: ['Trivy Scanner', 'OWASP Top 10', 'SAST Audit', 'Secret Leak Check', 'CVE Watchdog'],
-  devops: ['Docker Multi-Stage', 'Kubernetes / K8s', 'ArgoCD GitOps', 'Canary Rollout', 'GitHub Actions'],
-  monitor: ['Prometheus APM', 'Grafana Dashboard', 'P99 Latency Watcher', 'SRE Alertmanager', 'SLO / SLI'],
-};
+import { AGENT_TECH_STACK } from '../../lib/pipeline/contracts';
+export { AGENT_TECH_STACK };
 
 export const AgentDossierModal: React.FC = () => {
   const isDossierModalOpen = useTownStore((s) => s.isDossierModalOpen);
@@ -29,6 +19,15 @@ export const AgentDossierModal: React.FC = () => {
   const realArtifacts = useTownStore((s) => s.realArtifacts);
 
   const [copied, setCopied] = useState(false);
+
+  const reviewComments = React.useMemo(() => {
+    if (!realArtifacts.review?.content) return [];
+    try {
+      const parsed = JSON.parse(realArtifacts.review.content);
+      if (Array.isArray(parsed.comments)) return parsed.comments;
+    } catch {}
+    return [];
+  }, [realArtifacts.review]);
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -161,9 +160,9 @@ export const AgentDossierModal: React.FC = () => {
           {/* SYSTEM PROMPT CORE */}
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
-              🧠 System Prompt Chỉ Đạo (Agent Core):
+              🧠 System Prompt Chỉ Đạo (Department SOP):
             </span>
-            <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 font-mono text-[11px] leading-relaxed select-text">
+            <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 font-mono text-[11px] leading-relaxed whitespace-pre-wrap select-text">
               {agent.systemPrompt}
             </div>
           </div>
@@ -192,7 +191,11 @@ export const AgentDossierModal: React.FC = () => {
               </div>
               {currentArtifact.language === 'diff' || currentArtifact.filename.endsWith('.diff') ? (
                 <div className="max-h-60 overflow-y-auto overscroll-contain">
-                  <GitDiffViewer diffText={currentArtifact.content} filename={currentArtifact.filename} />
+                  <GitDiffViewer
+                    diffText={currentArtifact.content}
+                    filename={currentArtifact.filename}
+                    reviewComments={reviewComments}
+                  />
                 </div>
               ) : (
                 <div className="max-h-48 overflow-y-auto overscroll-contain p-3 rounded-lg bg-slate-950 border border-slate-800 font-mono text-[11px] text-emerald-300/90 whitespace-pre leading-relaxed select-text">

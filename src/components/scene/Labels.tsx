@@ -3,10 +3,64 @@
 import React from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import { STAGE_ORDER } from '../../lib/pipeline/stages';
+import { STAGE_ORDER, AgentRole } from '../../lib/pipeline/stages';
 import { STATIONS_LAYOUT } from '../../lib/scene/layout';
 import { getRouteWaypoints, interpolateCourierPosition } from '../../lib/scene/waypoints';
 import { useTownStore } from '../../store/useTownStore';
+
+const ROLE_ICONS: Record<AgentRole, string> = {
+  orchestrator: '🤖',
+  pm: '📝',
+  dev: '💻',
+  review: '🔍',
+  qa: '🧪',
+  security: '🛡️',
+  devops: '🚀',
+  monitor: '📡',
+};
+
+const ROLE_GLOW_STYLES: Record<AgentRole, { border: string; badge: string; shadow: string }> = {
+  orchestrator: {
+    border: 'border-purple-500/70',
+    badge: 'bg-purple-500/20 text-purple-300 border-purple-500/40',
+    shadow: 'shadow-purple-950/60',
+  },
+  pm: {
+    border: 'border-blue-500/70',
+    badge: 'bg-blue-500/20 text-blue-300 border-blue-500/40',
+    shadow: 'shadow-blue-950/60',
+  },
+  dev: {
+    border: 'border-amber-500/70',
+    badge: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+    shadow: 'shadow-amber-950/60',
+  },
+  review: {
+    border: 'border-cyan-500/70',
+    badge: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40',
+    shadow: 'shadow-cyan-950/60',
+  },
+  qa: {
+    border: 'border-emerald-500/70',
+    badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+    shadow: 'shadow-emerald-950/60',
+  },
+  security: {
+    border: 'border-rose-500/70',
+    badge: 'bg-rose-500/20 text-rose-300 border-rose-500/40',
+    shadow: 'shadow-rose-950/60',
+  },
+  devops: {
+    border: 'border-indigo-500/70',
+    badge: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40',
+    shadow: 'shadow-indigo-950/60',
+  },
+  monitor: {
+    border: 'border-teal-500/70',
+    badge: 'bg-teal-500/20 text-teal-300 border-teal-500/40',
+    shadow: 'shadow-teal-950/60',
+  },
+};
 
 /**
  * 3D Tracker running inside <Canvas> that projects 3D coordinates of stations
@@ -36,7 +90,11 @@ export const OverlayProjector: React.FC = () => {
           bubbleEl.style.display = 'block';
           const bx = (vec.x * 0.5 + 0.5) * size.width;
           const by = (-vec.y * 0.5 + 0.5) * size.height;
-          bubbleEl.style.transform = `translate3d(${bx}px, ${by}px, 0) translate(-50%, -100%)`;
+          // Responsive clamping to keep bubbles fully visible on mobile & desktop screens
+          const bubbleMarginX = size.width < 640 ? 100 : 135;
+          const clampedBx = Math.max(bubbleMarginX, Math.min(size.width - bubbleMarginX, bx));
+          const clampedBy = Math.max(68, Math.min(size.height - 75, by));
+          bubbleEl.style.transform = `translate3d(${clampedBx}px, ${clampedBy}px, 0) translate(-50%, -100%)`;
         }
       }
 
@@ -55,7 +113,10 @@ export const OverlayProjector: React.FC = () => {
           labelEl.style.display = 'block';
           const lx = (vec.x * 0.5 + 0.5) * size.width;
           const ly = (-vec.y * 0.5 + 0.5) * size.height;
-          labelEl.style.transform = `translate3d(${lx}px, ${ly}px, 0) translate(-50%, -50%)`;
+          const labelMarginX = size.width < 640 ? 55 : 75;
+          const clampedLx = Math.max(labelMarginX, Math.min(size.width - labelMarginX, lx));
+          const clampedLy = Math.max(50, Math.min(size.height - 50, ly));
+          labelEl.style.transform = `translate3d(${clampedLx}px, ${clampedLy}px, 0) translate(-50%, -50%)`;
         }
       }
     }
@@ -75,7 +136,10 @@ export const OverlayProjector: React.FC = () => {
           courierEl.style.display = 'block';
           const cx = (vec.x * 0.5 + 0.5) * size.width;
           const cy = (-vec.y * 0.5 + 0.5) * size.height;
-          courierEl.style.transform = `translate3d(${cx}px, ${cy}px, 0) translate(-50%, -50%)`;
+          const courierMarginX = 60;
+          const clampedCx = Math.max(courierMarginX, Math.min(size.width - courierMarginX, cx));
+          const clampedCy = Math.max(50, Math.min(size.height - 50, cy));
+          courierEl.style.transform = `translate3d(${clampedCx}px, ${clampedCy}px, 0) translate(-50%, -50%)`;
         }
       }
     }
@@ -128,43 +192,71 @@ export const StationOverlay: React.FC = () => {
         const isSelected = selectedAgentRole === role;
 
         // Chỉ hiển thị bong bóng thoại khi Agent đang bận việc hoặc đang được chọn xem chi tiết:
-        // Ngăn chặn việc 8 bong bóng thoại cùng hiện che kín toàn bộ hòn đảo 3D
         const shouldShowBubble =
           showBubbles &&
           agent.speech &&
           (isWorking || isDebugging || isError || isWaiting || isSelected);
 
+        const glowStyle = ROLE_GLOW_STYLES[role];
+        const roleIcon = ROLE_ICONS[role];
+
         return (
           <React.Fragment key={role}>
-            {/* 3D Floating Speech Bubble (Chỉ hiện khi Agent đang có việc) */}
+            {/* 3D Floating Speech Bubble (Redesigned & Responsive Compact) */}
             {shouldShowBubble && (
               <div
                 id={`bubble-${role}`}
-                className="absolute top-0 left-0 pointer-events-auto will-change-transform"
+                className={`absolute top-0 left-0 pointer-events-auto will-change-transform ${
+                  isSelected ? 'z-30' : 'z-20'
+                }`}
                 style={{ transform: 'translate3d(-9999px, -9999px, 0)' }}
               >
                 <div
                   onClick={(e) => {
                     e.stopPropagation();
-                    selectAgent(role, 'artifact');
+                    selectAgent(role);
                   }}
-                  className={`cursor-pointer transition-all duration-300 transform hover:scale-105 select-none max-w-[155px] sm:max-w-[210px] text-center p-1.5 sm:p-2 rounded-xl shadow-lg border backdrop-blur-md mb-1.5 sm:mb-2 ${
-                    isError
-                      ? 'bg-red-950/90 border-red-500 text-red-200'
-                      : isDebugging
-                      ? 'bg-amber-950/90 border-amber-500 text-amber-200'
-                      : isWaiting
-                      ? 'bg-purple-950/90 border-purple-500 text-purple-200 animate-pulse'
-                      : isWorking
-                      ? 'bg-slate-900/90 border-blue-400 text-blue-100'
-                      : 'bg-slate-900/80 border-slate-700 text-slate-300'
-                  }`}
+                  className={`cursor-pointer group transition-all duration-300 transform hover:scale-105 select-none w-max min-w-[120px] max-w-[180px] sm:max-w-[220px] md:max-w-[250px] p-1.5 sm:p-2 rounded-xl sm:rounded-2xl shadow-xl border backdrop-blur-xl bg-slate-950/95 mb-0.5 ${glowStyle.border} ${glowStyle.shadow}`}
                 >
-                  <div className="text-[10px] sm:text-[11px] font-medium leading-snug line-clamp-2">
+                  {/* Bubble Header: Avatar, Name & Live status dot */}
+                  <div className="flex items-center justify-between gap-1 pb-0.5 border-b border-slate-800/80 mb-1">
+                    <div className="flex items-center gap-1 min-w-0">
+                      <span className="text-[11px] sm:text-xs shrink-0">{roleIcon}</span>
+                      <span className="text-[9px] sm:text-[10px] font-bold text-white tracking-wide truncate">
+                        {layout.name}
+                      </span>
+                    </div>
+                    <span
+                      className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full shrink-0 ${
+                        isError
+                          ? 'bg-rose-500 animate-ping'
+                          : isDebugging
+                          ? 'bg-amber-400 animate-pulse'
+                          : isWaiting
+                          ? 'bg-purple-400 animate-pulse'
+                          : isWorking
+                          ? 'bg-emerald-400'
+                          : 'bg-slate-400'
+                      }`}
+                    />
+                  </div>
+
+                  {/* Bubble Text (Giới hạn 2 dòng gọn gàng, tránh tràn lấp trung tâm đảo) */}
+                  <div className="text-[10px] sm:text-[11px] font-medium text-slate-200 leading-snug line-clamp-2">
                     {agent.speech}
                   </div>
-                  {/* Little speech arrow below */}
-                  <div className="w-2 h-2 mx-auto rotate-45 -mb-2.5 sm:-mb-3 mt-1 bg-inherit border-r border-b border-inherit" />
+
+                  {/* Sleek SVG pointer downward */}
+                  <div className="flex justify-center -mb-2 sm:-mb-2.5 mt-1">
+                    <svg
+                      width="10"
+                      height="5"
+                      viewBox="0 0 10 5"
+                      className="text-slate-950 fill-current drop-shadow-md"
+                    >
+                      <polygon points="0,0 10,0 5,5" />
+                    </svg>
+                  </div>
                 </div>
               </div>
             )}
@@ -181,7 +273,7 @@ export const StationOverlay: React.FC = () => {
                     e.stopPropagation();
                     selectAgent(role);
                   }}
-                  className="cursor-pointer flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-slate-950/85 border border-slate-700/80 text-white shadow-md hover:border-slate-400 transition-colors whitespace-nowrap"
+                  className="cursor-pointer flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-slate-950/90 border border-slate-700/80 text-white shadow-xl hover:border-slate-400 transition-colors whitespace-nowrap backdrop-blur-md"
                 >
                   <span
                     className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${
@@ -199,7 +291,9 @@ export const StationOverlay: React.FC = () => {
                   <span className="hidden md:inline text-[10px] font-bold tracking-wider uppercase text-slate-400">
                     {layout.tag}
                   </span>
-                  <span className="text-[10px] sm:text-xs font-semibold text-slate-100">{layout.name}</span>
+                  <span className="text-[10px] sm:text-xs font-semibold text-slate-100">
+                    {layout.name}
+                  </span>
                 </div>
               </div>
             )}
@@ -218,10 +312,10 @@ export const StationOverlay: React.FC = () => {
             style={{ transform: 'translate3d(-9999px, -9999px, 0)' }}
           >
             <div
-              className={`px-2 py-0.5 text-[10px] font-bold rounded-full whitespace-nowrap shadow-md border ${
+              className={`px-2.5 py-0.5 text-[10px] font-bold rounded-full whitespace-nowrap shadow-xl border backdrop-blur-md ${
                 isFeedback
-                  ? 'bg-red-600 text-white border-red-400 animate-bounce'
-                  : 'bg-amber-500 text-slate-900 border-amber-300'
+                  ? 'bg-rose-950/90 text-rose-200 border-rose-500/80 shadow-rose-950/60 animate-bounce'
+                  : 'bg-amber-950/90 text-amber-200 border-amber-400/80 shadow-amber-950/60'
               }`}
             >
               {isFeedback ? `🐛 ${courier.label}` : `📦 ${courier.label}`}

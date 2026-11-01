@@ -45,12 +45,12 @@ const CourierTicker: React.FC = () => {
 export const TownScene: React.FC = () => {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const couriers = useTownStore((s) => s.couriers);
-  const themeMode = useTownStore((s) => s.themeMode);
+  const resolvedTheme = useTownStore((s) => s.resolvedTheme);
   const otherRoles = STAGE_ORDER.filter((r) => r !== 'orchestrator') as AgentRole[];
 
   // Cấu hình bảng màu ánh sáng theo chu kỳ Ngày / Hoàng hôn / Đêm
-  const isNight = themeMode === 'night';
-  const isSunset = themeMode === 'sunset';
+  const isNight = resolvedTheme === 'night';
+  const isSunset = resolvedTheme === 'sunset';
 
   const bgStyle = isNight
     ? 'radial-gradient(circle at 50% 35%, #1e293b 0%, #0b0f19 75%)'

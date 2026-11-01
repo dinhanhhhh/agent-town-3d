@@ -4,6 +4,109 @@ Tất cả các thay đổi đáng chú ý của dự án **Agent Town 3D** sẽ
 
 ---
 
+## [v1.5.1] - 2026-11-01
+### 🎮 Trải Nghiệm Thanh Tra Trạm Chuẩn Game RTS (Game-Style Station Inspector & Camera Focus)
+- **Trình Thanh Tra Cạnh Bên Không Phong Tỏa Màn Hình (`src/components/ui/StationInspectorPanel.tsx`, `src/app/page.tsx`)**:
+  - Chuyển đổi toàn bộ cơ chế xem thông tin trạm từ dạng pop-up Modal toàn màn hình có nền xám đen che phủ (`backdrop-blur-md`) sang **Ngăn Thanh Tra Cạnh Phải (Station Inspector Side Panel)** chuẩn game chiến thuật thời gian thực (RTS / City-Builder):
+    - Đặt cố định ở cạnh phải (`w-[420px] max-w-[calc(100vw-16px)]`), không dùng lớp phủ tối, giữ trọn vẹn 65-75% diện tích màn hình để người dùng vừa xem mã nguồn vừa quan sát camera 3D zoom cận cảnh vào nhân vật đang làm việc và hệ thống cáp quang đang phát sáng.
+    - Viền phát sáng neon cá nhân hóa theo màu sắc nhận diện của từng phòng ban (`hexColor`), huy hiệu trạng thái nhấp nháy, phát ngôn AI thời gian thực (`agent.speech`) và thanh tiến trình streaming live.
+    - Thanh điều hướng trạm nhanh 8 phòng ban ở chân bảng (Station Carousel Strip) kèm nút chuyển `‹ Trước` `Sau ›` và phím tắt `Escape` cho phép bay camera lướt quanh toàn bộ hòn đảo mượt mà.
+  - Tích hợp 3 Tab chuyên sâu:
+    - 💻 **Mã nguồn / Artifact**: Tích hợp `GitDiffViewer` (chế độ Unified & Split view) cho Dev Lab, thẻ kết quả kèm bình luận trực tiếp cho Tech Review, và khung hiển thị code/JSON có định dạng sắc nét.
+    - 📝 **Quy trình SOP & System Prompt**: Hiển thị SOP vai trò phòng ban và khung soạn thảo System Prompt cho phép chỉnh sửa, lưu trực tiếp (`updateAgentSystemPrompt`) hoặc khôi phục về mặc định (`resetAgentSystemPrompt`).
+    - 📊 **Chỉ số Telemetry & Tọa độ 3D**: Trực quan hóa danh mục Tech Stack chuyên môn, tọa độ $[X, Y, Z]$, góc xoay hướng tâm và vị trí trạm trong chuỗi DAG.
+- **Tối Ưu Chuyển Động Camera Hướng Tâm (`src/store/useTownStore.ts`, `src/components/scene/Labels.tsx`, `src/components/ui/RoleChips.tsx`, `src/components/ui/MilestoneWidget.tsx`)**:
+  - Đổi chế độ mặc định của hàm `selectAgent(role, modalMode = 'none')`: nhấp vào bất kỳ công trình 3D (`Building.tsx`), Lâu đài (`Castle.tsx`), nhân vật (`Character.tsx`), bong bóng thoại (`Labels.tsx`), thẻ trạm (`RoleChips.tsx`) hay công việc (`MilestoneWidget.tsx`) đều kích hoạt camera bay mượt mà đến trạm và trượt mở bảng Inspector bên cạnh.
+  - Vẫn duy trì nút phóng to "⛶ Toàn màn hình" trên thanh công cụ của Inspector Panel cho người dùng khi có nhu cầu xem chi tiết dạng modal to truyền thống.
+### 🛠️ Sửa Lỗi Triệt Để (Bug Fixes)
+- **Tối ưu hóa Bố cục Responsive & Chống Tràn Giao diện khi thu nhỏ cửa sổ (`Topbar.tsx`, `RoleChips.tsx`, `StatusBar.tsx`, `Labels.tsx`, `CameraRig.tsx`)**:
+  - Topbar: loại bỏ nhãn text thừa trên các nút toggle, thêm `overflow-x-auto scrollbar-none` và giới hạn bề rộng an toàn, đảm bảo mọi nút chức năng (`Voice`, `Desk Cam`, `Chaos`, `Báo cáo`, `Nhật ký`) luôn hiển thị đầy đủ và không bị chém cụt.
+  - Dock chọn trạm: tinh gọn nhãn thành `Hub`, `PM`, `Dev`, `Review`, `QA`, `Sec`, `Ops`, `APM` kèm `touch-pan-x`, toàn bộ 8 trạm nằm gọn gàng trong 460px không bị cắt cụt.
+  - Telemetry & Zoom: đưa StatusBar sát dock (`bottom-11 sm:bottom-12`) với kích thước phím zoom và chỉ số tinh gọn, không còn rớt dòng lơ lửng giữa màn hình 3D.
+  - Bong bóng thoại: hạ `bubbleOffset` (Release Eng xuống 4.1, APM Monitor xuống 4.8), giới hạn tối đa 2 dòng `line-clamp-2` và max-width gọn gàng, chấm dứt hoàn toàn tình trạng che khuất tâm đảo và đè mất nhãn trạm lân cận.
+  - Tỉ lệ Camera: kẹp chặn `responsiveScale` tối thiểu 0.72 (thay vì 0.45), giữ đảo luôn chiếm 70-85% khung nhìn, không còn bị thu teo nhỏ để lại khoảng trống trời xanh quá rộng.
+- **Khắc phục triệt để lỗi `Minified React error #310` khi nhấp chọn nhân vật/trạm (`StationInspectorPanel.tsx`, `CameraRig.tsx`)**:
+  - Đưa hook `useMemo` phân tích `reviewData` lên phía trước câu lệnh early `return null;` trong [`StationInspectorPanel.tsx`](file:///c:/Users/Admin/Documents/CV_Truong%20Dinh%20Anh/Ph%E1%BB%8Fng%20v%E1%BA%A5n/agent-town-3d/src/components/ui/StationInspectorPanel.tsx), đảm bảo số lượng và thứ tự gọi React Hooks bất biến giữa các lần render khi `selectedAgentRole` chuyển đổi giữa `null` và các phòng ban, đồng thời liên thông bình luận review sang `GitDiffViewer` của trạm Dev.
+  - Khóa tiêu điểm camera trong [`CameraRig.tsx`](file:///c:/Users/Admin/Documents/CV_Truong%20Dinh%20Anh/Ph%E1%BB%8Fng%20v%E1%BA%A5n/agent-town-3d/src/components/scene/CameraRig.tsx) khi người dùng đang chọn một nhân vật (`!selectedAgentRole`), không để chế độ Auto-Follow tự ý kéo camera theo Shipper đang chạy.
+  - Tách dữ liệu hằng số thuần túy sang [`src/lib/pipeline/contracts.ts`](file:///c:/Users/Admin/Documents/CV_Truong%20Dinh%20Anh/Ph%E1%BB%8Fng%20v%E1%BA%A5n/agent-town-3d/src/lib/pipeline/contracts.ts) và bổ sung Error Boundary [`src/app/error.tsx`](file:///c:/Users/Admin/Documents/CV_Truong%20Dinh%20Anh/Ph%E1%BB%8Fng%20v%E1%BA%A5n/agent-town-3d/src/app/error.tsx).
+
+---
+
+## [v1.5.0] - 2026-11-01
+### 🚀 Tính năng Mới & Đột Phá Trải Nghiệm (Voice, Multi-Model, CCTV & CI/CD Gate)
+- **Giọng Nói Trí Tuệ Nhân Tạo Thời Gian Thực (Web Speech API AI Voice TTS - `src/lib/audio/voice.ts`)**:
+  - Tích hợp bộ tổng hợp giọng nói trực tiếp từ trình duyệt (`window.speechSynthesis`) với hồ sơ ngữ điệu tùy biến riêng cho 8 AI Agents.
+  - Tự động lọc sạch ký tự Markdown, URLs và thẻ `---SPEECH---:`, duy trì hàng đợi phát âm (Audio Queue) mượt mà tránh đè tiếng.
+  - Hỗ trợ công tắc bật/tắt `🗣️ Voice On / 🔇 Voice` trên thanh công cụ Topbar; tự động chọn giọng tiếng Việt hoặc fallback an toàn sang giọng mặc định hệ thống.
+- **Bản Đồ Nhiệt Cáp Quang Dữ Liệu & Gia Tốc Xung Photon Động (`src/components/scene/DataCables.tsx`)**:
+  - Nâng cấp 7 tuyến cáp quang neon thành hệ thống Heatmap phản ứng nhạy bén theo trạng thái thực thi của từng trạm và tải lượng hệ thống:
+    - Trạng thái bình thường/sẵn sàng: Xanh Cyan (`#00f0ff`).
+    - Trạng thái đang chạy pipeline tải cao: Vàng Hổ phách (`#f59e0b`).
+    - Trạng thái bão tải Chaos Engineering / Lỗi: Đỏ cảnh báo khẩn cấp (`#ef4444`).
+  - Hạt xung dữ liệu (Photon Pulse) tự động tăng tốc độ truyền tải tỷ lệ thuận với chỉ số TPS và tải lượng CPU.
+- **Kiến trúc Đa Mô hình Hybrid Gemini 3.8 Flash & DeepSeek V3 (`src/app/api/pipeline/route.ts`, `src/store/useTownStore.ts`, `src/components/ui/ApiKeyModal.tsx`, `src/components/ui/ArtifactModal.tsx`, `src/components/ui/ExportModal.tsx`)**:
+  - Hỗ trợ độc lập 2 loại API Key: Google Gemini API (`AIzaSy...`) và DeepSeek API (`sk-...`) lưu trữ cục bộ trên trình duyệt máy khách (LocalStorage).
+  - Cho phép gán Model Provider linh hoạt cho từng phòng ban (`⚡ Tự động`, `♊ Gemini Flash`, `🐋 DeepSeek V3`) ngay trên AI Playground của `ArtifactModal`.
+  - Phân luồng suy luận thông minh ở Server: tự động ghi nhận chính xác tên model được giải quyết (dynamic model resolution) và thống kê FinOps chuẩn xác trong `ExportModal`.
+- **Ma trận Kiểm thử CI/CD & Cổng Khẩn Cấp Rollback Gate (`src/components/ui/ApprovalModal.tsx`, `src/store/useTownStore.ts`)**:
+  - Mở rộng Cổng Phê Duyệt Triển Khai (`ApprovalModal`) với tab **🚀 CI/CD Matrix & Canary**:
+    - Bảng ma trận kiểm thử Staging Matrix song song trên các môi trường Node 18 LTS, Node 20 LTS và Node 22 Current, liên kết số specs thực tế trích xuất từ test suite của QA.
+    - Tiến trình phân phối tải Canary Rollout trực quan: 10% ➔ 50% ➔ 100% Traffic.
+    - Nút **🚨 Emergency Rollback** khẩn cấp: Tức thời dọn sạch approval queue đang chờ, hủy pipeline dang dở, điều phối Shipper Rollback ngược từ trạm APM Monitor về Release Eng và bình ổn lại toàn bộ telemetry hệ thống.
+- **Màn hình Giám Sát Bàn Làm Việc Nổi Desk Cam PiP (`src/components/ui/DeskCamPiP.tsx`, `src/app/page.tsx`, `src/components/ui/Topbar.tsx`)**:
+  - Bổ sung cửa sổ CCTV Terminal thu nhỏ cố định ở góc trái màn hình với hiệu ứng CRT Scanlines cổ điển.
+  - Hiển thị trực tiếp dòng mã đang stream theo thời gian thực của trạm đang hoạt động, tọa độ 3D và trạng thái sức khỏe trạm.
+  - Tích hợp bộ đo FPS thực tế đo bằng `requestAnimationFrame`, thanh chuyển trạm nhanh/ghim camera, và nút bay Camera 3D trực tiếp tới trạm.
+- **Hệ Thống Toast Notification Thông Minh & Tự Động Co Giãn (`src/components/ui/ToastContainer.tsx`)**:
+  - Tự động xuất hiện thẻ thông báo góc màn hình khi có các sự kiện quan trọng (Cảnh báo bảo mật CVE, Test Suite QA, Cổng duyệt Production, Báo động đỏ bão tải SRE).
+  - Thiết kế Frosted Glass Cyberpunk bo tròn 2xl, viền phát sáng neon theo mức độ cảnh báo, nút mở nhanh modal/nhật ký và thanh tiến trình đếm ngược 4.5s tự hủy.
+  - Tối ưu 100% responsive: trên di động thẻ thông báo hiển thị ở đỉnh màn hình gọn gàng không che khuất thanh công cụ hay ốc đảo 3D.
+- **Chu Kỳ Thời Gian Thực Tự Động & Đồng Hồ Số Telemetry (`src/components/ui/StatusBar.tsx`, `src/components/ui/Topbar.tsx`, `src/store/useTownStore.ts`)**:
+  - Bổ sung chế độ `themeMode: 'auto'`, tự động nhận diện giờ thực tế của máy khách: Ban đêm (`night` 18:30 - 06:00), Hoàng hôn (`sunset` 17:00 - 18:30) hoặc Ban ngày (`day` 06:00 - 17:00).
+  - Tự động chuyển màu bầu trời, thắp sáng lồng đèn vàng ấm, thả đom đóm lấp lánh và hiển thị thời tiết đêm thanh mát (`🌙 Đêm thanh mát · 18°C`) thay vì bị kẹt ở "Nắng nhẹ".
+  - Thêm nút chuyển đổi `⏱️ Auto` trên Topbar cạnh các nút chỉnh tay (☀️ / 🌆 / 🌙) và tích hợp đồng hồ thời gian thực (`HH:mm:ss`) cập nhật từng giây trên thanh trạng thái.
+  - Loại bỏ class `hidden xl:flex` trên `StatusBar.tsx`, đảm bảo thông tin thời tiết hiển thị đầy đủ và co giãn thông minh trên cả mobile, tablet và desktop.
+- **Kẹp Biên Tọa Độ & Nâng Cấp Thẩm Mỹ Bong Bóng Thoại 3D (`src/components/scene/Labels.tsx`)**:
+  - Kẹp biên tọa độ chiếu 2D (`clampedBx`, `clampedBy`), ngăn chặn triệt để tình trạng bong bóng thoại trôi ra ngoài viền màn hình di động gây tràn trang hoặc cắt cụt chữ.
+  - Nâng cấp giao diện kính mờ với viền neon role-based, avatar vai trò, chấm trạng thái nhấp nháy và mũi tên SVG định hướng sắc nét.
+- **Tối ưu vị trí LiveStreamConsole trên di động (`src/components/ui/LiveStreamConsole.tsx`)**:
+  - Tự động chuyển vị trí console lên nửa trên màn hình trên thiết bị di động, triệt tiêu hoàn toàn xung đột hiển thị với thanh dock điều hướng trạm và telemetry ở đáy.
+
+### 🛡️ Vá Lỗi Kỹ Thuật & Tối Ưu Hệ Thống (Hardening & Bug Fixes)
+- **Khắc phục lỗi treo pipeline của nút Rollback (`ApprovalModal.tsx`, `useTownStore.ts`)**: Tự động giải quyết dứt điểm các approval đang chờ (`rejected`), hủy abort controller đang chạy và mở khóa cờ `isRealRunning` để người dùng có thể tiếp tục chạy task mới.
+- **Bắt lỗi toàn diện ở các nhánh DAG song song (`useTownStore.ts`)**: Bổ sung kiểm tra lỗi nghiêm ngặt sau `Promise.all([qa, security])` và `devops`, ngăn chặn tình trạng artifact rỗng vẫn báo hoàn thành.
+- **Triệt tiêu xung đột ghi đè stream chữ giữa QA & Security (`useTownStore.ts`)**: Bổ sung cờ `visualize` cho phép phân tách trạm stream hiển thị trên Live Console mà không bị chớp giật nội dung.
+- **Kích hoạt Feedback Loop động từ kết quả AI thật (`useTownStore.ts`)**: Tự động phân tích phán quyết Tech Review (`ReviewComments.json`) và số lượng CVEs của DevSecOps (`SecurityAudit.json`) để điều phối shipper quay về xưởng Dev sửa mã nguồn.
+- **Dọn sạch Monkey Patch DOM (`page.tsx`)**: Loại bỏ toàn bộ các đoạn vá `Node.prototype.removeChild` và lọc `console.error` cục bộ không an toàn.
+- **Khắc phục lệnh `npm run lint` (`package.json`)**: Chuyển script sang `tsc --noEmit` tương thích chuẩn với Next.js 16.
+
+---
+
+## [v1.4.3] - 2026-10-31
+### 🚀 Tính năng Mới & Chuẩn Hóa Kiến Trúc (Enterprise Prompts & Data Contracts)
+- **Chuẩn Hóa Bộ Quy Trình Nghiệp Vụ 8 Phòng Ban Chuẩn Thực Chiến (`src/lib/pipeline/prompts.ts`)**:
+  - Hợp nhất toàn bộ System Prompts về một nguồn chân lý duy nhất (`STAGE_PROMPT_CONFIGS`) dùng chung cho cả Client Store lẫn Server API:
+    - **Orchestrator**: Phân tích phạm vi kiến trúc, nhận diện rủi ro kỹ thuật và chia User Stories chuẩn INVEST (`P0/P1/P2`, Story Points, Acceptance Gate).
+    - **PM · BA**: Biên soạn PRD 5 phần thực chiến gồm Business Metrics, Functional Flows, Gherkin BDD (Happy/Negative/Edge), Non-Functional Requirements (SLA P99, AuthN/AuthZ, Rate-limit) và Out of Scope.
+    - **Dev Engineer**: Lập trình Strict TypeScript theo Clean Architecture, Defensive Input Validation, Error Handling bảo mật và xuất Unified Git Diff chính xác số dòng hunk.
+    - **Tech Review**: Thẩm định chéo PR Diff đối chiếu PRD theo 5 trụ cột (Spec Compliance, Boundary Safety, Architecture, Memory/Resource Safety, Security Hygiene) kèm comment neo đúng số dòng `+newStart` và mức độ `APPROVED | SUGGESTION | WARNING | BLOCKER`.
+    - **QA · Test**: Kiểm thử độc lập đối chiếu song song Gherkin PRD của PM và bản Diff của Dev, xuất 6–8 kịch bản Vitest/Jest bao phủ Happy Path, Validation 400/401/403, Boundary/Timeout và Isolation Mocking.
+    - **DevSecOps**: Rà soát SAST, Threat Modeling theo NFRs của PRD, Secret/PII Leak và OWASP Top 10.
+    - **Release Eng**: Đóng gói Multi-stage `node:20-alpine` Dockerfile, non-root `USER`, `HEALTHCHECK` kèm tóm tắt chiến lược ArgoCD Canary Rollout (10% ➔ 50% ➔ 100%), HPA & Automated Rollback Gate.
+    - **APM Monitor**: Giám sát hậu phát hành dựa trên **4 Tín Hiệu Vàng của Google SRE** (Latency, Traffic, Errors, Saturation) và đánh giá SLO Error Budget.
+- **Liên Thông Hồ Sơ Bàn Giao Liên Phòng Ban (`PipelineContext` & `buildCurrentContext` - `useTownStore.ts`)**:
+  - Đóng gói và truyền xuyên suốt toàn bộ 7 artifacts giữa các phòng ban trong `runRealPipeline`, `runGitHubPrAudit`, `rerunStage` và `resolveApproval` (`MilestonePlan` ➔ `PM`; `PRD + Diff` ➔ `Review`, `QA` & `Security`; `Review + QA + Security + Diff` ➔ `DevOps`; `PRD + Dockerfile + Security` ➔ `Monitor`).
+- **Đồng Bộ Live SSE Streaming Cho Trạm `APM Monitor` (`useTownStore.ts`)**:
+  - Chuyển bước kiểm tra sức khỏe Production sau khi duyệt Cổng Gatekeeper sang `streamStageFromApi`, giúp hiển thị trực tiếp luồng suy luận SRE trên `LiveStreamConsole`, kích hoạt camera Đạo diễn bay tới Đài Radar và hoàn thiện trọn vẹn bảng đo lường FinOps **8/8 trạm** trong `ExportModal`.
+
+### 🐛 Sửa lỗi Kỹ thuật (Bug Fixes)
+- **Khắc Phục Lỗi Ghi Đè Mất Output Schema Contract (`prompts.ts`, `api/pipeline/route.ts`, `ArtifactModal.tsx`)**:
+  - Tách biệt phần `defaultRolePrompt` (cho phép người dùng chỉnh sửa tự do trên AI Playground) và `outputContract` (JSON Schema / Git Diff + thẻ thoại `---SPEECH---:` luôn được Server khóa tự động ở cuối qua `buildEffectiveSystemPrompt`), triệt tiêu hoàn toàn lỗi prompt ngắn của Client làm mất schema JSON và bong bóng thoại 3D.
+- **Hiển Thị Đa Dòng SOP & Ghim Inline Review Comments Toàn Cục (`AgentDossierModal.tsx`, `ApprovalModal.tsx`)**:
+  - Bổ sung `whitespace-pre-wrap` cho khung System Prompt trong Hồ sơ kỹ sư và truyền `reviewComments` vào `GitDiffViewer` trên toàn bộ các modal xem mã nguồn.
+
+---
+
 ## [v1.4.2] - 2026-10-31
 ### 🚀 Tính năng Mới (New Features)
 - **Mô hình Thực thi Song song DAG Pipeline (`QA` ∥ `DevSecOps`) (`useTownStore.ts`)**:

@@ -175,11 +175,16 @@ export const ExportModal: React.FC = () => {
         ? `\n* **Thống kê Git Diff:** +${telemetrySummary.diffAdditions} dòng thêm / -${telemetrySummary.diffDeletions} dòng xóa`
         : '';
 
+    const isApproved = telemetrySummary.reviewVerdict.toUpperCase().includes('APPROV');
+    const statusLabel = isApproved
+      ? `✅ PRODUCTION READY (${telemetrySummary.reviewVerdict})`
+      : `⚠️ NEEDS REVISION (${telemetrySummary.reviewVerdict})`;
+
     return `# 🚀 BÁO CÁO TỔNG KẾT PHÁT HÀNH (EXECUTIVE RELEASE SUMMARY)
 > **Dự án:** Agent Town 3D · Multi-Agent Autonomous DevOps Platform  
 > **Thời gian xuất:** ${timestamp}  
 > **Nguồn dữ liệu:** ${telemetrySummary.hasRealRun ? '🟢 REAL AI / GITHUB PR AUDIT TELEMETRY' : '🔵 SIMULATION TELEMETRY'}  
-> **Trạng thái:** ✅ PRODUCTION READY (${telemetrySummary.reviewVerdict})
+> **Trạng thái:** ${statusLabel}
 
 ---
 
@@ -211,7 +216,7 @@ export const ExportModal: React.FC = () => {
 ${telemetrySummary.artifactRows.join('\n')}
 
 ---
-*Báo cáo được trích xuất động theo thời gian thực bởi Agent Town 3D v1.4 Platform.*
+*Báo cáo được trích xuất động theo thời gian thực bởi Agent Town 3D v1.5 Platform (Multi-Model Engine & SRE Gate).*
 `;
   };
 
@@ -434,8 +439,9 @@ ${sections}
                 <thead>
                   <tr className="border-b border-slate-800 text-slate-400 text-[10px] uppercase">
                     <th className="pb-2 font-semibold">Trạm (Stage)</th>
-                    <th className="pb-2 font-semibold">Thời gian (Duration)</th>
+                    <th className="pb-2 font-semibold">Thời gian</th>
                     <th className="pb-2 font-semibold">Ước tính Token</th>
+                    <th className="pb-2 font-semibold">AI Model Engine</th>
                     <th className="pb-2 font-semibold">Mô hình DAG</th>
                   </tr>
                 </thead>
@@ -453,6 +459,21 @@ ${sections}
                         </td>
                         <td className="py-1.5 text-emerald-400 font-mono">
                           {m ? `~${m.tokens.toLocaleString()} tok` : '--'}
+                        </td>
+                        <td className="py-1.5 font-mono text-[10px]">
+                          {m?.model ? (
+                            <span
+                              className={`px-1.5 py-0.5 rounded border ${
+                                m.model.includes('DeepSeek')
+                                  ? 'bg-blue-950/60 text-blue-300 border-blue-800/50'
+                                  : 'bg-emerald-950/60 text-emerald-300 border-emerald-800/50'
+                              }`}
+                            >
+                              {m.model}
+                            </span>
+                          ) : (
+                            <span className="text-slate-500">Auto</span>
+                          )}
                         </td>
                         <td className="py-1.5">
                           {isParallel ? (

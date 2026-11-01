@@ -11,12 +11,12 @@ interface LanternPos {
 }
 
 export const Lanterns: React.FC = () => {
-  const themeMode = useTownStore((s) => s.themeMode);
+  const resolvedTheme = useTownStore((s) => s.resolvedTheme);
   const lightsRef = useRef<THREE.PointLight[]>([]);
 
-  const isLit = themeMode !== 'day';
-  const lightIntensity = themeMode === 'night' ? 1.5 : themeMode === 'sunset' ? 0.8 : 0;
-  const emissiveColor = themeMode === 'night' ? 0xfbbf24 : 0xf59e0b;
+  const isLit = resolvedTheme !== 'day';
+  const lightIntensity = resolvedTheme === 'night' ? 1.5 : resolvedTheme === 'sunset' ? 0.8 : 0;
+  const emissiveColor = resolvedTheme === 'night' ? 0xfbbf24 : 0xf59e0b;
 
   // Tính toán vị trí đèn lồng cạnh vỉa hè thềm đón khách của từng trạm
   const lanternPositions: LanternPos[] = React.useMemo(() => {

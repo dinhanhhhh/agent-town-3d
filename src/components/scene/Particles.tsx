@@ -14,8 +14,8 @@ const FIREFLY_COUNT = 35;
  * - Ban đêm: Đom đóm hạt vàng ấm lấp lánh bập bùng quanh các tán cây và đèn lồng.
  */
 export const Particles: React.FC = () => {
-  const themeMode = useTownStore((s) => s.themeMode);
-  const isNight = themeMode === 'night';
+  const resolvedTheme = useTownStore((s) => s.resolvedTheme);
+  const isNight = resolvedTheme === 'night';
 
   const petalsMeshRef = useRef<THREE.InstancedMesh>(null);
   const firefliesMeshRef = useRef<THREE.InstancedMesh>(null);
@@ -110,7 +110,7 @@ export const Particles: React.FC = () => {
         >
           <planeGeometry args={[0.18, 0.24]} />
           <meshStandardMaterial
-            color={themeMode === 'sunset' ? 0xfecdd3 : 0xfbcfe8}
+            color={resolvedTheme === 'sunset' ? 0xfecdd3 : 0xfbcfe8}
             side={THREE.DoubleSide}
             roughness={0.4}
             transparent

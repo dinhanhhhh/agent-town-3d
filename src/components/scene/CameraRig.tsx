@@ -33,9 +33,13 @@ export const CameraRig: React.FC = () => {
   const targetVec = useRef(new THREE.Vector3(0, 0, 0));
   const isUserInteracting = useRef(false);
 
-  // Hệ số thu phóng tự động theo kích thước khung nhìn (Responsive 3D Viewport Scale)
-  // giúp ốc đảo không bao giờ bị tràn lề trái/phải khi thu nhỏ cửa sổ hoặc xem trên mobile/tablet
-  const responsiveScale = Math.min(1, Math.max(0.45, size.width / 1200));
+  // Hệ số thu phóng tự động theo kích thước khung nhìn (Responsive 3D Viewport Scale):
+  // Cân bằng cả chiều rộng lẫn chiều cao, giữ đảo 3D luôn chiếm 70-85% khung nhìn
+  // và không bao giờ bị thu nhỏ quá mức (tối thiểu 0.72 thay vì 0.45) trên màn hình hẹp/dọc
+  const responsiveScale = Math.min(
+    1.05,
+    Math.max(0.72, Math.min(size.width / 1080, (size.height / 720) * 0.95))
+  );
   const effectiveZoom = cameraZoom * responsiveScale;
 
   // Cập nhật target thông thường khi người dùng chọn trạm thủ công hoặc chuyển preset
@@ -52,8 +56,8 @@ export const CameraRig: React.FC = () => {
 
   useFrame((_, delta) => {
     // 🎥 Logic Chế độ Đạo diễn (Auto-Follow):
-    // Tự động lia góc nhìn bám theo Shipper mang hàng hoặc Trạm AI đang tích cực stream/làm việc
-    if (isAutoFollow && !isUserInteracting.current) {
+    // Chỉ tự động lia theo Shipper / Trạm đang chạy khi người dùng KHÔNG đang bấm chọn focus một trạm cụ thể
+    if (isAutoFollow && !selectedAgentRole && !isUserInteracting.current) {
       if (couriers.length > 0) {
         const activeCourier = couriers[0];
         const waypoints = getRouteWaypoints(activeCourier.fromRole, activeCourier.toRole);
@@ -62,7 +66,7 @@ export const CameraRig: React.FC = () => {
       } else if (streamingStage && STATIONS_LAYOUT[streamingStage]) {
         const pos = STATIONS_LAYOUT[streamingStage].focusCamera;
         targetVec.current.set(pos[0], pos[1], pos[2]);
-      } else if (!selectedAgentRole) {
+      } else {
         const activeRole = (Object.keys(agents) as AgentRole[]).find(
           (r) => agents[r].status === 'working' || agents[r].status === 'debugging'
         );

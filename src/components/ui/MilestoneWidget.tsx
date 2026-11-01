@@ -167,7 +167,7 @@ export const MilestoneWidget: React.FC = () => {
                       if (isPending) {
                         openApprovalModal(true);
                       } else {
-                        selectAgent(t.stage || 'dev', 'artifact');
+                        selectAgent(t.stage || 'dev');
                       }
                     }}
                     className="p-2 rounded-xl bg-slate-950/60 hover:bg-slate-800/70 border border-slate-800/80 hover:border-slate-700/80 transition-all cursor-pointer flex items-center justify-between gap-2 group"

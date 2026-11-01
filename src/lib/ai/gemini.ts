@@ -4,10 +4,11 @@ export interface GeminiCallParams {
   apiKey?: string;
   temperature?: number;
   signal?: AbortSignal;
+  onModelResolved?: (model: string) => void;
 }
 
 // Current active Gemini Flash models (prioritizing Gemini 3.8 / 3.5 Flash)
-const GEMINI_MODELS = [
+export const GEMINI_MODELS = [
   'gemini-3.8-flash',
   'gemini-3.5-flash-lite',
   'gemini-3.1-flash-lite',
@@ -43,7 +44,8 @@ export async function callGemini({
   apiKey,
   temperature = 0.4,
   signal,
-}: GeminiCallParams): Promise<string> {
+  onModelResolved,
+}: GeminiCallParams): Promise<{ text: string; model: string }> {
   const key = apiKey || process.env.GEMINI_API_KEY;
 
   if (!key || key.trim() === '') {
@@ -89,7 +91,8 @@ export async function callGemini({
         throw new Error(`Model ${model} không trả về nội dung hợp lệ.`);
       }
 
-      return text;
+      onModelResolved?.(model);
+      return { text, model };
     } catch (err: unknown) {
       if (signal?.aborted) throw err;
       lastError = err;
@@ -108,6 +111,7 @@ export async function* streamGemini({
   apiKey,
   temperature = 0.4,
   signal,
+  onModelResolved,
 }: GeminiCallParams): AsyncGenerator<string, void, unknown> {
   const key = apiKey || process.env.GEMINI_API_KEY;
 
@@ -149,6 +153,8 @@ export async function* streamGemini({
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
+
+      onModelResolved?.(model);
 
       const extractChunksFromLine = (rawLine: string): string[] => {
         const line = rawLine.trim();

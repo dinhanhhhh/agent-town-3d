@@ -6,151 +6,8 @@ import { STATIONS_LAYOUT } from '../../lib/scene/layout';
 import { AgentRole } from '../../lib/pipeline/stages';
 import { TOKENS } from '../../styles/tokens';
 import { GitDiffViewer } from './GitDiffViewer';
-
-const ARTIFACT_PREVIEWS: Record<AgentRole, { filename: string; language: string; content: string }> = {
-  orchestrator: {
-    filename: 'MilestonePlan.json',
-    language: 'json',
-    content: `{
-  "milestone": "Sprint #24: Auth & Microservices",
-  "status": "IN_PROGRESS",
-  "orchestrator": "Claude Code 3D Hub",
-  "tasks": [
-    { "id": "TICK-142", "title": "Google OAuth 2.0 & JWT Auth", "assignedTo": "Dev", "status": "ACTIVE" },
-    { "id": "TICK-143", "title": "Redis Caching Layer for DB", "assignedTo": "Dev", "status": "QUEUED" }
-  ],
-  "pipelineHealth": "HEALTHY",
-  "feedbackLoopEnabled": true
-}`,
-  },
-  pm: {
-    filename: 'PRD.md',
-    language: 'markdown',
-    content: `# PRD: Xác thực đăng nhập Google OAuth 2.0 & Phân quyền JWT
-**Author:** PM · Business Analyst (Agent 1)  
-**Acceptance Criteria (Gherkin):**
-
-Scenario: Người dùng đăng nhập thành công bằng tài khoản Google
-  Given người dùng ở trang đăng nhập
-  When bấm nút "Sign in with Google" và xác thực consent
-  Then hệ thống tạo session JWT kèm refresh token 7 ngày
-  And chuyển hướng tới Dashboard với quyền USER
-
-Scenario: Token hết hạn (Edge Case)
-  Given refresh token hết hạn hoặc bị thu hồi
-  When người dùng gửi request API
-  Then hệ thống trả mã lỗi 401 Unauthorized và yêu cầu đăng nhập lại`,
-  },
-  dev: {
-    filename: 'source-code.diff',
-    language: 'diff',
-    content: `diff --git a/src/auth/oauth.service.ts b/src/auth/oauth.service.ts
-index e69de29..4b825dc 100644
---- a/src/auth/oauth.service.ts
-+++ b/src/auth/oauth.service.ts
-@@ -14,6 +14,18 @@ export class GoogleAuthService {
-+  async verifyGoogleToken(idToken: string): Promise<UserSession> {
-+    const ticket = await this.googleClient.verifyIdToken({
-+      idToken,
-+      audience: process.env.GOOGLE_CLIENT_ID,
-+    });
-+    const payload = ticket.getPayload();
-+    if (!payload?.email_verified) {
-+      throw new UnauthorizedException('Email not verified by Google');
-+    }
-+    return this.generateJwtTokens(payload);
-+  }
-}`,
-  },
-  review: {
-    filename: 'ReviewComments.json',
-    language: 'json',
-    content: `{
-  "pullRequest": 87,
-  "reviewer": "Tech Reviewer (Agent 3)",
-  "verdict": "APPROVED",
-  "score": 9.4,
-  "summary": "Clean code architecture. Google token verification properly handles unverified email edge cases. No secrets leaked.",
-  "comments": [
-    { "file": "oauth.service.ts", "line": 21, "status": "RESOLVED", "note": "LGTM! Exception handling is compliant with OWASP standards." }
-  ]
-}`,
-  },
-  qa: {
-    filename: 'TestReport.json',
-    language: 'json',
-    content: `{
-  "suite": "Auth & Token Refresh Test Suite",
-  "runner": "QA · Test Automation (Agent 4)",
-  "totalTests": 48,
-  "passed": 48,
-  "failed": 0,
-  "coverage": "98.4%",
-  "durationMs": 1420,
-  "testCases": [
-    { "name": "Google OAuth happy path exchange", "status": "PASSED", "duration": "42ms" },
-    { "name": "Expired token 401 unauthorized boundary", "status": "PASSED", "duration": "18ms" },
-    { "name": "CSRF state parameter validation", "status": "PASSED", "duration": "24ms" }
-  ]
-}`,
-  },
-  security: {
-    filename: 'SecurityScanReport.json',
-    language: 'json',
-    content: `{
-  "scanner": "DevSecOps SAST & Dependency Auditor (Agent 5)",
-  "status": "PASSED",
-  "vulnerabilities": {
-    "critical": 0,
-    "high": 0,
-    "medium": 0,
-    "low": 0
-  },
-  "secretScanning": "0 API keys / tokens detected in git diff",
-  "compliance": [
-    { "standard": "OWASP Top 10", "status": "COMPLIANT" },
-    { "standard": "JWT Best Practices RFC 8725", "status": "COMPLIANT" }
-  ]
-}`,
-  },
-  devops: {
-    filename: 'Dockerfile',
-    language: 'dockerfile',
-    content: `# Production Multi-stage Container Build
-FROM node:20-alpine AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --omit=dev
-COPY . .
-RUN npm run build
-
-FROM node:20-alpine AS runner
-WORKDIR /app
-ENV NODE_ENV=production
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-EXPOSE 3000
-CMD ["node", "dist/main.js"]`,
-  },
-  monitor: {
-    filename: 'ClusterHealth.json',
-    language: 'json',
-    content: `{
-  "cluster": "k8s-prod-us-central",
-  "watchdog": "APM Telemetry (Agent 7)",
-  "status": "HEALTHY",
-  "metrics": {
-    "cpuUsage": "24.2%",
-    "memoryUsage": "512MB / 2GB",
-    "p99Latency": "14ms",
-    "errorRate": "0.01%",
-    "tps": 342
-  },
-  "alertsActive": 0,
-  "lastCanarySync": "Just now"
-}`,
-  },
-};
+import { ARTIFACT_PREVIEWS } from '../../lib/pipeline/contracts';
+export { ARTIFACT_PREVIEWS };
 
 export const ArtifactModal: React.FC = () => {
   const isArtifactModalOpen = useTownStore((s) => s.isArtifactModalOpen);
@@ -164,6 +21,8 @@ export const ArtifactModal: React.FC = () => {
   const updateAgentSystemPrompt = useTownStore((s) => s.updateAgentSystemPrompt);
   const resetAgentSystemPrompt = useTownStore((s) => s.resetAgentSystemPrompt);
   const rerunStage = useTownStore((s) => s.rerunStage);
+  const agentModelProviders = useTownStore((s) => s.agentModelProviders);
+  const setAgentModelProvider = useTownStore((s) => s.setAgentModelProvider);
 
   const [activeTab, setActiveTab] = useState<'artifact' | 'prompt' | 'events'>('artifact');
   const [copied, setCopied] = useState(false);
@@ -361,7 +220,7 @@ export const ArtifactModal: React.FC = () => {
               <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400 uppercase font-bold text-[10px] tracking-wider">
-                    Core System Prompt (AI Playground)
+                    Department Role SOP (AI Playground)
                   </span>
                   <button
                     onClick={() => resetAgentSystemPrompt(selectedAgentRole)}
@@ -375,14 +234,41 @@ export const ArtifactModal: React.FC = () => {
                 <textarea
                   value={agent?.systemPrompt || ''}
                   onChange={(e) => updateAgentSystemPrompt(selectedAgentRole, e.target.value)}
-                  rows={6}
+                  rows={8}
                   className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 font-mono text-xs leading-relaxed focus:outline-none focus:border-cyan-500 transition-colors resize-y"
                   placeholder="Nhập System Prompt tùy chỉnh cho Agent này..."
                 />
 
-                <div className="flex items-center justify-between pt-1">
-                  <span className="text-[10px] text-slate-500 font-sans">
-                    💡 Prompt được lưu ngay lập tức vào phiên chạy.
+                {/* Multi-Model Engine Selector */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 bg-slate-900/90 rounded-xl border border-slate-800">
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-300 font-semibold">
+                    <span>🤖 Mô hình AI đảm nhiệm:</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {(['auto', 'gemini', 'deepseek'] as const).map((prov) => (
+                      <button
+                        key={prov}
+                        type="button"
+                        onClick={() => setAgentModelProvider(selectedAgentRole, prov)}
+                        className={`px-2.5 py-1 text-[11px] font-medium rounded-lg border transition-all ${
+                          (agentModelProviders[selectedAgentRole] || 'auto') === prov
+                            ? prov === 'deepseek'
+                              ? 'bg-blue-600 text-white border-blue-400 font-bold shadow-sm'
+                              : prov === 'gemini'
+                              ? 'bg-emerald-600 text-white border-emerald-400 font-bold shadow-sm'
+                              : 'bg-indigo-600 text-white border-indigo-400 font-bold shadow-sm'
+                            : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200'
+                        }`}
+                      >
+                        {prov === 'auto' ? '⚡ Auto' : prov === 'gemini' ? '♊ Gemini Flash' : '🐋 DeepSeek V3'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
+                  <span className="text-[10px] text-slate-400 font-sans">
+                    🛡️ Output Contract (<code className="text-cyan-400">{artifact?.filename}</code> schema & thẻ thoại 3D) luôn được Server khóa bảo vệ tự động.
                   </span>
                   <button
                     onClick={() => rerunStage(selectedAgentRole)}

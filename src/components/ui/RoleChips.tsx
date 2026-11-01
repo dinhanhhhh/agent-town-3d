@@ -22,9 +22,9 @@ const ROLE_SHORT_NAMES: Record<AgentRole, string> = {
   dev: 'Dev',
   review: 'Review',
   qa: 'QA',
-  security: 'Security',
-  devops: 'DevOps',
-  monitor: 'Monitor',
+  security: 'Sec',
+  devops: 'Ops',
+  monitor: 'APM',
 };
 
 export const RoleChips: React.FC = () => {
@@ -50,7 +50,7 @@ export const RoleChips: React.FC = () => {
   };
 
   return (
-    <div className="absolute bottom-2 left-2 right-2 lg:bottom-3 lg:left-3 lg:right-auto z-30 pointer-events-none lg:max-w-[calc(100vw-460px)] overflow-x-auto pb-0.5 scrollbar-none">
+    <div className="absolute bottom-2 left-2 right-2 lg:bottom-3 lg:left-3 lg:right-auto z-30 pointer-events-none lg:max-w-[calc(100vw-460px)] overflow-x-auto pb-0.5 scrollbar-none touch-pan-x">
       <div className="pointer-events-auto flex items-center gap-1 p-1 sm:p-1.5 bg-slate-900/85 backdrop-blur-md border border-slate-700/80 rounded-2xl shadow-2xl w-max">
         {STAGE_ORDER.map((role) => {
           const agent = agents[role];
@@ -64,9 +64,13 @@ export const RoleChips: React.FC = () => {
             <button
               key={role}
               onClick={() => {
-                selectAgent(role, 'dossier');
+                if (isSelected) {
+                  selectAgent(null);
+                } else {
+                  selectAgent(role);
+                }
               }}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap border ${
+              className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl text-[11px] sm:text-xs font-semibold transition-all whitespace-nowrap border ${
                 isSelected
                   ? 'bg-slate-700/90 text-white border-blue-400 shadow-lg scale-105'
                   : isStreaming
@@ -83,7 +87,7 @@ export const RoleChips: React.FC = () => {
                 </span>
               )}
               <span
-                className={`w-2 h-2 rounded-full shadow-sm ${getStatusColor(
+                className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full shadow-sm ${getStatusColor(
                   agent?.status || 'idle'
                 )}`}
               />

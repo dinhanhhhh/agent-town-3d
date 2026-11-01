@@ -1,13 +1,13 @@
-# 🏰 Thị trấn DevOps 3D (Agent Town 3D) v1.4.2
+# 🏰 Thị trấn DevOps 3D (Agent Town 3D) v1.5.0
 
 > **Mô phỏng Hệ thống 8 Autonomous AI Agents & DevOps SDLC Pipeline trên Hòn đảo bay 3D Isometric Diorama**  
-> Xây dựng với **Next.js 16 (Turbopack)**, **React 19**, **Three.js / React Three Fiber v9**, **Google Gemini API**, **Zustand**, và **Web Audio API**.
+> Xây dựng với **Next.js 16 (Turbopack)**, **React 19**, **Three.js / React Three Fiber v9**, **Google Gemini API**, **DeepSeek V3**, **Zustand**, và **Web Speech & Audio API**.
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.4-black?logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.3-blue?logo=react)](https://react.dev/)
 [![React Three Fiber](https://img.shields.io/badge/R3F-v9-blue?logo=three.js)](https://docs.pmnd.rs/react-three-fiber)
-[![Gemini API](https://img.shields.io/badge/Google_Gemini-3.8_Flash_SSE-orange?logo=google)](https://ai.google.dev/)
-[![Version](https://img.shields.io/badge/Release-v1.4.2-emerald)](CHANGELOG.md)
+[![Gemini & DeepSeek](https://img.shields.io/badge/AI_Engine-Gemini_3.8_|_DeepSeek_V3-orange?logo=google)](https://ai.google.dev/)
+[![Version](https://img.shields.io/badge/Release-v1.5.0-emerald)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ---
@@ -27,6 +27,14 @@
 - 🏃 **Người Vận Chuyển 3D (Courier Shippers)**: Trực quan hóa việc truyền tải Artifacts (PR diff, Test report, Docker image) chạy trên hệ thống đường đá 7 nan hoa và vòng xuyến trung tâm.
 - 🚴 **Vòng Lặp Phản Hồi Tự Động (Feedback Loop)**: Khi QA bắt lỗi hoặc Tech Review từ chối, Shipper đạp xe ngược về xưởng Dev để kỹ sư viết bản vá lỗi (hotfix patch).
 - 🛡️ **Cổng Phê Duyệt Triển Khai (Production Approval Gate)**: Cơ chế Human-in-the-loop an toàn yêu cầu Tech Lead / Con người bấm duyệt trước khi triển khai lên Production.
+- 🗣️ **Giọng Nói Trí Tuệ Nhân Tạo Thời Gian Thực (Web Speech API TTS)**: Tích hợp âm thanh giọng nói tự nhiên với ngữ điệu riêng biệt cho 8 AI Agents, lọc sạch thẻ code và công tắc bật/tắt `🗣️ Voice` trên Topbar.
+- 📹 **Màn Hình Giám Sát Bàn Làm Việc PiP (Desk Cam CCTV HUD)**: Cửa sổ CCTV scanlines thu nhỏ ở góc màn hình, truyền hình trực tiếp mã nguồn AI streaming, bộ đo FPS thời gian thực (`requestAnimationFrame`), nút ghim bàn làm việc và chuyển góc nhìn 3D tức thì.
+- 🌐 **Kiến Trúc Đa Mô Hình Hybrid (Gemini 3.8 Flash & DeepSeek V3)**: Quản lý 2 API Key độc lập, lựa chọn Model Provider linh hoạt cho từng phòng ban trong AI Playground và thống kê chi phí FinOps chi tiết.
+- 🚀 **Ma Trận CI/CD Đa Môi Trường & Cổng Khẩn Cấp Rollback Gate**: Kiểm thử Staging song song (Node 18/20/22), tiến trình ArgoCD Canary (10% ➔ 50% ➔ 100%) và nút Emergency Rollback điều phối Shipper quay đầu giải cứu hệ thống.
+- ⚡ **Bản Đồ Nhiệt Cáp Quang Dữ Liệu (Photon Heatmap)**: Cáp quang tự động đổi màu phản ứng theo tải lượng (Cyan ➔ Amber ➔ Red Glow) và gia tốc hạt photon theo TPS thời gian thực.
+- 🎮 **Trình Thanh Tra Trạm Chuẩn Game RTS (Game-Style Station Inspector & Camera Focus)**: Bấm vào bất kỳ trạm nào trong không gian 3D hoặc dock điều khiển, camera tự động lướt và zoom cận cảnh vào trạm làm việc, đồng thời trượt mở ngăn Inspector cạnh phải màn hình không dùng backdrop che phủ, giữ trọn 70% không gian 3D sống động. Tích hợp xem Git Diff (Unified/Split), chỉnh sửa lưu SOP/System Prompt, thống kê Telemetry và thanh lướt 8 trạm liên hoàn (Station Carousel).
+- ⏱️ **Chu Kỳ Thời Gian Thực Tự Động & Đồng Hồ Telemetry (`themeMode: 'auto'`)**: Tự động đồng bộ ánh sáng 3D theo giờ thực của bạn (Ban ngày ☀️, Hoàng hôn 🌆, Ban đêm 🌙 kèm đom đóm & đèn lồng phát sáng), hiển thị thời tiết và đồng hồ số nhịp giây trên mọi kích cỡ màn hình.
+- 🔔 **Hệ Thống Toast Notification & Bong Bóng Thoại 3D Kẹp Biên**: Tự động đẩy thẻ thông báo kính mờ khi có sự kiện quan trọng (Cảnh báo CVE, Cổng duyệt, Bão tải SRE) và kẹp biên 100% tọa độ hiển thị chống tràn màn hình di động.
 - 🤖 **Ba Chế Độ Vận Hành Chuyên Nghiệp**:
   1. **Live AI Token Streaming (Gemini 3.8 Flash / DeepSeek SSE)**: Truyền trực tiếp từng dòng code, PRD, Git Diff và báo cáo lên màn hình Terminal nổi thời gian thực kèm nút **`⏹ Dừng`** (`AbortController`).
   2. **Kiểm Toán GitHub Pull Request Thật (Public GitHub PR Audit)**: Dán URL một PR công khai bất kỳ trên GitHub (`https://github.com/owner/repo/pull/123`) để kéo diff thật về thị trấn và điều phối các trạm Review, QA, DevSecOps chấm điểm trực tiếp.
@@ -78,7 +86,8 @@ Hệ thống ứng dụng mô hình **Kiến trúc Đối xứng Hướng tâm (
 
 ## 🎨 4. Điểm Nhấn Đồ Họa & Trải Nghiệm Người Dùng (Visual & UX)
 
-- 🔀 **Mô Hình Thực Thi Song Song DAG Pipeline (`QA` ∥ `DevSecOps`) & FinOps Telemetry**: Sau khâu Tech Review, hệ thống đồng thời phóng 2 Shipper và kích hoạt cả 2 trạm QA Automation và DevSecOps chạy suy luận song song qua `Promise.all`. Thời gian thực thi (`durationMs`), ước tính token và tốc độ (`tok/s`) được đo lường chính xác và xuất ra bảng FinOps trong `ExportModal`.
+- 🏢 **Bộ Quy Trình SOP 8 Phòng Ban Thực Chiến & Bảo Vệ Hợp Đồng Đầu Ra (`prompts.ts`)**: Thiết lập Single Source of Truth chuẩn hóa nghiệp vụ doanh nghiệp cho cả 8 phòng ban (INVEST User Stories, PRD 5 phần kèm Gherkin & NFRs, Clean Architecture Diff, Code Review 5 trụ cột khớp dòng `+newStart`, Vitest/Jest đối chiếu chéo PRD + Diff, OWASP Top 10 SAST, Multi-stage non-root Alpine Dockerfile + ArgoCD Canary, và Google SRE 4 Golden Signals & SLO). Cơ chế tách biệt `Role SOP` (tùy biến tự do trên Playground) khỏi `Output Contract` (khóa cố định trên Server) cùng luồng bàn giao liên phòng ban toàn diện (`PipelineContext`) và Live SSE Stream trọn vẹn 8/8 trạm FinOps.
+- 🔀 **Mô Hình Thực Thi Song Song DAG Pipeline (`QA` ∥ `DevSecOps`) & FinOps Telemetry**: Sau khâu Tech Review, hệ thống đồng thời phóng 2 Shipper và kích hoạt cả 2 trạm QA Automation và DevSecOps chạy suy luận song song qua `Promise.all`. Thời gian thực thi (`durationMs`), ước tính token và tốc độ (`tok/s`) được đo lường chính xác cho cả 8 trạm và xuất ra bảng FinOps trong `ExportModal`.
 - 🎥 **Chế Độ Đạo Diễn Camera 3D Tự Động (`Auto-Follow Director Mode`)**: Bổ sung nút bấm `🎥 Đạo diễn / Tự do` trên Topbar. Camera tự động lia mượt mà bám sát tọa độ 3D của nhân vật Shipper đang chạy trên nan hoa đại lộ hoặc trạm AI đang trực tiếp suy luận; tự động nhường quyền khi người dùng kéo chuột và bám lại khi thả tay.
 - 🧪 **AI Agent Playground & Re-run Stage Cô Lập (`ArtifactModal`)**: Cho phép người dùng chỉnh sửa trực tiếp `systemPrompt` của từng Agent ngay trên UI và bấm nút `🔄 Chạy lại trạm này` để sinh lại artifact riêng biệt với ngữ cảnh hiện có mà không phải khởi động lại toàn bộ pipeline.
 - 🔍 **Trình Xem Git Diff Nâng Cao, Inline Review Comments & Tải Bundle 8 Artifacts**: Triệt tiêu lỗi nhân đôi dấu `+`/`-`, cuộn ngang Split View 2 cột không bị cắt chữ, tự động hiển thị nhận xét từ `ReviewComments.json` dưới dạng thẻ bình luận inline trực tiếp dưới đúng dòng code; nút `📦 Tải Bundle 8 Artifacts` cho phép tải toàn bộ 8 tài liệu đã tạo về 1 file Markdown duy nhất.
@@ -165,6 +174,8 @@ agent-town-3d/
 │   │   └── ui/
 │   │       ├── Topbar.tsx            # Thanh điều khiển 1 dòng, theme, speed 1x/2x/4x, nút Dừng AI
 │   │       ├── MilestoneWidget.tsx   # Bảng widget tổng quan 4 ô số liệu milestone
+│   │       ├── StationInspectorPanel.tsx # Trình thanh tra trạm AI cạnh phải chuẩn Game RTS (Non-blocking)
+│   │       ├── ToastContainer.tsx    # Bộ hiển thị thông báo Toast tự động co giãn Cyberpunk
 │   │       ├── LiveStreamConsole.tsx # Màn hình Terminal nổi hiển thị Live SSE Token Stream
 │   │       ├── LogDrawer.tsx         # Khung nhật ký cố định kích thước 420x380px
 │   │       ├── RoleChips.tsx         # Thanh dock 8 trạm ở chân màn hình
@@ -175,17 +186,20 @@ agent-town-3d/
 │   │       ├── ExportModal.tsx       # Modal xuất báo cáo phát hành động kèm Snapshot 3D WebGL
 │   │       ├── PromptModal.tsx       # Modal giao việc AI 5 kịch bản (bao gồm GitHub PR Audit)
 │   │       ├── ApiKeyModal.tsx       # Modal nhập Google Gemini / DeepSeek API key bảo mật
+│   │       ├── DeskCamPiP.tsx        # Cửa sổ CCTV Desk Cam nổi góc màn hình kèm scanlines
 │   │       └── StatusBar.tsx         # Thanh APM Telemetry (CPU, Latency, TPS) & Zoom
 │   ├── lib/
 │   │   ├── ai/
 │   │   │   ├── gemini.ts             # Google Gemini 3.8 Flash REST & SSE Stream client
 │   │   │   └── deepseek.ts           # DeepSeek Chat REST & SSE Stream client
 │   │   ├── audio/
-│   │   │   └── sfx.ts                # Bộ tạo âm thanh tổng hợp Web Audio API
+│   │   │   ├── sfx.ts                # Bộ tạo âm thanh tổng hợp Web Audio API
+│   │   │   └── voice.ts              # Bộ tổng hợp giọng nói Web Speech API TTS cho 8 AI Agents
 │   │   ├── events/
 │   │   │   ├── EventSource.ts        # Giao diện nguồn sự kiện pipeline
 │   │   │   └── MockSimulator.ts      # Bộ mô phỏng kịch bản SDLC tự động
 │   │   ├── pipeline/
+│   │   │   ├── prompts.ts            # SOP chuẩn thực chiến 8 phòng ban, Output Contracts & Handoff Context
 │   │   │   └── stages.ts             # Định nghĩa schemas, role types, stage order
 │   │   └── scene/
 │   │       ├── layout.ts             # Tọa độ Radial Polar chuẩn R=9.2m & màu sắc
@@ -246,7 +260,7 @@ npm run start
 
 - 🤖 [**`AGENTS.md`**](file:///c:/Users/Admin/Documents/CV_Truong%20Dinh%20Anh/Ph%E1%BB%8Fng%20v%E1%BA%A5n/agent-town-3d/AGENTS.md): Đặc tả chi tiết System Prompt, hợp đồng dữ liệu đầu vào / đầu ra và cơ chế phối hợp giữa 8 AI Agents.
 - 📜 [**`CHANGELOG.md`**](file:///c:/Users/Admin/Documents/CV_Truong%20Dinh%20Anh/Ph%E1%BB%8Fng%20v%E1%BA%A5n/agent-town-3d/CHANGELOG.md): Nhật ký lưu vết toàn bộ các phiên bản, tính năng mới và các đợt refactor kiến trúc từ v1.0 đến v1.4.
-- 🛠️ [**`POSTMORTEM_AND_LESSONS_LEARNED.md`**](file:///c:/Users/Admin/Documents/CV_Truong%20Dinh%20Anh/Ph%E1%BB%8Fng%20v%E1%BA%A5n/agent-town-3d/POSTMORTEM_AND_LESSONS_LEARNED.md): Tài liệu lưu trữ 12 sự cố kỹ thuật tiêu biểu đã từng xuất hiện (lỗi đi xuyên tường, race condition bộ đếm shipper, mở chồng modal, xung dữ liệu cáp quang...) kèm nguyên nhân gốc và biện pháp phòng ngừa vĩnh viễn.
+- 🛠️ [**`POSTMORTEM_AND_LESSONS_LEARNED.md`**](file:///c:/Users/Admin/Documents/CV_Truong%20Dinh%20Anh/Ph%E1%BB%8Fng%20v%E1%BA%A5n/agent-town-3d/POSTMORTEM_AND_LESSONS_LEARNED.md): Tài liệu lưu trữ 16 sự cố kỹ thuật tiêu biểu đã từng xuất hiện (lỗi đi xuyên tường, race condition bộ đếm shipper, mở chồng modal, xung dữ liệu cáp quang, ghi đè Output Schema Contract...) kèm nguyên nhân gốc và biện pháp phòng ngừa vĩnh viễn.
 
 ---
 

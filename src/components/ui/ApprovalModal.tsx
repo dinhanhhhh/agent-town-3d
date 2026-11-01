@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useTownStore } from '../../store/useTownStore';
 import { simulator } from '../../lib/events/MockSimulator';
 import { AgentRole } from '../../lib/pipeline/stages';
@@ -226,7 +226,7 @@ Scenario: Token hết hạn (Edge Case)
   },
 };
 
-type TabType = 'checklist' | 'dev' | 'review' | 'qa' | 'security' | 'devops' | 'pm' | 'prd';
+type TabType = 'checklist' | 'matrix' | 'dev' | 'review' | 'qa' | 'security' | 'devops' | 'pm' | 'prd';
 
 export const ApprovalModal: React.FC = () => {
   const isApprovalModalOpen = useTownStore((s) => s.isApprovalModalOpen);
@@ -237,14 +237,31 @@ export const ApprovalModal: React.FC = () => {
   const isRealRunning = useTownStore((s) => s.isRealRunning);
   const realArtifacts = useTownStore((s) => s.realArtifacts);
   const resolveApproval = useTownStore((s) => s.resolveApproval);
+  const triggerRollback = useTownStore((s) => s.triggerRollback);
   const selectAgent = useTownStore((s) => s.selectAgent);
   const setCameraZoom = useTownStore((s) => s.setCameraZoom);
 
   const [activeTab, setActiveTab] = useState<TabType>('checklist');
-  const [expandedStation, setExpandedStation] = useState<AgentRole | null>('review');
+  const [expandedStation, setExpandedStation] = useState<AgentRole | null>(null);
+  const tabsRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [rejectFeedback, setRejectFeedback] = useState('Thiếu try/catch và input validation khi xử lý token');
+
+  const reviewComments = React.useMemo(() => {
+    if (!realArtifacts.review?.content) return [];
+    try {
+      const parsed = JSON.parse(realArtifacts.review.content);
+      if (Array.isArray(parsed.comments)) return parsed.comments;
+    } catch {}
+    return [];
+  }, [realArtifacts.review]);
+
+  const qaSpecsCount = React.useMemo(() => {
+    if (!realArtifacts.qa?.content) return 8;
+    const matches = realArtifacts.qa.content.match(/\b(?:it|test)\s*\(/g);
+    return matches && matches.length > 0 ? matches.length : 8;
+  }, [realArtifacts.qa]);
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -337,10 +354,10 @@ export const ApprovalModal: React.FC = () => {
   const pmArtifact = getArtifact('pm');
 
   const checklistItems = [
+    { role: 'dev' as AgentRole, artifact: devArtifact, isDone: true },
     { role: 'review' as AgentRole, artifact: reviewArtifact, isDone: true },
     { role: 'qa' as AgentRole, artifact: qaArtifact, isDone: true },
     { role: 'security' as AgentRole, artifact: securityArtifact, isDone: true },
-    { role: 'devops' as AgentRole, artifact: devopsArtifact, isDone: false },
   ];
 
   const currentTabArtifact =
@@ -365,7 +382,7 @@ export const ApprovalModal: React.FC = () => {
       }}
       className="fixed inset-0 z-[1000] flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in overflow-hidden overscroll-contain"
     >
-      <div className="w-full max-w-4xl bg-slate-900 border border-slate-700/80 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[94dvh] sm:max-h-[92vh] animate-scale-up overscroll-contain">
+      <div className="w-full max-w-4xl xl:max-w-5xl bg-slate-900 border border-slate-700/80 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[94dvh] sm:max-h-[92vh] animate-scale-up overscroll-contain">
         {/* Header */}
         <div className="flex items-center justify-between gap-2 px-4 py-3 sm:px-6 sm:py-4 bg-gradient-to-r from-amber-950/50 via-slate-900 to-slate-900 border-b border-slate-800">
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
@@ -392,83 +409,125 @@ export const ApprovalModal: React.FC = () => {
           </button>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex items-center gap-1.5 px-3 sm:px-6 pt-2.5 sm:pt-3 bg-slate-950/60 border-b border-slate-800 overflow-x-auto no-scrollbar">
+        {/* Tab Navigation with Scroll Arrows & Concise Responsive Labels */}
+        <div className="relative bg-slate-950/70 border-b border-slate-800 flex items-center px-2">
           <button
-            onClick={() => setActiveTab('checklist')}
-            className={`px-3.5 py-2 text-xs font-bold rounded-t-xl transition-colors border-b-2 whitespace-nowrap ${
-              activeTab === 'checklist'
-                ? 'text-white border-amber-400 bg-slate-800/80 shadow-sm'
-                : 'text-slate-400 border-transparent hover:text-slate-200'
-            }`}
+            type="button"
+            onClick={() => tabsRef.current?.scrollBy({ left: -180, behavior: 'smooth' })}
+            className="hidden sm:flex w-6 h-6 shrink-0 items-center justify-center text-slate-400 hover:text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors text-xs border border-slate-800"
+            title="Cuộn tab sang trái"
           >
-            📋 Tiêu chuẩn Kiểm duyệt
+            ‹
           </button>
 
-          <button
-            onClick={() => setActiveTab('dev')}
-            className={`px-3.5 py-2 text-xs font-bold rounded-t-xl transition-colors border-b-2 whitespace-nowrap flex items-center gap-1.5 ${
-              activeTab === 'dev'
-                ? 'text-white border-blue-400 bg-slate-800/80 shadow-sm'
-                : 'text-blue-300 border-transparent hover:text-white'
-            }`}
+          <div
+            ref={tabsRef}
+            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 pt-2 sm:pt-2.5 overflow-x-auto scrollbar-thin scrollbar-thumb-slate-700/60 scrollbar-track-transparent scroll-smooth w-full"
           >
-            <span>💻 Code Dev ({devArtifact.filename})</span>
-          </button>
+            <button
+              onClick={() => setActiveTab('checklist')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-t-xl transition-all border-b-2 whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
+                activeTab === 'checklist'
+                  ? 'text-white border-amber-400 bg-slate-800/90 shadow-sm'
+                  : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/40'
+              }`}
+            >
+              <span>📋</span>
+              <span>Tiêu chuẩn</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('matrix')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-t-xl transition-all border-b-2 whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
+                activeTab === 'matrix'
+                  ? 'text-white border-cyan-400 bg-slate-800/90 shadow-sm'
+                  : 'text-cyan-300 border-transparent hover:text-white hover:bg-slate-800/40'
+              }`}
+            >
+              <span>🚀</span>
+              <span>CI/CD Canary</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('dev')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-t-xl transition-all border-b-2 whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
+                activeTab === 'dev'
+                  ? 'text-white border-blue-400 bg-slate-800/90 shadow-sm'
+                  : 'text-blue-300 border-transparent hover:text-white hover:bg-slate-800/40'
+              }`}
+            >
+              <span>💻</span>
+              <span>Mã nguồn Dev</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('review')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-t-xl transition-all border-b-2 whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
+                activeTab === 'review'
+                  ? 'text-white border-sky-400 bg-slate-800/90 shadow-sm'
+                  : 'text-sky-300 border-transparent hover:text-white hover:bg-slate-800/40'
+              }`}
+            >
+              <span>🔍</span>
+              <span>Tech Review</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('qa')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-t-xl transition-all border-b-2 whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
+                activeTab === 'qa'
+                  ? 'text-white border-purple-400 bg-slate-800/90 shadow-sm'
+                  : 'text-purple-300 border-transparent hover:text-white hover:bg-slate-800/40'
+              }`}
+            >
+              <span>🧪</span>
+              <span>Unit Tests</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('security')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-t-xl transition-all border-b-2 whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
+                activeTab === 'security'
+                  ? 'text-white border-emerald-400 bg-slate-800/90 shadow-sm'
+                  : 'text-emerald-300 border-transparent hover:text-white hover:bg-slate-800/40'
+              }`}
+            >
+              <span>🛡️</span>
+              <span>Security Audit</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('devops')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-t-xl transition-all border-b-2 whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
+                activeTab === 'devops'
+                  ? 'text-white border-amber-400 bg-slate-800/90 shadow-sm'
+                  : 'text-amber-300 border-transparent hover:text-white hover:bg-slate-800/40'
+              }`}
+            >
+              <span>📦</span>
+              <span>Dockerfile</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('prd')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-t-xl transition-all border-b-2 whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
+                activeTab === 'prd'
+                  ? 'text-white border-teal-400 bg-slate-800/90 shadow-sm'
+                  : 'text-teal-300 border-transparent hover:text-white hover:bg-slate-800/40'
+              }`}
+            >
+              <span>📄</span>
+              <span>PRD Specs</span>
+            </button>
+          </div>
 
           <button
-            onClick={() => setActiveTab('review')}
-            className={`px-3.5 py-2 text-xs font-bold rounded-t-xl transition-colors border-b-2 whitespace-nowrap flex items-center gap-1.5 ${
-              activeTab === 'review'
-                ? 'text-white border-sky-400 bg-slate-800/80 shadow-sm'
-                : 'text-sky-300 border-transparent hover:text-white'
-            }`}
+            type="button"
+            onClick={() => tabsRef.current?.scrollBy({ left: 180, behavior: 'smooth' })}
+            className="hidden sm:flex w-6 h-6 shrink-0 items-center justify-center text-slate-400 hover:text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors text-xs border border-slate-800"
+            title="Cuộn tab sang phải"
           >
-            <span>🔍 Review ({reviewArtifact.filename})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('qa')}
-            className={`px-3.5 py-2 text-xs font-bold rounded-t-xl transition-colors border-b-2 whitespace-nowrap flex items-center gap-1.5 ${
-              activeTab === 'qa'
-                ? 'text-white border-purple-400 bg-slate-800/80 shadow-sm'
-                : 'text-purple-300 border-transparent hover:text-white'
-            }`}
-          >
-            <span>🧪 Unit Tests ({qaArtifact.filename})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('security')}
-            className={`px-3.5 py-2 text-xs font-bold rounded-t-xl transition-colors border-b-2 whitespace-nowrap flex items-center gap-1.5 ${
-              activeTab === 'security'
-                ? 'text-white border-emerald-400 bg-slate-800/80 shadow-sm'
-                : 'text-emerald-300 border-transparent hover:text-white'
-            }`}
-          >
-            <span>🛡️ Security ({securityArtifact.filename})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('devops')}
-            className={`px-3.5 py-2 text-xs font-bold rounded-t-xl transition-colors border-b-2 whitespace-nowrap flex items-center gap-1.5 ${
-              activeTab === 'devops'
-                ? 'text-white border-amber-400 bg-slate-800/80 shadow-sm'
-                : 'text-amber-300 border-transparent hover:text-white'
-            }`}
-          >
-            <span>🚀 Canary ({devopsArtifact.filename})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('prd')}
-            className={`px-3.5 py-2 text-xs font-bold rounded-t-xl transition-colors border-b-2 whitespace-nowrap flex items-center gap-1.5 ${
-              activeTab === 'prd'
-                ? 'text-white border-teal-400 bg-slate-800/80 shadow-sm'
-                : 'text-teal-300 border-transparent hover:text-white'
-            }`}
-          >
-            <span>📄 PRD ({pmArtifact.filename})</span>
+            ›
           </button>
         </div>
 
@@ -506,12 +565,14 @@ export const ApprovalModal: React.FC = () => {
           {/* TAB 1: CHECKLIST WITH ACCORDION & 3D FLY-TO */}
           {activeTab === 'checklist' && (
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Kết quả kiểm thử từ các AI Station (Bấm vào để xem chỗ làm & chi tiết)
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-0.5">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <span>📋</span>
+                  <span>Kết quả kiểm thử từ 4 AI Station (Bấm vào để xem chi tiết)</span>
                 </h3>
-                <span className="text-[11px] text-amber-400 font-medium">
-                  💡 Nhấn vào trạm để xem code/báo cáo hoặc bay camera 3D
+                <span className="text-[11px] text-amber-400 font-medium flex items-center gap-1">
+                  <span>💡</span>
+                  <span>Nhấn vào trạm để xem mã nguồn hoặc bay camera 3D</span>
                 </span>
               </div>
 
@@ -572,12 +633,15 @@ export const ApprovalModal: React.FC = () => {
 
                       {/* Expanded Work Place & Artifact Preview */}
                       {isExpanded && (
-                        <div className="px-4 pb-4 pt-1 border-t border-slate-800/80 space-y-3 animate-fade-in">
-                          <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
-                            <span className="text-slate-300 italic">
+                        <div className="px-4 pb-4 pt-1 border-t border-slate-800/80 space-y-2.5 animate-fade-in">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-400 pt-1 gap-2">
+                            <span className="text-slate-300 italic truncate">
                               {artifact.summary}
                             </span>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <span className="text-[10px] font-mono text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                                {artifact.filename} ({artifact.language})
+                              </span>
                               <button
                                 onClick={() => handleCopyCode(artifact.content)}
                                 className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs transition-colors flex items-center gap-1"
@@ -595,10 +659,7 @@ export const ApprovalModal: React.FC = () => {
 
                           {/* Code Preview Box */}
                           <div className="relative">
-                            <div className="absolute top-2 right-3 text-[10px] font-mono text-slate-400 bg-slate-900/80 px-2 py-0.5 rounded border border-slate-800">
-                              {artifact.filename} ({artifact.language})
-                            </div>
-                            <pre className="p-3.5 bg-slate-950 rounded-xl border border-slate-800 text-xs font-mono text-emerald-400 leading-relaxed overflow-x-auto max-h-48 select-text">
+                            <pre className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs font-mono text-emerald-400 leading-relaxed overflow-x-auto max-h-36 sm:max-h-40 select-text">
                               {artifact.content}
                             </pre>
                           </div>
@@ -611,8 +672,119 @@ export const ApprovalModal: React.FC = () => {
             </div>
           )}
 
+          {/* TAB: CI/CD MATRIX & CANARY ROLLOUT */}
+          {activeTab === 'matrix' && (
+            <div className="space-y-4 animate-fade-in font-sans">
+              {/* Environment Test Matrix Card */}
+              <div className="p-4 bg-slate-950/80 border border-slate-800 rounded-2xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-white flex items-center gap-1.5 uppercase tracking-wider">
+                    <span>🧪</span>
+                    <span>Multi-Environment CI/CD Test Matrix</span>
+                  </span>
+                  <span className="text-[10px] text-emerald-400 font-mono bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-800/40">
+                    QA Suite: {qaSpecsCount} Specs Checked
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-slate-200">Node 18 Alpine</span>
+                      <span className="text-emerald-400 font-bold">✅ PASS</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400">Suites: {qaSpecsCount}/{qaSpecsCount} Specs</p>
+                    <div className="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                      <div className="bg-emerald-500 h-full w-full" />
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-slate-900 border border-cyan-800/60 rounded-xl space-y-1 shadow-sm">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-cyan-300">Node 20 Alpine (Target)</span>
+                      <span className="text-emerald-400 font-bold">✅ PASS</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400">Core Engine: {qaSpecsCount} Specs</p>
+                    <div className="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                      <div className="bg-cyan-500 h-full w-full" />
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-slate-200">Node 22 Alpine</span>
+                      <span className="text-emerald-400 font-bold">✅ PASS</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400">NextGen Runtime Compat</p>
+                    <div className="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                      <div className="bg-emerald-500 h-full w-full" />
+                    </div>
+                  </div>
+                </div>
+                <p className="text-[10px] text-slate-500 italic">
+                  * Mô phỏng kiểm thử ma trận Staging 3 môi trường Node.js đối chiếu từ bộ test suite thực tế của QA.
+                </p>
+              </div>
+
+              {/* Canary Traffic Strategy (ArgoCD) */}
+              <div className="p-4 bg-slate-950/80 border border-slate-800 rounded-2xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-white flex items-center gap-1.5 uppercase tracking-wider">
+                    <span>🚦</span>
+                    <span>ArgoCD Progressive Canary Rollout</span>
+                  </span>
+                  <span className="text-[10px] text-amber-400 font-mono">
+                    Canary Gate Active
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs text-slate-300">
+                    <span>Phase 1: 10% Traffic (Canary Cohort)</span>
+                    <span className="text-emerald-400 font-semibold">Healthy · Error Rate 0.01%</span>
+                  </div>
+                  <div className="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden border border-slate-800 flex">
+                    <div className="bg-emerald-500 h-full w-[10%]" title="10% Canary" />
+                    <div className="bg-blue-600/40 h-full w-[40%]" title="40% Staged" />
+                    <div className="bg-slate-800 h-full w-[50%]" title="50% Locked" />
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] text-slate-500">
+                    <span>10% Canary Active</span>
+                    <span>50% SRE Stage</span>
+                    <span>100% Production Lock</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* SRE Emergency Rollback Gate */}
+              <div className="p-4 bg-rose-950/30 border border-rose-900/60 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-rose-300">
+                    <span>🛡️</span>
+                    <span>SRE Automated Rollback Gatekeeper</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    Phát hiện bất thường hoặc muốn thử nghiệm quy trình phục hồi sự cố? Bấm để hoàn tác Canary ngay lập tức.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    openApprovalModal(false);
+                    triggerRollback('Tech Lead kích hoạt Rollback Gate từ giao diện CI/CD Matrix');
+                  }}
+                  className="px-4 py-2 bg-rose-600/80 hover:bg-rose-600 text-white font-bold text-xs rounded-xl shadow-lg shadow-rose-950/50 transition-all flex items-center justify-center gap-1.5 shrink-0"
+                >
+                  <span>↩️</span>
+                  <span>Kích hoạt Rollback khẩn cấp</span>
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* TAB 2 TO 7: DEDICATED FULL-SCREEN WORK ARTIFACT VIEW */}
-          {activeTab !== 'checklist' && currentTabArtifact && (
+          {activeTab !== 'checklist' && activeTab !== 'matrix' && currentTabArtifact && (
             <div className="space-y-3 animate-fade-in">
               {/* Station Work Place Banner */}
               <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -666,6 +838,7 @@ export const ApprovalModal: React.FC = () => {
                   <GitDiffViewer
                     diffText={currentTabArtifact.content}
                     filename={currentTabArtifact.filename}
+                    reviewComments={reviewComments}
                   />
                 </div>
               ) : (
