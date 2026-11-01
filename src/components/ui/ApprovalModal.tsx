@@ -382,35 +382,35 @@ export const ApprovalModal: React.FC = () => {
       }}
       className="fixed inset-0 z-[1000] flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in overflow-hidden overscroll-contain"
     >
-      <div className="w-full max-w-4xl xl:max-w-5xl bg-slate-900 border border-slate-700/80 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[94dvh] sm:max-h-[92vh] animate-scale-up overscroll-contain">
+      <div className="w-full max-w-4xl xl:max-w-5xl bg-slate-900 border border-slate-700/80 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[96dvh] sm:max-h-[92vh] animate-scale-up overscroll-contain">
         {/* Header */}
-        <div className="flex items-center justify-between gap-2 px-4 py-3 sm:px-6 sm:py-4 bg-gradient-to-r from-amber-950/50 via-slate-900 to-slate-900 border-b border-slate-800">
-          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-lg sm:text-xl">
+        <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 sm:px-6 sm:py-4 bg-gradient-to-r from-amber-950/50 via-slate-900 to-slate-900 border-b border-slate-800">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 shrink-0 rounded-xl sm:rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-base sm:text-xl">
               🛡️
             </div>
             <div className="min-w-0">
-              <h2 className="text-sm sm:text-base font-bold text-white tracking-wide flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <h2 className="text-xs sm:text-base font-bold text-white tracking-wide flex flex-wrap items-center gap-1.5 sm:gap-2">
                 <span className="truncate">Cổng Phê Duyệt Production</span>
-                <span className="px-2 py-0.5 text-[9px] sm:text-[10px] font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 whitespace-nowrap">
-                  ✨ 4/4 Trạm Đã Sẵn Sàng
+                <span className="px-1.5 sm:px-2 py-0.2 sm:py-0.5 text-[9px] sm:text-[10px] font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 whitespace-nowrap">
+                  ✨ 4/4 Trạm Sẵn Sàng
                 </span>
               </h2>
-              <p className="text-[11px] sm:text-xs text-amber-400 font-medium truncate">
+              <p className="text-[10px] sm:text-xs text-amber-400 font-medium truncate">
                 Production Release Gatekeeper · Rà soát mã nguồn & tiêu chuẩn chất lượng
               </p>
             </div>
           </div>
           <button
             onClick={() => openApprovalModal(false)}
-            className="w-8 h-8 shrink-0 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-colors"
+            className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-colors text-xs sm:text-sm"
           >
             ✕
           </button>
         </div>
 
         {/* Tab Navigation with Scroll Arrows & Concise Responsive Labels */}
-        <div className="relative bg-slate-950/70 border-b border-slate-800 flex items-center px-2">
+        <div className="relative bg-slate-950/70 border-b border-slate-800 flex items-center px-1 sm:px-2">
           <button
             type="button"
             onClick={() => tabsRef.current?.scrollBy({ left: -180, behavior: 'smooth' })}
@@ -422,7 +422,7 @@ export const ApprovalModal: React.FC = () => {
 
           <div
             ref={tabsRef}
-            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 pt-2 sm:pt-2.5 overflow-x-auto scrollbar-thin scrollbar-thumb-slate-700/60 scrollbar-track-transparent scroll-smooth w-full"
+            className="flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 pt-1.5 sm:pt-2.5 overflow-x-auto scrollbar-none sm:scrollbar-thin sm:scrollbar-thumb-slate-700/60 scroll-smooth w-full touch-pan-x"
           >
             <button
               onClick={() => setActiveTab('checklist')}
@@ -532,19 +532,19 @@ export const ApprovalModal: React.FC = () => {
         </div>
 
         {/* Content Body */}
-        <div className="p-3.5 sm:p-6 overflow-y-auto overscroll-contain flex-1 text-sm text-slate-300 space-y-4">
+        <div className="p-2.5 sm:p-5 overflow-y-auto overscroll-contain flex-1 text-sm text-slate-300 space-y-3">
           {/* Target Task Details Header */}
-          <div className="p-3 sm:p-3.5 bg-slate-950/80 border border-slate-800 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-            <div className="space-y-1 min-w-0">
+          <div className="p-2.5 sm:p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl sm:rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="space-y-0.5 min-w-0">
               <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs">
                 <span className="font-bold text-amber-400">
                   {activeTask?.refNo || 'TICK-142'}
                 </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                <span className="px-1.5 sm:px-2 py-0.2 sm:py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30">
                   Branch: main
                 </span>
                 <span className="hidden sm:inline text-slate-400">·</span>
-                <span className="text-[11px] font-mono text-emerald-400 truncate">
+                <span className="text-[10px] sm:text-[11px] font-mono text-emerald-400 truncate">
                   registry.devops.town/api:latest
                 </span>
               </div>
@@ -555,7 +555,7 @@ export const ApprovalModal: React.FC = () => {
 
             <button
               onClick={() => setActiveTab('dev')}
-              className="px-3 py-1.5 bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 hover:text-white border border-blue-500/40 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 shrink-0"
+              className="px-2.5 sm:px-3 py-1 sm:py-1.5 bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 hover:text-white border border-blue-500/40 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1 shrink-0 self-start sm:self-auto"
             >
               <span>💻 Xem Code Dev</span>
               <span>➔</span>
@@ -564,19 +564,19 @@ export const ApprovalModal: React.FC = () => {
 
           {/* TAB 1: CHECKLIST WITH ACCORDION & 3D FLY-TO */}
           {activeTab === 'checklist' && (
-            <div className="space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-0.5">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <div className="space-y-2 sm:space-y-2.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-0.5">
+                <h3 className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                   <span>📋</span>
                   <span>Kết quả kiểm thử từ 4 AI Station (Bấm vào để xem chi tiết)</span>
                 </h3>
-                <span className="text-[11px] text-amber-400 font-medium flex items-center gap-1">
+                <span className="text-[10px] sm:text-[11px] text-amber-400 font-medium flex items-center gap-1">
                   <span>💡</span>
                   <span>Nhấn vào trạm để xem mã nguồn hoặc bay camera 3D</span>
                 </span>
               </div>
 
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 {checklistItems.map(({ role, artifact, isDone }) => {
                   const isExpanded = expandedStation === role;
                   const building = BUILDING_NAMES[role];
@@ -584,7 +584,7 @@ export const ApprovalModal: React.FC = () => {
                   return (
                     <div
                       key={role}
-                      className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
+                      className={`rounded-xl sm:rounded-2xl border transition-all duration-200 overflow-hidden ${
                         isExpanded
                           ? 'bg-slate-950 border-amber-500/60 shadow-lg'
                           : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
@@ -593,37 +593,38 @@ export const ApprovalModal: React.FC = () => {
                       {/* Clickable Header Row */}
                       <div
                         onClick={() => setExpandedStation(isExpanded ? null : role)}
-                        className="flex items-center justify-between p-3.5 cursor-pointer select-none"
+                        className="flex items-center justify-between p-2.5 sm:p-3.5 cursor-pointer select-none gap-2"
                       >
-                        <div className="flex items-start gap-3">
-                          <span className="text-base mt-0.5">
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                          <span className="text-sm sm:text-base shrink-0">
                             {isDone ? '✅' : '⏳'}
                           </span>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-slate-100 text-sm">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                              <span className="font-bold text-slate-100 text-xs sm:text-sm truncate">
                                 {artifact.agentName}
                               </span>
-                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                              <span className="hidden sm:inline-block text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
                                 📍 {building}
                               </span>
                             </div>
-                            <p className="text-xs text-slate-400 mt-0.5">
+                            <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 truncate max-w-[170px] sm:max-w-none">
                               {artifact.badgeStatus}
                             </p>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               flyToStation(role);
                             }}
-                            className="px-2.5 py-1 text-[11px] font-bold text-amber-300 hover:text-white bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 rounded-xl transition-all flex items-center gap-1 shadow-sm"
+                            className="px-2 sm:px-2.5 py-1 text-[11px] font-bold text-amber-300 hover:text-white bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 rounded-xl transition-all flex items-center gap-1 shadow-sm shrink-0"
                             title="Đóng modal và bay camera 3D tới trạm làm việc của agent"
                           >
-                            <span>🔭 Bay tới trạm 3D</span>
+                            <span>🔭</span>
+                            <span className="hidden sm:inline">Bay tới trạm 3D</span>
                           </button>
                           <span className="text-slate-500 text-xs transition-transform duration-200">
                             {isExpanded ? '▲' : '▼'}

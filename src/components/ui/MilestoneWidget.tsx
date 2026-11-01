@@ -4,13 +4,21 @@ import React, { useState } from 'react';
 import { useTownStore } from '../../store/useTownStore';
 
 export const MilestoneWidget: React.FC = () => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isMobilePill, setIsMobilePill] = useState(false);
 
-  // Tự động thu gọn danh sách task trên màn hình nhỏ (< 768px) để không che khuất ốc đảo 3D
+  // Nhận diện màn hình di động (< 640px) để tự động chuyển sang chế độ Mini Pill siêu gọn
   React.useEffect(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < 768) {
-      setIsCollapsed(true);
-    }
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 640;
+      setIsMobilePill(mobile);
+      if (mobile) {
+        setIsCollapsed(true);
+      }
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
   const agents = useTownStore((s) => s.agents);
   const tasks = useTownStore((s) => s.tasks);
@@ -70,8 +78,40 @@ export const MilestoneWidget: React.FC = () => {
           },
         ];
 
+  // Chế độ Mini Pill siêu gọn trên Mobile (< 640px)
+  if (isMobilePill && isCollapsed) {
+    return (
+      <div className="absolute top-14 left-2 z-30 pointer-events-none select-none animate-in fade-in duration-200">
+        <button
+          onClick={() => setIsCollapsed(false)}
+          className="pointer-events-auto flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-xl shadow-xl text-xs hover:border-slate-500 transition-all active:scale-95"
+          title="Chạm để mở bảng số liệu chi tiết"
+        >
+          <span className="text-sm">📊</span>
+          <span className="font-bold text-white text-[11px]">Tổng quan</span>
+          <span
+            className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
+              runningCount > 0
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse'
+                : pendingCount > 0
+                ? 'bg-orange-500/20 text-orange-300 border border-orange-500/40'
+                : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+            }`}
+          >
+            {runningCount > 0
+              ? `${runningCount} chạy`
+              : pendingCount > 0
+              ? `${pendingCount} duyệt`
+              : `${successCount} xong`}
+          </span>
+          <span className="text-[10px] text-slate-400">▾</span>
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="absolute top-14 left-2 sm:top-16 sm:left-3 z-30 w-60 sm:w-72 max-w-[calc(100vw-16px)] pointer-events-none transition-all duration-300 select-none">
+    <div className="absolute top-14 left-2 sm:top-16 sm:left-3 z-30 w-60 sm:w-72 max-w-[calc(100vw-16px)] pointer-events-none transition-all duration-300 select-none animate-in fade-in duration-200">
       <div className="pointer-events-auto bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden p-2.5 sm:p-3 space-y-2 sm:space-y-2.5">
         {/* Header Widget */}
         <div className="flex items-center justify-between">
@@ -85,11 +125,11 @@ export const MilestoneWidget: React.FC = () => {
           </div>
 
           <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
+            onClick={() => setIsCollapsed(true)}
             className="w-5 h-5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-colors text-[10px]"
-            title={isCollapsed ? 'Mở rộng bảng' : 'Thu gọn bảng'}
+            title="Thu gọn bảng"
           >
-            {isCollapsed ? '▼' : '▲'}
+            ▲
           </button>
         </div>
 

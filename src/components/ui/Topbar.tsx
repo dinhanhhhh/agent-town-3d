@@ -68,15 +68,15 @@ export const Topbar: React.FC = () => {
   return (
     <header className="absolute top-2 left-2 right-2 sm:top-3 sm:left-3 sm:right-3 z-30 pointer-events-none flex items-center justify-between gap-1.5 sm:gap-2.5 flex-nowrap">
       {/* Brand & AI Prompt Opener Button */}
-      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-        <div className="pointer-events-auto flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 bg-slate-900/85 backdrop-blur-md border border-slate-700/80 rounded-2xl shadow-xl">
+      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+        <div className="pointer-events-auto flex items-center gap-1.5 px-2 sm:px-3 py-1.5 bg-slate-900/85 backdrop-blur-md border border-slate-700/80 rounded-2xl shadow-xl">
           <span className="text-sm sm:text-base">🏢</span>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <h1 className="text-[11px] sm:text-xs font-bold text-white tracking-wide uppercase whitespace-nowrap">
+          <div className="hidden xs:block">
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              <h1 className="text-[10px] sm:text-xs font-bold text-white tracking-wide uppercase whitespace-nowrap">
                 <span className="hidden md:inline">Thị trấn </span>DevOps
               </h1>
-              <span className="px-1.5 py-0.2 text-[9px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-md">
+              <span className="px-1 sm:px-1.5 py-0.2 text-[8px] sm:text-[9px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-md">
                 v1.5
               </span>
             </div>
@@ -86,7 +86,7 @@ export const Topbar: React.FC = () => {
         {/* AI Action Trigger Button (Spotlight / Raycast opener) */}
         <button
           onClick={() => openPromptModal(true)}
-          className={`pointer-events-auto flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-2xl font-bold text-xs shadow-xl transition-all border whitespace-nowrap ${
+          className={`pointer-events-auto flex items-center gap-1 sm:gap-2 px-2 sm:px-3.5 py-1.5 sm:py-2 rounded-2xl font-bold text-xs shadow-xl transition-all border whitespace-nowrap ${
             isRealRunning
               ? 'bg-amber-600/30 text-amber-200 border-amber-500/50 hover:bg-amber-600/40 animate-pulse'
               : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-indigo-500 text-white border-blue-400/40 shadow-blue-900/40 hover:scale-[1.02]'
@@ -97,11 +97,13 @@ export const Topbar: React.FC = () => {
             <>
               <div className="w-3.5 h-3.5 border-2 border-amber-300 border-t-transparent rounded-full animate-spin" />
               <span className="hidden sm:inline">AI Đang chạy...</span>
-              <span className="sm:hidden">AI...</span>
+              <span className="sm:hidden text-[11px]">AI...</span>
             </>
           ) : (
             <>
-              <span>✨ Giao việc AI</span>
+              <span>✨</span>
+              <span className="hidden sm:inline">Giao việc AI</span>
+              <span className="sm:hidden text-[11px]">AI</span>
               <span className="hidden lg:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-black/25 text-[10px] text-blue-200 border border-white/15 font-mono">
                 Ctrl K
               </span>
@@ -112,7 +114,7 @@ export const Topbar: React.FC = () => {
         {isRealRunning && (
           <button
             onClick={abortPipeline}
-            className="pointer-events-auto flex items-center gap-1 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-2xl font-bold text-xs bg-rose-600/85 hover:bg-rose-500 text-white border border-rose-400/60 shadow-lg shadow-rose-950/50 transition-all whitespace-nowrap"
+            className="pointer-events-auto flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-2xl font-bold text-xs bg-rose-600/85 hover:bg-rose-500 text-white border border-rose-400/60 shadow-lg shadow-rose-950/50 transition-all whitespace-nowrap"
             title="Dừng ngay luồng AI Pipeline đang chạy"
           >
             <span>⏹</span>
@@ -122,7 +124,7 @@ export const Topbar: React.FC = () => {
       </div>
 
       {/* Control Buttons Group (Clean, single-line, responsive toolbar with horizontal scroll safety) */}
-      <div className="pointer-events-auto flex items-center gap-1 sm:gap-1.5 p-1 bg-slate-900/85 backdrop-blur-md border border-slate-700/80 rounded-2xl shadow-xl overflow-x-auto scrollbar-none max-w-[calc(100vw-190px)] sm:max-w-none shrink-0">
+      <div className="pointer-events-auto flex items-center gap-1 sm:gap-1.5 p-1 bg-slate-900/85 backdrop-blur-md border border-slate-700/80 rounded-2xl shadow-xl overflow-x-auto scrollbar-none max-w-[calc(100vw-110px)] sm:max-w-none shrink-0">
         {/* Theme Mode Switcher: Auto / Ngày / Hoàng hôn / Đêm */}
         <div
           className="flex items-center bg-slate-800/90 p-0.5 rounded-xl border border-slate-700 shrink-0"

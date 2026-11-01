@@ -50,8 +50,8 @@ export const RoleChips: React.FC = () => {
   };
 
   return (
-    <div className="absolute bottom-2 left-2 right-2 lg:bottom-3 lg:left-3 lg:right-auto z-30 pointer-events-none lg:max-w-[calc(100vw-460px)] overflow-x-auto pb-0.5 scrollbar-none touch-pan-x">
-      <div className="pointer-events-auto flex items-center gap-1 p-1 sm:p-1.5 bg-slate-900/85 backdrop-blur-md border border-slate-700/80 rounded-2xl shadow-2xl w-max">
+    <div className="absolute bottom-2 left-2 right-2 sm:left-3 sm:right-auto z-30 pointer-events-none lg:max-w-[calc(100vw-460px)] overflow-x-auto pb-0.5 scrollbar-none touch-pan-x flex justify-center sm:justify-start">
+      <div className="pointer-events-auto flex items-center gap-1 p-1 sm:p-1.5 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-2xl shadow-2xl w-max">
         {STAGE_ORDER.map((role) => {
           const agent = agents[role];
           const layout = STATIONS_LAYOUT[role];
@@ -77,12 +77,12 @@ export const RoleChips: React.FC = () => {
                   ? 'bg-blue-950/70 text-blue-200 border-blue-400 ring-2 ring-blue-400/50 animate-pulse shadow-md'
                   : 'bg-slate-800/60 text-slate-300 border-slate-700/60 hover:bg-slate-700/70 hover:text-white'
               }`}
-              title={`${layout.name} (${agent?.status}) - Bấm để phóng to và xem artifact`}
+              title={`${layout.name} (${agent?.status}) - Bấm để phóng to và xem trạm`}
             >
-              <span>{ROLE_ICONS[role]}</span>
-              <span className="font-bold">{shortName}</span>
+              <span className="text-xs sm:text-sm">{ROLE_ICONS[role]}</span>
+              <span className="hidden sm:inline font-bold">{shortName}</span>
               {hasArtifact && (
-                <span className="px-1 py-0.2 text-[9px] font-extrabold bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 rounded-full leading-none">
+                <span className="hidden sm:inline px-1 py-0.2 text-[9px] font-extrabold bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 rounded-full leading-none">
                   ✓
                 </span>
               )}

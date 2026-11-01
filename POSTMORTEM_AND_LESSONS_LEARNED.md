@@ -516,36 +516,35 @@
 
 ---
 
-## 23. Sự cố 23: Vỡ bố cục khi thu nhỏ cửa sổ (Topbar tràn mất nút, Dock cắt cụt trạm, Telemetry rớt dòng lơ lửng, Bong bóng thoại che phủ tâm đảo & Camera zoom xa quá mức)
+## 23. Sự cố 23: Vỡ bố cục khi xem trên điện thoại di động (Oppo A55 360×800 / iPhone 16 Pro Max 430×932) & khi thu nhỏ cửa sổ
 
 ### 🔴 Triệu chứng (Symptom)
-- Khi thu nhỏ cửa sổ trình duyệt (chiều ngang hẹp hoặc màn hình dọc/split-view):
-  1. **Topbar:** Các nút bên phải (`Voice`, `Desk Cam`, `Chaos`, `Báo cáo`, `Nhật ký`) bị đẩy tràn ra ngoài màn hình và biến mất hoàn toàn mà không thể cuộn xem; ngay cả trên màn hình full, chữ "Nhật ký" cũng bị chém cụt.
-  2. **Thanh Dock (RoleChips):** Nút trạm `DevOps` bị cắt nửa, trạm `Monitor` biến mất khỏi cạnh phải màn hình.
-  3. **Thanh Telemetry & Zoom (StatusBar):** Bị rớt dòng lên tầng trên, nổi lơ lửng ngay giữa màn hình và đè lên phần chân đảo 3D.
-  4. **Bong bóng thoại 3D:** Có diện tích quá lớn (`max-w-[320px]`), nằm ngay trung tâm đè kín Lâu đài Claude Code và che mất nhãn trạm lân cận (`DevSecOps`).
-  5. **Camera 3D:** Bị thu nhỏ tít lại ở giữa, để lại 2 khoảng trời xanh bao la ở trên và dưới.
+- Khi xem ở kích thước màn hình smartphone (Oppo A55 360×800, iPhone 16 Pro Max 430×932) hoặc thu nhỏ cửa sổ:
+  1. **Topbar:** Logo và nút "Giao việc AI" quá to chiếm hết 230px, đẩy toàn bộ thanh công cụ bên phải (`Voice`, `Desk Cam`, `Chaos`, `Báo cáo`, `Nhật ký`) tràn mất ra khỏi màn hình.
+  2. **Widget Tổng quan:** Chiếm hơn 45% chiều cao màn hình (360px), che kín nửa trên của đảo 3D và đè lên Hub Claude Code, trạm PM, trạm Dev.
+  3. **Thanh Dock (RoleChips) & Telemetry (StatusBar):** Tạo thành 2 tầng chiếm 150px chiều cao ở đáy; nút trạm bị cắt cụt ngoài màn hình; phím zoom `+ - Reset` thừa thãi trên màn hình cảm ứng vốn đã có pinch-to-zoom 2 ngón tay.
+  4. **Cổng Phê Duyệt Production (ApprovalModal):**
+     - Nút "🔭 Bay tới trạm 3D" bị ép hẹp rớt thành 4 dòng (`Bay / tới / trạm / 3D`).
+     - Nhãn địa danh dài `Software Engineering Lab (Chính Tây)` rớt thành 3 dòng làm thẻ trạm phình to gấp đôi.
+     - 2 trạm còn lại (`QA · Test` và `DevSecOps`) bị đẩy tụt mất hoàn toàn khỏi màn hình.
 
 ### 🔍 Nguyên nhân gốc rễ (Root Cause)
-1. **Lạm dụng chữ text trên thanh Topbar:** Quá nhiều nút gắn class `hidden xl:inline` hiển thị text làm tổng chiều rộng vượt quá 1200px; thanh bar không có cơ chế cuộn ngang an toàn (`max-w-[calc(100vw-...)]` và `overflow-x-auto`).
-2. **Tên nhãn trạm dài & thiếu hỗ trợ vuốt chạm (`RoleChips.tsx`):** Nhãn tên dài (`Security`, `DevOps`, `Monitor`) khiến tổng chiều rộng dock vượt quá 550px, thiếu `touch-pan-x`.
-3. **StatusBar dùng vị trí cố định `bottom-14` trên màn hình nhỏ:** Khoảng cách quá cao tạo khoảng hở thừa lớn so với dock ở đáy.
-4. **`bubbleOffset` của các trạm đặt quá cao & bubble max-width quá lớn:** Trạm Release Eng có `bubbleOffset: [0, 5.0, 0]`, khi chiếu góc nhìn isometric sẽ rơi thẳng vào tâm đảo; bong bóng 3 dòng chiếm nhiều diện tích.
-5. **Công thức `responsiveScale` chỉ phụ thuộc vào `size.width / 1200`:** Khi chiều rộng là 600px, camera zoom giảm 50% làm ốc đảo nhỏ bất hợp lý.
+1. **Mật độ thông tin dành cho Desktop:** Các thành phần UI hiển thị đầy đủ text dài và bento box cồng kềnh, không có biến thể thu gọn (compact mode / mini pill) riêng cho viewport `< 640px`.
+2. **Cụm phím Zoom cơ học không cần thiết trên Mobile:** OrbitControls đã hỗ trợ pinch-to-zoom đa điểm, việc để thêm 3 nút `+ - Reset` làm vỡ layout 2 tầng ở đáy.
+3. **Thẻ trạm trong Modal không giới hạn độ dài:** Thiếu `hidden sm:inline` cho các nhãn phụ và nút bấm chữ dài.
 
 ### ✅ Giải pháp chuẩn hóa (Solution & Prevention)
-1. **Tinh giản Topbar & Kích hoạt cuộn ngang an toàn (`Topbar.tsx`):**
-   - Loại bỏ chữ text thừa trên các nút toggle trực quan (`Xoay`, `Đạo diễn`, `Demo`, `Tên`, `Thoại`), chỉ giữ icon kèm tooltip và đổi màu nền rõ nét.
-   - Thêm `overflow-x-auto scrollbar-none max-w-[calc(100vw-190px)] sm:max-w-none` đảm bảo mọi nút đều có thể tiếp cận trên mọi độ phân giải.
-2. **Gọn hóa nhãn Dock & Cho phép vuốt ngang mượt mà (`RoleChips.tsx`):**
-   - Rút gọn nhãn ngắn gọn, súc tích: `Hub`, `PM`, `Dev`, `Review`, `QA`, `Sec`, `Ops`, `APM`. Toàn bộ 8 trạm nằm vừa vặn trong 460px; thêm `touch-pan-x`.
-3. **Đưa StatusBar sát dock (`StatusBar.tsx`):**
-   - Chuyển vị trí trên màn hình hẹp xuống `bottom-11 sm:bottom-12`, thu nhỏ các nút `+`, `-`, `Reset` gọn gàng (`w-6 h-6`).
-4. **Hạ thấp `bubbleOffset` & Thu gọn bong bóng thoại (`layout.ts`, `Labels.tsx`):**
-   - Hạ `bubbleOffset` của Release Eng xuống `4.1` (thay vì `5.0`), APM Monitor xuống `4.8` (thay vì `6.2`).
-   - Giới hạn bubble `max-w-[180px] sm:max-w-[220px] md:max-w-[250px]`, `line-clamp-2`, tăng z-index ưu tiên cho trạm được chọn.
-5. **Cân đối tỉ lệ thu phóng Camera 3D (`CameraRig.tsx`):**
-   - Kẹp chặn `responsiveScale = Math.min(1.05, Math.max(0.72, Math.min(size.width / 1080, (size.height / 720) * 0.95)))`. Đảo luôn chiếm 70-85% khung nhìn, chấm dứt tình trạng đảo bị thu teo nhỏ.
+1. **Chế độ Mini Pill cho Widget Tổng quan (`MilestoneWidget.tsx`):**
+   - Trên mobile `< 640px`, tự động thu gọn widget thành 1 pill badge nhỏ gọn `[📊 Tổng quan · 1 chạy ▾]`, chỉ chiếm 32px ở góc trái thay vì 360px. Chạm vào mới mở rộng xem chi tiết.
+2. **Chế độ Icon Dock cho Thanh trạm (`RoleChips.tsx`):**
+   - Trên mobile, ẩn text dài, hiển thị 8 icon trạm `[🎛️ 🏢 🛠️ 🔍 🧪 🛡️ 🚀 📡]` kèm chấm trạng thái. Toàn bộ 8 trạm nằm gọn trong 284px, vừa vặn hoàn hảo trên màn hình 360px của Oppo A55 mà không cần cuộn.
+3. **Ẩn nút Zoom cơ học trên Mobile & Gọn hóa Telemetry (`StatusBar.tsx`):**
+   - Ẩn cụm `+ - Reset` trên mobile (`hidden sm:flex`), chỉ hiển thị dòng trạng thái gọn nhẹ `bottom-12 right-2`.
+4. **Tối ưu thẻ trạm trong Cổng Duyệt Production (`ApprovalModal.tsx`):**
+   - Rút gọn nút thành icon `🔭` trên mobile (`hidden sm:inline` cho chữ "Bay tới trạm 3D").
+   - Ẩn nhãn địa danh dài dòng (`📍 Software Engineering Lab...`), giảm chiều cao thẻ xuống ~44px, hiển thị đầy đủ 4/4 trạm trên một màn hình điện thoại mà không cần cuộn.
+5. **Tinh giản Topbar cho Mobile (`Topbar.tsx`):**
+   - Thu nhỏ logo còn icon `🏢` và nút `✨ AI` gọn gàng, chừa hơn 255px cho thanh công cụ bên phải cuộn mượt mà.
 
 ---
 

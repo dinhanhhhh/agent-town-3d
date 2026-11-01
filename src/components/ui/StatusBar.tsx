@@ -104,9 +104,9 @@ export const StatusBar: React.FC = () => {
   }, [latencyMs]);
 
   return (
-    <footer className="absolute bottom-11 sm:bottom-12 right-2 lg:bottom-3 lg:right-3 z-30 pointer-events-none flex items-center gap-1 sm:gap-2">
-      {/* Zoom Controls */}
-      <div className="pointer-events-auto flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 bg-slate-900/85 backdrop-blur-md border border-slate-700/80 rounded-xl sm:rounded-2xl shadow-xl">
+    <footer className="absolute bottom-12 right-2 sm:bottom-12 sm:right-3 lg:bottom-3 lg:right-3 z-30 pointer-events-none flex items-center gap-1 sm:gap-2">
+      {/* Zoom Controls (Chỉ hiển thị trên màn hình có chuột/desktop sm:, ẩn trên mobile vì đã có cảm ứng pinch-to-zoom 2 ngón) */}
+      <div className="hidden sm:flex pointer-events-auto items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 bg-slate-900/85 backdrop-blur-md border border-slate-700/80 rounded-xl sm:rounded-2xl shadow-xl">
         <button
           onClick={zoomIn}
           className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg sm:rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center transition-colors text-xs sm:text-sm"
@@ -131,7 +131,7 @@ export const StatusBar: React.FC = () => {
       </div>
 
       {/* APM, Dynamic Weather & Real-Time Clock Telemetry Bar */}
-      <div className="pointer-events-auto flex items-center gap-1.5 sm:gap-2.5 px-2 sm:px-3.5 py-1 sm:py-1.5 bg-slate-900/85 backdrop-blur-md border border-slate-700/80 rounded-xl sm:rounded-2xl shadow-xl text-[10px] sm:text-xs whitespace-nowrap">
+      <div className="pointer-events-auto flex items-center gap-1.5 sm:gap-2.5 px-2 sm:px-3.5 py-1 sm:py-1.5 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-xl sm:rounded-2xl shadow-xl text-[10px] sm:text-xs whitespace-nowrap">
         {/* Weather & Real-Time Clock (Responsive across all screens) */}
         <div className="flex items-center gap-1 sm:gap-1.5 text-slate-300">
           <span className="text-xs sm:text-sm">{weatherDisplay.icon}</span>
