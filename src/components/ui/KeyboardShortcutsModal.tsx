@@ -26,9 +26,10 @@ export const KeyboardShortcutsModal: React.FC = () => {
       title: '🎮 Điều khiển Camera RTS & 8 Trạm AI',
       icon: '📐',
       shortcuts: [
-        { keys: ['1', '…', '8'], desc: 'Bay camera tới & thanh tra Trạm 0 (Hub) ➔ Trạm 7 (APM)' },
+        { keys: ['0'], desc: 'Bay tới & thanh tra HUB 0 (Claude Code Orchestrator)' },
+        { keys: ['1', '…', '7'], desc: 'Bay chuẩn xác tới STATION 1 (PM) ➔ STATION 7 (APM)' },
+        { keys: ['8'], desc: 'Đặt lại góc nhìn toàn cảnh đảo 3D (Overview)' },
         { keys: ['[', ']'], desc: 'Lướt chuyển góc nhìn sang trạm trước đó / trạm kế tiếp' },
-        { keys: ['0'], desc: 'Đặt lại góc nhìn toàn cảnh đảo 3D (Overview)' },
         { keys: ['R'], desc: 'Bật / Tắt xoay đảo 360° tự động (Auto-Rotate)' },
         { keys: ['F'], desc: 'Bật / Tắt chế độ Đạo diễn bám theo Shipper (Auto-Follow)' },
         { keys: ['+', '-'], desc: 'Phóng to / Thu nhỏ mức zoom camera không gian' },

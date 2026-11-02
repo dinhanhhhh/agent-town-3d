@@ -105,9 +105,9 @@ export const StatusBar: React.FC = () => {
   }, [latencyMs]);
 
   return (
-    <footer className="absolute bottom-12 right-2 sm:bottom-12 sm:right-3 lg:bottom-3 lg:right-3 z-30 pointer-events-none flex items-center gap-1 sm:gap-2">
+    <footer className="pointer-events-auto flex items-center gap-1 sm:gap-1.5 shrink-0">
       {/* Zoom Controls (Chỉ hiển thị trên màn hình có chuột/desktop sm:, ẩn trên mobile vì đã có cảm ứng pinch-to-zoom 2 ngón) */}
-      <div className="hidden sm:flex pointer-events-auto items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 bg-slate-900/85 backdrop-blur-md border border-slate-700/80 rounded-xl sm:rounded-2xl shadow-xl">
+      <div className="hidden sm:flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 bg-slate-900/85 backdrop-blur-md border border-slate-700/80 rounded-xl sm:rounded-2xl shadow-xl">
         <button
           onClick={zoomIn}
           className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg sm:rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center transition-colors text-xs sm:text-sm"

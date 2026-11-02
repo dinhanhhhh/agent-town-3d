@@ -4,6 +4,36 @@ Tất cả các thay đổi đáng chú ý của dự án **Agent Town 3D** sẽ
 
 ---
 
+## [v1.6.2] - 2026-11-02
+### ⚡ Triệt Tiêu Rung Lắc Nhãn 3D, Sửa Lỗi Crash React #31 & Tách Tầng Chống Đè Thanh Dock
+- **Triệt tiêu hoàn toàn hiện tượng rung lắc giật cục của nhãn 3D (`src/components/scene/Labels.tsx`, `src/components/scene/TownScene.tsx`)**:
+  - Gỡ bỏ thuộc tính `transition-all duration-300` khỏi thẻ container gốc `label-${role}` điều khiển bởi `style.transform = translate3d(...)`, giải quyết triệt để xung đột nội suy CSS với chu kỳ gán 60fps từ Three.js `useFrame`.
+  - Tách hiệu ứng fade/scale mờ mượt vào thẻ div con bên trong.
+  - Sắp xếp `<CameraRig />` chạy trước `<OverlayProjector />` và đặt priority `useFrame(..., 1)` để đảm bảo ma trận camera được cập nhật hoàn chỉnh trước khi chiếu tọa độ 2D.
+  - Bỏ kẹp lề cưỡng bức trên nhãn nóc nhà, nới lỏng biên kẹp bóng thoại (20px thay vì 135px) giúp bóng thoại của DevSecOps không bị giật lùi 135px vào giữa đảo che khuất QA/Hub.
+- **Khắc phục triệt để lỗi sập giao diện React Fatal Error #31 (`src/components/ui/StationInspectorPanel.tsx`)**:
+  - Thêm defensive parsing cho mảng `securityData.compliance` và `orchestratorData.technicalScope`: kiểm tra object trước khi render, hiển thị chuỗi `${item.standard} (${item.status})` thay vì truyền trực tiếp object vào JSX child.
+- **Hợp nhất thanh đáy vào Container Flexbox duy nhất (`src/app/page.tsx`, `src/components/ui/StatusBar.tsx`, `src/components/ui/RoleChips.tsx`)**:
+  - Đưa cả thanh Dock `RoleChips` và thanh `StatusBar` vào container cha `flex items-center justify-between gap-2` ở đáy màn hình (`bottom-2 sm:bottom-3`).
+  - Cả hai thành phần luôn luôn nằm thẳng hàng trên cùng một đường chân trời duy nhất, loại bỏ hoàn toàn hiện tượng lệch bậc thang bay lơ lửng.
+  - Sử dụng cơ chế Flexbox `min-w-0 shrink overflow-x-auto` cho Dock và `shrink-0` cho Telemetry: hai bên tự động co giãn bảo vệ nhau, không bao giờ có thể đè chồng hay va chạm trên bất kỳ kích cỡ màn hình nào.
+  - Đưa nút duyệt `⚠️ 1 duyệt` sang cụm cố định bên trái của Topbar cạnh nút "Giao việc AI", không bao giờ bị cuộn che khuất.
+
+## [v1.6.1] - 2026-11-02
+### 🐛 Vá Lỗi Giao Diện 3D, Trùng Lặp Nhãn & Đồng Bộ Phím Tắt (3D Label Elevation, Next.js Dev Indicator & Hotkey Alignment)
+- **Khắc phục va chạm Bong bóng thoại 3D và Nhãn trạm (`src/components/scene/Labels.tsx`, `src/lib/scene/layout.ts`)**:
+  - Neo nhãn trạm cố định trên nóc nhà ($y = 2.45\text{m}$), tách biệt hoàn toàn khỏi cao độ bong bóng thoại.
+  - Nâng cao độ bong bóng thoại DevOps lên $y = 4.8\text{m}$ tạo khoảng không thoáng đãng.
+  - Tự động làm mờ nhãn trạm (`opacity-0 scale-90`) khi bong bóng thoại xuất hiện, loại bỏ hiện tượng double-header đè chữ.
+  - Cho phép click trực tiếp vào bong bóng chờ duyệt của Release Eng để mở ngay `ApprovalModal`.
+- **Thanh lọc biểu tượng Next.js Dev Indicator (`next.config.mjs`)**:
+  - Thêm cấu hình `devIndicators: false` loại bỏ hoàn toàn nút tròn đen chữ "N" che khuất nút Hub ở thanh Dock góc dưới bên trái.
+- **Đồng bộ hóa hệ thống số thứ tự và phím tắt RTS (`src/components/ui/RoleChips.tsx`, `src/components/ui/Topbar.tsx`, `src/components/ui/KeyboardShortcutsModal.tsx`)**:
+  - Đánh số thẻ dock đồng nhất với không gian 3D: `Hub 0`, `PM 1`, `Dev 2`, `Review 3`, `QA 4`, `Sec 5`, `Ops 6`, `APM 7`.
+  - Cập nhật phím tắt chuẩn xác: Phím `0` focus Hub 0 / toggle toàn cảnh; Phím `1`–`7` focus tương ứng Station 1–7; Phím `8` đặt lại góc nhìn toàn cảnh.
+- **Khắc phục Z-Fighting cáp quang neon (`src/components/scene/DataCables.tsx`)**:
+  - Nâng cao độ rãnh cáp quang lên $y = 0.038$, dải sáng heatmap lên $y = 0.036$ và hạt photon pulse lên $y = 0.052$, nổi hoàn toàn trên bề mặt đá lát đường ($y \le 0.035$).
+
 ## [v1.6.0] - 2026-11-01
 ### ⌨️ Hệ Thống Phím Tắt Chuẩn Game RTS & Trung Tâm Chẩn Đoán SRE (RTS Hotkeys, SRE Cluster Diagnostics & Station Sandbox)
 - **Hệ Thống Phím Tắt Điều Khiển Chuẩn RTS Game (`src/components/ui/KeyboardShortcutsModal.tsx`, `src/components/ui/Topbar.tsx`, `src/components/ui/RoleChips.tsx`)**:

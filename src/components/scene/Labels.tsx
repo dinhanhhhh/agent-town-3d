@@ -7,6 +7,7 @@ import { STAGE_ORDER, AgentRole } from '../../lib/pipeline/stages';
 import { STATIONS_LAYOUT } from '../../lib/scene/layout';
 import { getRouteWaypoints, interpolateCourierPosition } from '../../lib/scene/waypoints';
 import { useTownStore } from '../../store/useTownStore';
+import { sfx } from '../../lib/audio/sfx';
 
 const ROLE_ICONS: Record<AgentRole, string> = {
   orchestrator: '🤖',
@@ -70,6 +71,8 @@ export const OverlayProjector: React.FC = () => {
   const { camera, size } = useThree();
   const vec = React.useMemo(() => new THREE.Vector3(), []);
 
+  // KHÔNG truyền priority > 0 (R3F sẽ tắt auto-render → canvas trắng).
+  // Thứ tự chạy sau CameraRig được đảm bảo bằng thứ tự mount trong TownScene.
   useFrame(() => {
     // 1. Project Station Speech Bubbles & Badges
     for (const role of STAGE_ORDER) {
@@ -87,36 +90,41 @@ export const OverlayProjector: React.FC = () => {
         if (vec.z > 1) {
           bubbleEl.style.display = 'none';
         } else {
-          bubbleEl.style.display = 'block';
           const bx = (vec.x * 0.5 + 0.5) * size.width;
           const by = (-vec.y * 0.5 + 0.5) * size.height;
-          // Responsive clamping to keep bubbles fully visible on mobile & desktop screens
-          const bubbleMarginX = size.width < 640 ? 100 : 135;
-          const clampedBx = Math.max(bubbleMarginX, Math.min(size.width - bubbleMarginX, bx));
-          const clampedBy = Math.max(68, Math.min(size.height - 75, by));
-          bubbleEl.style.transform = `translate3d(${clampedBx}px, ${clampedBy}px, 0) translate(-50%, -100%)`;
+          // Nếu nằm ngoài màn hình thì ẩn, chỉ kẹp nhẹ 20px ở sát mép để không giật bóng thoại vào giữa đảo
+          if (bx < -200 || bx > size.width + 200 || by < -150 || by > size.height + 150) {
+            bubbleEl.style.display = 'none';
+          } else {
+            bubbleEl.style.display = 'block';
+            const clampedBx = Math.max(20, Math.min(size.width - 20, bx));
+            const clampedBy = Math.max(50, Math.min(size.height - 30, by));
+            bubbleEl.style.transform = `translate3d(${clampedBx.toFixed(1)}px, ${clampedBy.toFixed(1)}px, 0) translate(-50%, -100%)`;
+          }
         }
       }
 
-      // Station title chip element
+      // Station title chip element (neo cố định ngay trên nóc trạm y = 2.45m)
       const labelEl = document.getElementById(`label-${role}`);
       if (labelEl) {
         vec.set(
           layout.position[0],
-          layout.position[1] + layout.bubbleOffset[1] - 0.65,
+          layout.position[1] + 2.45,
           layout.position[2]
         );
         vec.project(camera);
         if (vec.z > 1) {
           labelEl.style.display = 'none';
         } else {
-          labelEl.style.display = 'block';
           const lx = (vec.x * 0.5 + 0.5) * size.width;
           const ly = (-vec.y * 0.5 + 0.5) * size.height;
-          const labelMarginX = size.width < 640 ? 55 : 75;
-          const clampedLx = Math.max(labelMarginX, Math.min(size.width - labelMarginX, lx));
-          const clampedLy = Math.max(50, Math.min(size.height - 50, ly));
-          labelEl.style.transform = `translate3d(${clampedLx}px, ${clampedLy}px, 0) translate(-50%, -50%)`;
+          // Neo tuyệt đối theo nóc tòa nhà 3D, không kẹp lề để nhãn không bị giằng xé hay rung lắc khi xoay camera
+          if (lx < -120 || lx > size.width + 120 || ly < -80 || ly > size.height + 80) {
+            labelEl.style.display = 'none';
+          } else {
+            labelEl.style.display = 'block';
+            labelEl.style.transform = `translate3d(${lx.toFixed(1)}px, ${ly.toFixed(1)}px, 0) translate(-50%, -50%)`;
+          }
         }
       }
     }
@@ -133,13 +141,14 @@ export const OverlayProjector: React.FC = () => {
         if (vec.z > 1) {
           courierEl.style.display = 'none';
         } else {
-          courierEl.style.display = 'block';
           const cx = (vec.x * 0.5 + 0.5) * size.width;
           const cy = (-vec.y * 0.5 + 0.5) * size.height;
-          const courierMarginX = 60;
-          const clampedCx = Math.max(courierMarginX, Math.min(size.width - courierMarginX, cx));
-          const clampedCy = Math.max(50, Math.min(size.height - 50, cy));
-          courierEl.style.transform = `translate3d(${clampedCx}px, ${clampedCy}px, 0) translate(-50%, -50%)`;
+          if (cx < -100 || cx > size.width + 100 || cy < -80 || cy > size.height + 80) {
+            courierEl.style.display = 'none';
+          } else {
+            courierEl.style.display = 'block';
+            courierEl.style.transform = `translate3d(${cx.toFixed(1)}px, ${cy.toFixed(1)}px, 0) translate(-50%, -50%)`;
+          }
         }
       }
     }
@@ -157,6 +166,7 @@ export const StationOverlay: React.FC = () => {
   const showBubbles = useTownStore((s) => s.showBubbles);
   const isArtifactModalOpen = useTownStore((s) => s.isArtifactModalOpen);
   const isApprovalModalOpen = useTownStore((s) => s.isApprovalModalOpen);
+  const openApprovalModal = useTownStore((s) => s.openApprovalModal);
   const isApiKeyModalOpen = useTownStore((s) => s.isApiKeyModalOpen);
   const isPromptModalOpen = useTownStore((s) => s.isPromptModalOpen);
   const isDossierModalOpen = useTownStore((s) => s.isDossierModalOpen);
@@ -214,7 +224,12 @@ export const StationOverlay: React.FC = () => {
                 <div
                   onClick={(e) => {
                     e.stopPropagation();
-                    selectAgent(role);
+                    sfx.playPop();
+                    if (isWaiting && role === 'devops') {
+                      openApprovalModal(true);
+                    } else {
+                      selectAgent(role);
+                    }
                   }}
                   className={`cursor-pointer group transition-all duration-300 transform hover:scale-105 select-none w-max min-w-[120px] max-w-[180px] sm:max-w-[220px] md:max-w-[250px] p-1.5 sm:p-2 rounded-xl sm:rounded-2xl shadow-xl border backdrop-blur-xl bg-slate-950/95 mb-0.5 ${glowStyle.border} ${glowStyle.shadow}`}
                 >
@@ -261,7 +276,7 @@ export const StationOverlay: React.FC = () => {
               </div>
             )}
 
-            {/* Station Title & Status Chip */}
+            {/* Station Title & Status Chip (tự động ẩn mượt khi bong bóng thoại đang hiển thị để chống đè lặp chữ) */}
             {showLabels && (
               <div
                 id={`label-${role}`}
@@ -273,7 +288,9 @@ export const StationOverlay: React.FC = () => {
                     e.stopPropagation();
                     selectAgent(role);
                   }}
-                  className="cursor-pointer flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-slate-950/90 border border-slate-700/80 text-white shadow-xl hover:border-slate-400 transition-colors whitespace-nowrap backdrop-blur-md"
+                  className={`cursor-pointer flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-slate-950/90 border border-slate-700/80 text-white shadow-xl hover:border-slate-400 transition-all duration-300 whitespace-nowrap backdrop-blur-md ${
+                    shouldShowBubble ? 'opacity-0 scale-90 pointer-events-none' : 'opacity-100 scale-100'
+                  }`}
                 >
                   <span
                     className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${

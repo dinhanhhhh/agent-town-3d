@@ -79,7 +79,7 @@ export const DataCables: React.FC = () => {
       const currentR = seg.rStart + seg.cableLen * progress;
       mesh.position.set(
         Math.cos(seg.angle) * currentR,
-        0.038,
+        0.052,
         Math.sin(seg.angle) * currentR
       );
 
@@ -131,16 +131,16 @@ export const DataCables: React.FC = () => {
 
         return (
           <group key={seg.role}>
-            {/* Rãnh cáp quang ngầm phát sáng mỏng trên tim đường */}
+            {/* Rãnh cáp quang ngầm phát sáng mỏng trên tim đường (nâng y = 0.038 tránh Z-fighting) */}
             <mesh
-              position={[seg.midX, 0.028, seg.midZ]}
+              position={[seg.midX, 0.038, seg.midZ]}
               rotation={[-Math.PI / 2, 0, -seg.angle + Math.PI / 2]}
             >
-              <planeGeometry args={[0.08, seg.cableLen]} />
+              <planeGeometry args={[0.12, seg.cableLen]} />
               <meshBasicMaterial
                 color={cableColor}
                 transparent
-                opacity={opacity}
+                opacity={Math.max(opacity, 0.6)}
                 side={THREE.DoubleSide}
               />
             </mesh>
@@ -148,14 +148,14 @@ export const DataCables: React.FC = () => {
             {/* Vầng sáng viền Heatmap khi trạm hoạt động */}
             {(isWorking || isDebugging || isChaosRunning) && (
               <mesh
-                position={[seg.midX, 0.027, seg.midZ]}
+                position={[seg.midX, 0.036, seg.midZ]}
                 rotation={[-Math.PI / 2, 0, -seg.angle + Math.PI / 2]}
               >
-                <planeGeometry args={[0.18, seg.cableLen]} />
+                <planeGeometry args={[0.26, seg.cableLen]} />
                 <meshBasicMaterial
                   color={glowColor}
                   transparent
-                  opacity={0.3}
+                  opacity={0.45}
                   side={THREE.DoubleSide}
                 />
               </mesh>
@@ -168,11 +168,11 @@ export const DataCables: React.FC = () => {
               }}
               position={[
                 Math.cos(seg.angle) * (seg.rStart + seg.cableLen * 0.5),
-                0.036,
+                0.052,
                 Math.sin(seg.angle) * (seg.rStart + seg.cableLen * 0.5),
               ]}
             >
-              <sphereGeometry args={[0.068, 10, 10]} />
+              <sphereGeometry args={[0.082, 12, 12]} />
               <meshBasicMaterial color={glowColor} />
             </mesh>
           </group>

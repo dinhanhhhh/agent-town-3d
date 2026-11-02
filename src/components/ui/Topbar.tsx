@@ -78,10 +78,23 @@ export const Topbar: React.FC = () => {
         return;
       }
 
-      // Hotkeys 1-8: Bay camera & thanh tra 8 trạm AI
-      if (e.key >= '1' && e.key <= '8') {
-        const index = parseInt(e.key, 10) - 1;
-        const role = STAGE_ORDER[index];
+      // Hotkeys 0 - 7: Bay chuẩn xác theo số hiệu Hub 0 & Station 1 - 7
+      if (e.key === '0') {
+        e.preventDefault();
+        sfx.playWarp();
+        const curRole = useTownStore.getState().selectedAgentRole;
+        if (curRole === 'orchestrator') {
+          selectAgent(null);
+          resetCamera();
+        } else {
+          selectAgent('orchestrator');
+        }
+        return;
+      }
+
+      if (e.key >= '1' && e.key <= '7') {
+        const stationNumber = parseInt(e.key, 10);
+        const role = STAGE_ORDER[stationNumber]; // 1 -> pm, 2 -> dev, ..., 7 -> monitor
         if (role) {
           e.preventDefault();
           sfx.playWarp();
@@ -90,8 +103,8 @@ export const Topbar: React.FC = () => {
         return;
       }
 
-      // 0: Reset camera về toàn cảnh đảo 3D
-      if (e.key === '0') {
+      // 8: Đặt lại góc nhìn toàn cảnh đảo 3D (Overview)
+      if (e.key === '8') {
         e.preventDefault();
         sfx.playWarp();
         selectAgent(null);
@@ -287,6 +300,18 @@ export const Topbar: React.FC = () => {
           >
             <span>⏹</span>
             <span className="hidden sm:inline">Dừng</span>
+          </button>
+        )}
+
+        {/* Cổng duyệt Production nổi bật ở cụm cố định bên trái, không bao giờ bị scroll che khuất */}
+        {pendingApprovals.length > 0 && (
+          <button
+            onClick={() => openApprovalModal(true)}
+            className="pointer-events-auto flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-2xl font-bold text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 border border-amber-300 shadow-lg shadow-amber-500/30 animate-bounce transition-transform hover:scale-105 shrink-0 whitespace-nowrap"
+            title="Bấm để mở Cổng Phê Duyệt Production (Tech Lead Review Gate)"
+          >
+            <span>⚠️</span>
+            <span>{pendingApprovals.length} duyệt</span>
           </button>
         )}
       </div>
@@ -544,17 +569,6 @@ export const Topbar: React.FC = () => {
           <span>📋</span>
           <span className="hidden xl:inline">Nhật ký</span>
         </button>
-
-        {/* Production Approval Notification Badge */}
-        {pendingApprovals.length > 0 && (
-          <button
-            onClick={() => openApprovalModal(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold bg-amber-500 text-slate-950 border border-amber-300 rounded-xl shadow-lg shadow-amber-500/30 animate-bounce transition-transform hover:scale-105 shrink-0"
-          >
-            <span>⚠️</span>
-            <span>{pendingApprovals.length} duyệt</span>
-          </button>
-        )}
       </div>
     </header>
   );

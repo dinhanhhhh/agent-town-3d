@@ -30,6 +30,8 @@
 22. [Sự cố 22: Nhấp chọn nhân vật/trạm bị crash giao diện (Minified React error #310) do vi phạm React Rules of Hooks](#22-sự-cố-22-nhấp-chọn-nhân-vậttrạm-bị-crash-giao-diện-minified-react-error-310--this-page-couldnt-load-do-vi-phạm-react-rules-of-hooks)
 23. [Sự cố 23: Vỡ bố cục khi xem trên điện thoại di động (Oppo A55 360×800 / iPhone 16 Pro Max 430×932) & khi thu nhỏ cửa sổ](#23-sự-cố-23-vỡ-bố-cục-khi-xem-trên-điện-thoại-di-động-oppo-a55-360800--iphone-16-pro-max-430932--khi-thu-nhỏ-cửa-sổ)
 24. [Sự cố 24: Rò rỉ Google Gemini API Key lên GitHub công khai qua file script test tạm thời (`scripts/test_models.js`)](#24-sự-cố-24-rò-rỉ-google-gemini-api-key-lên-github-công-khai-qua-file-script-test-tạm-thời-scriptstest_modelsjs)
+25. [Sự cố 25: Bong bóng thoại 3D đè nát nhãn trạm (Double-Header Collision); Icon Dev Next.js che nút Hub; Lệch số thứ tự Dock/Phím tắt (0 vs 1) và Cáp quang neon chìm dưới lòng đường (Z-Fighting)](#25-sự-cố-25-bong-bóng-thoại-3d-đè-nát-nhãn-trạm-double-header-collision-icon-dev-nextjs-che-nút-hub-lệch-số-thứ-tự-dockphím-tắt-0-vs-1-và-cáp-quang-neon-chìm-dưới-lòng-đường-z-fighting)
+26. [Sự cố 26: Rung lắc nhãn 3D do CSS Transition xung đột 60fps; Crash React Error #31 (render Object Compliance) & Va chạm đè hàng thanh Dock với StatusBar](#26-sự-cố-26-rung-lắc-nhãn-3d-do-css-transition-xung-đột-60fps-crash-react-error-31-render-object-compliance--va-chạm-đè-hàng-thanh-dock-với-statusbar)
 
 ---
 
@@ -585,6 +587,81 @@
 
 ---
 
+## 25. Sự cố 25: Bong bóng thoại 3D đè nát nhãn trạm (Double-Header Collision); Icon Dev Next.js che nút Hub; Lệch số thứ tự Dock/Phím tắt (0 vs 1) và Cáp quang neon chìm dưới lòng đường (Z-Fighting)
+
+### 🔴 Triệu chứng (Symptom)
+1. **Va chạm bong bóng thoại & nhãn trạm 3D:** Tại trạm Release Eng (`devops`), bong bóng thoại ("Dừng tại cổng duyệt: Chờ Tech Lead duyệt release Production ⏳") có đuôi trỏ đâm thẳng vào chip nhãn `STATION 6 Release Eng`, gây đè chữ và che khuất cổng vào trạm. Cả 2 cùng hiển thị tên trạm thừa thãi.
+2. **Icon Next.js che khuất thanh Dock:** Nút tròn màu đen chữ "N" (`devIndicators`) của Next.js nổi ở góc dưới bên trái, đè trực tiếp lên nút `Hub` trong `RoleChips`.
+3. **Bất nhất số thứ tự và phím tắt điều hướng:**
+   - Trên không gian 3D, các trạm đánh số từ 0: `HUB 0`, `STATION 1`, ..., `STATION 7`.
+   - Dưới thanh Dock và hướng dẫn phím tắt lại hiển thị từ 1: `Hub 1`, `PM 2`, ..., `APM 8`. Người dùng bấm phím `1` lại focus vào Hub 0, bấm `2` lại focus vào Station 1, gây nhầm lẫn trầm trọng.
+4. **Cáp quang neon chìm dưới lòng đường (Z-Fighting):** Cáp dữ liệu `DataCables.tsx` chạy ở cao độ $y = 0.028$, trong khi đá lát vỉa hè chạy ở $y = 0.024 - 0.035$, khiến hiệu ứng phát sáng neon và nhiệt lượng heatmap bị vùi lấp dưới nền đá.
+5. **Bong bóng duyệt Release thiếu tương tác mở cổng:** Khi Release Eng dừng tại cổng duyệt, người dùng bấm vào bong bóng thoại chỉ chọn agent chứ không bật trực tiếp modal phê duyệt.
+
+### 🔍 Nguyên nhân gốc rễ (Root Cause)
+1. **Tọa độ nhãn 3D phụ thuộc vào `bubbleOffset`:** `Labels.tsx` tính cao độ nhãn bằng `bubbleOffset[1] - 0.65`. Khi `bubbleOffset` là $4.1\text{m}$, nhãn trôi lơ lửng ở cao độ $3.45\text{m}$ ngay dưới đít bong bóng thay vì gắn cố định trên nóc nhà trạm ($y = 2.45\text{m}$). Đồng thời khi bong bóng xuất hiện, nhãn trạm không được ẩn đi, dẫn đến hiển thị 2 tiêu đề đè lên nhau.
+2. **Next.js mặc định bật Prerender Dev Indicator:** Trong chế độ phát triển, Next.js chèn component chỉ báo cố định ở góc dưới `bottom-left`, che các thành phần dock ở mép dưới màn hình.
+3. **Chỉ số mảng `indexOf(role) + 1` không đồng bộ với kiến trúc 0-based:** RoleChips dùng `idx + 1` (1-8), trong khi hệ thống 3D coi Claude Hub là `Station 0` và 7 trạm chuyên môn là `Station 1..7`.
+4. **Sai lệch cao độ render tầng lớp (Layer Elevation Z-Fighting):** Trục Y của cáp quang thấp hơn độ dày của các phiến đá lát đường `RoadMesh`.
+
+### ✅ Giải pháp chuẩn hóa (Solution & Prevention)
+1. **Tách biệt và neo cao độ chuẩn xác trong `Labels.tsx` & `layout.ts`:**
+   - Nâng `devops.bubbleOffset` lên `[0, 4.8, 0]` để tạo khoảng thoáng trên cao.
+   - Neo nhãn trạm `labelEl` cố định tại nóc nhà: `layout.position[1] + 2.45m`.
+   - Thêm hiệu ứng tự động ẩn nhãn trạm (`opacity-0 scale-90 pointer-events-none`) khi bong bóng thoại đang hiển thị (`shouldShowBubble`), dọn sạch xung đột hiển thị.
+   - Thêm tương tác mở `ApprovalModal` trực tiếp khi bấm vào bong bóng chờ duyệt của DevOps.
+2. **Tắt Dev Indicator trong `next.config.mjs`:** Thêm `devIndicators: false` để thanh lọc hoàn toàn overlay góc dưới.
+3. **Đồng bộ toàn diện hệ thống số thứ tự và phím tắt:**
+   - Sửa thanh Dock `RoleChips.tsx`: hiển thị `Hub 0`, `PM 1`, `Dev 2`, ..., `APM 7`.
+   - Cập nhật `Topbar.tsx` & `KeyboardShortcutsModal.tsx`: Phím `0` = Focus Hub 0 (hoặc toggle toàn cảnh), Phím `1..7` = Focus Station 1..7, Phím `8` = Đặt lại toàn cảnh.
+4. **Nâng cao độ cáp quang và hạt photon pulse trong `DataCables.tsx`:**
+   - Nâng rãnh cáp lên $y = 0.038$, dải sáng heatmap lên $y = 0.036$, và hạt xung dữ liệu lên $y = 0.052$, nổi hoàn toàn trên bề mặt đá lát đường ($y \le 0.035$).
+
+---
+
+## 26. Sự cố 26: Rung lắc nhãn 3D do CSS Transition xung đột 60fps; Crash React Error #31 (render Object Compliance) & Va chạm đè hàng thanh Dock với StatusBar
+
+### 🔴 Triệu chứng (Symptom)
+1. **Nhãn trạm 3D và bong bóng thoại bị rung lắc, giật cục khi xoay/di chuyển camera:** Khi người dùng xoay 360 độ hoặc lia camera qua lại, các thẻ nhãn trạm (`label-${role}`) rung bần bật, trễ giật và không bám sát đỉnh tòa nhà 3D. Đồng thời bong bóng DevSecOps bị kéo lệch 135px vào giữa đảo đè lên trạm QA/Hub.
+2. **Crash toàn bộ ứng dụng với lỗi Minified React error #31:** Khi người dùng chọn trạm DevSecOps hoặc mở Station Inspector Panel, màn hình hiển thị trang lỗi "Đã xảy ra sự cố giao diện" với mã lỗi `Minified React error #31; args[] = object with keys {standard, status}`.
+3. **Va chạm đè chồng giao diện mép dưới màn hình:** Trên màn hình laptop hoặc desktop có tỉ lệ thu phóng (1080p scaling 125%/150%), thanh Dock chọn trạm (`RoleChips`) dài 8 nút và thanh trạng thái SRE Telemetry (`StatusBar` kèm cụm Zoom `+ - Reset`) cùng nằm ở tầng đáy `bottom-3`, khiến nút `+ - Reset` đè trực tiếp lên 2 nút `Ops 6` và `APM 7` của thanh Dock.
+
+### 🔍 Nguyên nhân gốc rễ (Root Cause)
+1. **Xung đột giữa CSS Transition và cập nhật Transform 60fps:**
+   - Thẻ `label-${role}` được gán class `transition-all duration-300`. Trong khi đó, `OverlayProjector` chạy trong `useFrame` (60fps) liên tục gán giá trị mới cho `style.transform = translate3d(...)`. Trình duyệt cố gắng nội suy chuyển động 300ms cho một giá trị thay đổi liên tục mỗi 16ms, gây ra hiện tượng rung lắc giật ngược (jittering/oscillation).
+   - Thứ tự thực thi: `<OverlayProjector />` được đặt TRƯỚC `<CameraRig />` trong `TownScene.tsx`, khiến tọa độ chiếu bị trễ 1 frame so với vị trí camera thực tế.
+   - Biên kẹp cứng `bubbleMarginX = 135` ép buộc bong bóng DevSecOps thụt lùi 135px vào tâm đảo khi trạm nằm gần cạnh phải màn hình.
+2. **Vi phạm React Child Invariant (React Error #31):**
+   - Trong `StationInspectorPanel.tsx`, mảng `securityData.compliance` chứa danh sách các object `{ standard: string, status: string }` sinh ra từ AI / Mock. Component thực hiện render trực tiếp `{item}` vào thẻ JSX `<span>✓ {item}</span>`. React từ chối render trực tiếp object và ném lỗi fatal error #31.
+3. **Thiếu phân tầng hiển thị Responsive mép dưới:**
+   - `RoleChips` và `StatusBar` đều đặt định vị tuyệt đối ở `bottom-3` trên màn hình `lg:`. Tổng chiều rộng 2 thanh vượt quá 1350px, dẫn đến việc trên màn hình dưới 1536px hai thanh đè nát lên nhau.
+
+### ✅ Giải pháp chuẩn hóa (Solution & Prevention)
+1. **Thanh lọc CSS Transition và đồng bộ thứ tự Frame:**
+   - Xóa bỏ `transition-all duration-300` khỏi thẻ container gốc `label-${role}` có `translate3d`. Chỉ áp dụng transition opacity/scale trên thẻ con bên trong để hiệu ứng mờ nhạt không ảnh hưởng tới tọa độ di chuyển.
+   - Đặt `<CameraRig />` TRƯỚC `<OverlayProjector />` trong `<Canvas>` và gán độ ưu tiên `useFrame(..., 1)` để đảm bảo ma trận camera được cập nhật hoàn chỉnh trước khi chiếu tọa độ 2D.
+   - Bỏ kẹp lề cưỡng bức trên nhãn nóc nhà, nới lỏng biên kẹp bong bóng thoại (20px thay vì 135px) giúp bóng thoại luôn bám tự nhiên trên đỉnh trạm của mình.
+2. **Defensive Parsing cho toàn bộ thuộc tính mảng:**
+   - Trong `StationInspectorPanel.tsx`, kiểm tra kiểu dữ liệu của từng phần tử `compliance`: nếu là chuỗi thì hiển thị trực tiếp, nếu là object thì trích xuất `${item.standard} (${item.status})` hoặc serialize an toàn, tuyệt đối không bao giờ để object lọt vào React child.
+   - Phòng ngừa tương tự cho `orchestratorData.technicalScope`.
+3. **Hợp nhất thanh đáy vào Flexbox Container duy nhất (Single Unified Bottom HUD Bar):**
+   - Loại bỏ hoàn toàn định vị `absolute` riêng lẻ trên `RoleChips` và `StatusBar`. Thay vào đó, gom cả hai vào container chung tại `src/app/page.tsx`:
+     `<div className="absolute bottom-2 left-2 right-2 sm:bottom-3 sm:left-3 sm:right-3 z-30 pointer-events-none flex items-center justify-between gap-1.5 sm:gap-2.5">`
+   - Cả hai thành phần luôn nằm trên **chính xác cùng một hàng ngang duy nhất (cùng baseline đáy)**, triệt tiêu hoàn toàn hiện tượng lệch tầng lơ lửng giữa trời.
+   - `RoleChips` dùng `min-w-0 shrink overflow-x-auto scrollbar-none` (tự co giãn và cho phép vuốt cuộn khi màn hình hẹp), `StatusBar` dùng `shrink-0` cố định bên phải. Cơ chế Flexbox tự động bảo vệ hai cụm không bao giờ có thể đè lên nhau.
+   - Đưa nút duyệt `⚠️ 1 duyệt` sang cụm cố định bên trái của `Topbar` để không bao giờ bị cuộn che khuất.
+
+### ⚠️ Hồi quy (Regression) phát sinh từ các bước trước & bài học
+- **Triệu chứng:** Canvas 3D trắng trơn, chỉ còn nhãn HTML trôi nổi; Thanh StatusBar bị đẩy lên `bottom-14` lơ lửng giữa trời trong khi Dock nằm ở đáy.
+- **Root cause:** 
+  1. Đã gán `useFrame(cb, 1)` cho `OverlayProjector`. Trong R3F, **bất kỳ `useFrame` nào có priority > 0 sẽ tắt auto-render** — R3F giao toàn quyền gọi `gl.render()` cho người dùng → không còn gì được vẽ.
+  2. Dùng mẹo nâng `StatusBar` lên `bottom-14` thay vì giải quyết bằng cấu trúc Flexbox cha, khiến thanh bên phải bay lơ lửng trên không trung tạo khoảng trống vô nghĩa bên dưới.
+- **Fix:** 
+  1. Bỏ priority, đảm bảo thứ tự chạy bằng thứ tự mount (`<CameraRig />` đặt trước `<OverlayProjector />`).
+  2. Bỏ `bottom-14`, đưa cả 2 component vào container cha Flexbox `justify-between items-center` duy nhất ở đáy màn hình.
+
+---
+
 > **Quy tắc vàng cho tương lai:**
 > 1. Mọi đối tượng 3D đặt trên đảo phải tuân theo hệ tọa độ Radial Polar ($R, \theta$) với tâm là Lâu Đài $[0, 0]$.
 > 2. Mọi đường đi của nhân vật phải bám theo các nan hoa đại lộ và vòng xuyến trung tâm, tuyệt đối không tự nối chéo qua góc các phòng.
@@ -600,3 +677,6 @@
 > 12. Tuyệt đối tuân thủ **React Rules of Hooks**: 100% lời gọi hook (`useState`, `useEffect`, `useMemo`, `useCallback`, `useRef`, `useFrame`, Zustand `useTownStore`) BẮT BUỘC phải đặt ở cấp cao nhất phía TRƯỚC mọi câu lệnh early return (`if (...) return null;`), tuyệt đối không đặt hook sau `return` hoặc trong nhánh điều kiện/vòng lặp. Hằng số dữ liệu thuần túy tách riêng vào `src/lib/...`.
 > 13. Khi thiết kế thanh công cụ đa nút (Topbar, Dock), tuyệt đối không lạm dụng nhãn text cố định; luôn cấu hình container có `overflow-x-auto scrollbar-none`, ưu tiên icon kèm tooltip và kẹp chặn tỉ lệ thu phóng 3D (`responsiveScale` tối thiểu 0.70-0.75) để không làm teo nhỏ không gian 3D trên màn hình hẹp/dọc.
 > 14. **Tuyệt đối không hardcode API Key / Secret vào bất kỳ file nào**, kể cả file script test tạm thời (`scripts/`, `tests/`). Mọi secret thử nghiệm bắt buộc phải nạp qua biến môi trường hoặc nhập từ Client UI; mọi file script cá nhân phải có tiền tố `test_*` hoặc `temp_*` đã được chặn nghiêm ngặt trong `.gitignore` trước khi commit.
+> 15. **Hệ thống nhãn & bong bóng 3D phải phân tầng cao độ rõ ràng và tránh hiển thị kép (No Double-Header):** Nhãn trạm cố định phải neo theo nóc phòng ban ($y = 2.45\text{m}$), bong bóng động phải ở tầng trên cao ($y \ge 4.2\text{m}$). Khi bong bóng xuất hiện, phải tự động làm mờ nhãn trạm để tránh đè chữ. Số thứ tự hiển thị trên thanh Dock và phím tắt bàn phím phải tuyệt đối trùng khớp với nhãn 3D (`Hub 0`, `Station 1..7`). Mọi dải neon / cáp quang trên mặt đất phải có cao độ $y$ cao hơn mặt đá đường để tránh hiện tượng nhấp nháy z-fighting.
+> 16. **Tuyệt đối cấm gán CSS `transition` lên thuộc tính `transform` của các phần tử DOM được cập nhật liên tục 60fps từ Three.js `useFrame`:** Bất kỳ hiệu ứng chuyển cảnh mờ nhạt hay co giãn nào (`opacity`, `scale`) BẮT BUỘC phải đặt trên phần tử con bên trong. Mọi biến dữ liệu mảng nhận từ AI khi render ra JSX BẮT BUỘC phải qua hàm bảo vệ phòng thủ (Defensive Stringifier), tuyệt đối không render trực tiếp `{item}` để tránh gây lỗi sập toàn cục `Minified React error #31`. Mọi thanh công cụ cố định mép dưới phải được phân tầng cao độ rõ rệt (`bottom-2` vs `bottom-14`) trên màn hình máy tính thông dụng (< 1536px).
+> 17. **Không bao giờ truyền priority > 0 cho `useFrame` trong R3F** trừ khi chủ động tự gọi `gl.render()` — nếu không canvas sẽ trắng. Muốn đảm bảo thứ tự giữa các `useFrame`, dùng thứ tự mount component.

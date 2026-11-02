@@ -621,14 +621,24 @@ export const StationInspectorPanel: React.FC = () => {
                         Tiêu Chuẩn Tuân Thủ:
                       </span>
                       <div className="flex flex-wrap gap-1">
-                        {securityData.compliance.map((item: string, idx: number) => (
-                          <span
-                            key={idx}
-                            className="px-2 py-0.5 rounded-full bg-emerald-950/60 text-emerald-300 border border-emerald-500/30 text-[10px] font-semibold"
-                          >
-                            ✓ {item}
-                          </span>
-                        ))}
+                        {securityData.compliance.map((item: any, idx: number) => {
+                          const label =
+                            typeof item === 'string'
+                              ? item
+                              : item && typeof item === 'object'
+                              ? item.standard
+                                ? `${item.standard}${item.status ? ` (${item.status})` : ''}`
+                                : JSON.stringify(item)
+                              : String(item ?? '');
+                          return (
+                            <span
+                              key={idx}
+                              className="px-2 py-0.5 rounded-full bg-emerald-950/60 text-emerald-300 border border-emerald-500/30 text-[10px] font-semibold"
+                            >
+                              ✓ {label}
+                            </span>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -757,14 +767,17 @@ export const StationInspectorPanel: React.FC = () => {
                         Phạm vi kỹ thuật:
                       </span>
                       <div className="flex flex-wrap gap-1">
-                        {orchestratorData.technicalScope.map((scope: string, idx: number) => (
-                          <span
-                            key={idx}
-                            className="px-2 py-0.5 rounded-lg bg-blue-950/60 text-blue-300 border border-blue-500/30 text-[10px]"
-                          >
-                            {scope}
-                          </span>
-                        ))}
+                        {orchestratorData.technicalScope.map((scope: any, idx: number) => {
+                          const text = typeof scope === 'string' ? scope : typeof scope === 'object' ? JSON.stringify(scope) : String(scope ?? '');
+                          return (
+                            <span
+                              key={idx}
+                              className="px-2 py-0.5 rounded-lg bg-blue-950/60 text-blue-300 border border-blue-500/30 text-[10px]"
+                            >
+                              {text}
+                            </span>
+                          );
+                        })}
                       </div>
                     </div>
                   )}

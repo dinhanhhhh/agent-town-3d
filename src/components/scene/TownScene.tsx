@@ -209,11 +209,11 @@ export const TownScene: React.FC = () => {
         ))}
         <StandbyCourier />
 
-        {/* 3D Tracker tính toán tọa độ chiếu cho nhãn 2D */}
-        <OverlayProjector />
-
         {/* Bộ điều khiển camera Isometric */}
         <CameraRig />
+
+        {/* 3D Tracker tính toán tọa độ chiếu cho nhãn 2D (chạy sau khi CameraRig đã cập nhật camera) */}
+        <OverlayProjector />
 
         {/* Cập nhật chuyển động shipper khi chạy AI thật */}
         <CourierTicker />

@@ -59,8 +59,12 @@ export default function Home() {
       <LogDrawer />
       <LiveStreamConsole />
       <DeskCamPiP />
-      <RoleChips />
-      <StatusBar />
+
+      {/* 3. Bottom HUD Bar: Dock trạm bên trái & Zoom / Telemetry bên phải trên cùng một hàng ngang duy nhất, kẹp biên chống va chạm */}
+      <div className="absolute bottom-2 left-2 right-2 sm:bottom-3 sm:left-3 sm:right-3 z-30 pointer-events-none flex items-center justify-between gap-1.5 sm:gap-2.5">
+        <RoleChips />
+        <StatusBar />
+      </div>
 
       {/* Interactive Modals */}
       <PromptModal />

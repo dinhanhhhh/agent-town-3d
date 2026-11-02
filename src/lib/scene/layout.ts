@@ -111,7 +111,7 @@ export const STATIONS_LAYOUT: Record<AgentRole, StationLayout> = {
     wallColor: TOKENS.palette3D.darkStone,
     accentColor: 0xf97316,
     buildingType: 'harbor',
-    bubbleOffset: [0, 4.1, 0],
+    bubbleOffset: [0, 4.8, 0],
     focusCamera: [6.5, 1.6, 6.5],
   },
   monitor: {
