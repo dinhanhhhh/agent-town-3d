@@ -5,6 +5,7 @@ import { AgentRole, STAGE_ORDER } from '../../lib/pipeline/stages';
 import { STATIONS_LAYOUT } from '../../lib/scene/layout';
 import { getRouteWaypoints, interpolateCourierPosition } from '../../lib/scene/waypoints';
 import { Courier, useTownStore } from '../../store/useTownStore';
+import { sfx } from '../../lib/audio/sfx';
 
 interface StationAgentProps {
   role: AgentRole;
@@ -103,6 +104,7 @@ export const StationAgent: React.FC<StationAgentProps> = ({ role }) => {
       rotation={[0, seatRotationY, 0]}
       onClick={(e) => {
         e.stopPropagation();
+        sfx.playPop();
         selectAgent(role);
       }}
       onPointerOver={() => {

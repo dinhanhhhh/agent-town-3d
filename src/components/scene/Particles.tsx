@@ -7,18 +7,22 @@ import { useTownStore } from '../../store/useTownStore';
 
 const PETAL_COUNT = 45;
 const FIREFLY_COUNT = 35;
+const RAIN_COUNT = 90;
 
 /**
  * Hiệu ứng tiểu cảnh hạt sống động (Dynamic Ambience Particles):
  * - Ban ngày & Hoàng hôn: Cánh hoa anh đào Sakura hồng pastel bay lượn trong gió.
  * - Ban đêm: Đom đóm hạt vàng ấm lấp lánh bập bùng quanh các tán cây và đèn lồng.
+ * - Bão tải Chaos Surge: Cơn mưa neon digital xối xả tốc độ cao với góc nghiêng gió bão.
  */
 export const Particles: React.FC = () => {
   const resolvedTheme = useTownStore((s) => s.resolvedTheme);
+  const isChaosRunning = useTownStore((s) => s.isChaosRunning);
   const isNight = resolvedTheme === 'night';
 
   const petalsMeshRef = useRef<THREE.InstancedMesh>(null);
   const firefliesMeshRef = useRef<THREE.InstancedMesh>(null);
+  const rainMeshRef = useRef<THREE.InstancedMesh>(null);
 
   // Khởi tạo vị trí ban đầu của cánh hoa
   const petalsData = useMemo(() => {
@@ -53,12 +57,46 @@ export const Particles: React.FC = () => {
     }));
   }, []);
 
+  // Khởi tạo vị trí hạt mưa bão tải
+  const rainData = useMemo(() => {
+    return Array.from({ length: RAIN_COUNT }, () => ({
+      pos: new THREE.Vector3(
+        (Math.random() - 0.5) * 28,
+        Math.random() * 10 + 2,
+        (Math.random() - 0.5) * 28
+      ),
+      speedY: 0.35 + Math.random() * 0.22,
+      driftX: -0.05 - Math.random() * 0.03,
+      scale: 0.75 + Math.random() * 0.5,
+    }));
+  }, []);
+
   const dummy = useMemo(() => new THREE.Object3D(), []);
 
   useFrame((state) => {
     const t = state.clock.elapsedTime;
 
-    if (!isNight && petalsMeshRef.current) {
+    if (isChaosRunning && rainMeshRef.current) {
+      // Cập nhật chuyển động mưa bão tải xối xả
+      rainData.forEach((drop, idx) => {
+        drop.pos.y -= drop.speedY;
+        drop.pos.x += drop.driftX;
+        drop.pos.z += drop.driftX * 0.4;
+
+        if (drop.pos.y < 0.6) {
+          drop.pos.y = 11 + Math.random() * 4;
+          drop.pos.x = (Math.random() - 0.5) * 28 + 4;
+          drop.pos.z = (Math.random() - 0.5) * 28 + 2;
+        }
+
+        dummy.position.copy(drop.pos);
+        dummy.rotation.set(0.18, 0, 0.35); // Nghiêng theo hướng gió bão
+        dummy.scale.set(drop.scale, drop.scale * 1.6, drop.scale);
+        dummy.updateMatrix();
+        rainMeshRef.current!.setMatrixAt(idx, dummy.matrix);
+      });
+      rainMeshRef.current.instanceMatrix.needsUpdate = true;
+    } else if (!isNight && petalsMeshRef.current) {
       // Cập nhật chuyển động bay của cánh hoa Sakura
       petalsData.forEach((petal, idx) => {
         petal.pos.y -= petal.speedY;
@@ -100,8 +138,21 @@ export const Particles: React.FC = () => {
 
   return (
     <group position={[0, 0, 0]}>
-      {/* 1. CÁNH HOA ANH ĐÀO SAKURA (BAN NGÀY & HOÀNG HÔN) */}
-      {!isNight && (
+      {/* 1. MƯA BÃO TẢI DIGITAL NEON (KHI CHAOS SURGE BẬT) */}
+      {isChaosRunning && (
+        <instancedMesh
+          ref={rainMeshRef}
+          args={[undefined, undefined, RAIN_COUNT]}
+          castShadow={false}
+          receiveShadow={false}
+        >
+          <cylinderGeometry args={[0.015, 0.015, 0.7, 4]} />
+          <meshBasicMaterial color={0x38bdf8} transparent opacity={0.75} />
+        </instancedMesh>
+      )}
+
+      {/* 2. CÁNH HOA ANH ĐÀO SAKURA (BAN NGÀY & HOÀNG HÔN KHI KHÔNG CÓ BÃO) */}
+      {!isChaosRunning && !isNight && (
         <instancedMesh
           ref={petalsMeshRef}
           args={[undefined, undefined, PETAL_COUNT]}
@@ -119,8 +170,8 @@ export const Particles: React.FC = () => {
         </instancedMesh>
       )}
 
-      {/* 2. ĐOM ĐÓM VÀNG LẤP LÁNH (BAN ĐÊM) */}
-      {isNight && (
+      {/* 3. ĐOM ĐÓM VÀNG LẤP LÁNH (BAN ĐÊM KHI KHÔNG CÓ BÃO) */}
+      {!isChaosRunning && isNight && (
         <instancedMesh
           ref={firefliesMeshRef}
           args={[undefined, undefined, FIREFLY_COUNT]}

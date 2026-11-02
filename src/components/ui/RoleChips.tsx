@@ -81,6 +81,9 @@ export const RoleChips: React.FC = () => {
             >
               <span className="text-xs sm:text-sm">{ROLE_ICONS[role]}</span>
               <span className="hidden sm:inline font-bold">{shortName}</span>
+              <span className="hidden xl:inline text-[9px] font-mono text-cyan-300/70 bg-slate-950/60 px-1 py-0.2 rounded border border-slate-700/60 leading-none">
+                {STAGE_ORDER.indexOf(role) + 1}
+              </span>
               {hasArtifact && (
                 <span className="hidden sm:inline px-1 py-0.2 text-[9px] font-extrabold bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 rounded-full leading-none">
                   ✓

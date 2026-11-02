@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { useTownStore } from '../../store/useTownStore';
+import { sfx } from '../../lib/audio/sfx';
 
 /**
  * TRUNG TÂM CHỈ HUY TRUNG TÂM (AI COMMAND CENTER / WAR ROOM)
@@ -13,6 +14,9 @@ export const CommandCenter: React.FC = () => {
   const hologramCoreRef = useRef<THREE.Group>(null);
   const orbitalRingRef = useRef<THREE.Mesh>(null);
   const monitorLightRef = useRef<THREE.PointLight>(null);
+  const roofBeaconRef = useRef<THREE.Group>(null);
+  const roofRing1Ref = useRef<THREE.Mesh>(null);
+  const roofRing2Ref = useRef<THREE.Mesh>(null);
 
   const selectAgent = useTownStore((s) => s.selectAgent);
   const selectedAgentRole = useTownStore((s) => s.selectedAgentRole);
@@ -47,6 +51,18 @@ export const CommandCenter: React.FC = () => {
       const pulse = 0.8 + Math.sin(t * (isBusy ? 8 : 3)) * 0.25;
       monitorLightRef.current.intensity = pulse;
     }
+
+    // Vành Hologram chỉ huy trên nóc nhà (Sky Holo Crown)
+    if (roofBeaconRef.current) {
+      roofBeaconRef.current.position.y = 3.12 + Math.sin(t * 2.2) * 0.05;
+    }
+    if (roofRing1Ref.current) {
+      roofRing1Ref.current.rotation.z += delta * (isBusy ? 2.2 : 0.8);
+    }
+    if (roofRing2Ref.current) {
+      roofRing2Ref.current.rotation.x -= delta * (isBusy ? 1.8 : 0.6);
+      roofRing2Ref.current.rotation.y += delta * (isBusy ? 1.4 : 0.5);
+    }
   });
 
   return (
@@ -54,6 +70,7 @@ export const CommandCenter: React.FC = () => {
       position={[0, 0.6, 0]}
       onClick={(e) => {
         e.stopPropagation();
+        sfx.playPop();
         selectAgent('orchestrator');
       }}
       onPointerOver={() => {
@@ -159,6 +176,45 @@ export const CommandCenter: React.FC = () => {
           <sphereGeometry args={[0.08, 12, 12]} />
           <meshBasicMaterial color={isBusy ? 0xef4444 : 0x10b981} />
         </mesh>
+      </group>
+
+      {/* VƯƠNG MIỆNG QUYỀN LỰC HOLOGRAPHIC CHỈ HUY TRÊN NÓC (SKY COMMAND HOLO CROWN) */}
+      <group ref={roofBeaconRef} position={[0, 3.12, 0]}>
+        {/* Vành quỹ đạo chính màu xanh cyan Claude Code */}
+        <mesh ref={roofRing1Ref} rotation={[0.5, 0, 0]}>
+          <torusGeometry args={[0.62, 0.022, 14, 36]} />
+          <meshBasicMaterial
+            color={isSelected ? 0xfbbf24 : 0x38bdf8}
+            transparent
+            opacity={0.85}
+          />
+        </mesh>
+        {/* Vành quỹ đạo phụ màu tím than công nghệ cao */}
+        <mesh ref={roofRing2Ref} rotation={[-0.4, 0.6, 0]}>
+          <torusGeometry args={[0.48, 0.016, 12, 32]} />
+          <meshBasicMaterial
+            color={isBusy ? 0xa855f7 : 0x06b6d4}
+            transparent
+            opacity={0.75}
+          />
+        </mesh>
+        {/* Lõi năng lượng kim cương lơ lửng */}
+        <mesh>
+          <octahedronGeometry args={[0.22, 0]} />
+          <meshStandardMaterial
+            color={isSelected ? 0xf59e0b : isBusy ? 0xa855f7 : 0x0284c7}
+            emissive={isSelected ? 0xf59e0b : isBusy ? 0xa855f7 : 0x38bdf8}
+            emissiveIntensity={isBusy ? 1.6 : 0.9}
+            transparent
+            opacity={0.9}
+          />
+        </mesh>
+        {/* Nguồn sáng phát quang lan tỏa từ đỉnh nóc */}
+        <pointLight
+          color={isBusy ? '#a855f7' : '#38bdf8'}
+          distance={4.5}
+          intensity={isBusy ? 1.4 : 0.8}
+        />
       </group>
 
       {/* ========================================================

@@ -1,12 +1,13 @@
 {
   "name": "agent-town-3d",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "npx tsx scripts/verify_system_integrity.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",

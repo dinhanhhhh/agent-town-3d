@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { useTownStore } from '../../store/useTownStore';
+import { STAGE_ORDER } from '../../lib/pipeline/stages';
+import { sfx } from '../../lib/audio/sfx';
 import { simulator } from '../../lib/events/MockSimulator';
 
 export const Topbar: React.FC = () => {
@@ -39,6 +41,13 @@ export const Topbar: React.FC = () => {
   const isChaosRunning = useTownStore((s) => s.isChaosRunning);
   const runChaosSimulation = useTownStore((s) => s.runChaosSimulation);
   const openExportModal = useTownStore((s) => s.openExportModal);
+  const openKeyboardModal = useTownStore((s) => s.openKeyboardModal);
+  const openDiagnosticsModal = useTownStore((s) => s.openDiagnosticsModal);
+  const selectAgent = useTownStore((s) => s.selectAgent);
+  const resetCamera = useTownStore((s) => s.resetCamera);
+  const zoomIn = useTownStore((s) => s.zoomIn);
+  const zoomOut = useTownStore((s) => s.zoomOut);
+  const toggleThemeMode = useTownStore((s) => s.toggleThemeMode);
   const initClientStorage = useTownStore((s) => s.initClientStorage);
 
   const pendingApprovals = approvals.filter((a) => a.status === 'pending');
@@ -49,21 +58,180 @@ export const Topbar: React.FC = () => {
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const isInput =
+        target?.tagName === 'INPUT' ||
+        target?.tagName === 'TEXTAREA' ||
+        target?.isContentEditable;
+
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         openPromptModal(true);
-      } else if (
-        e.key === '/' &&
-        document.activeElement?.tagName !== 'INPUT' &&
-        document.activeElement?.tagName !== 'TEXTAREA'
-      ) {
+        return;
+      }
+
+      if (isInput) return;
+
+      if (e.key === '/') {
         e.preventDefault();
         openPromptModal(true);
+        return;
+      }
+
+      // Hotkeys 1-8: Bay camera & thanh tra 8 trạm AI
+      if (e.key >= '1' && e.key <= '8') {
+        const index = parseInt(e.key, 10) - 1;
+        const role = STAGE_ORDER[index];
+        if (role) {
+          e.preventDefault();
+          sfx.playWarp();
+          selectAgent(role);
+        }
+        return;
+      }
+
+      // 0: Reset camera về toàn cảnh đảo 3D
+      if (e.key === '0') {
+        e.preventDefault();
+        sfx.playWarp();
+        selectAgent(null);
+        resetCamera();
+        return;
+      }
+
+      // Space: Play / Pause mô phỏng
+      if (e.code === 'Space') {
+        e.preventDefault();
+        sfx.playPop();
+        toggleSimulating();
+        return;
+      }
+
+      // T: Đổi chu kỳ Ngày / Hoàng hôn / Đêm
+      if (e.key === 't' || e.key === 'T') {
+        e.preventDefault();
+        sfx.playPop();
+        toggleThemeMode();
+        return;
+      }
+
+      // M: Bật / Tắt âm thanh
+      if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        toggleSound();
+        return;
+      }
+
+      // V: Bật / Tắt giọng nói TTS
+      if (e.key === 'v' || e.key === 'V') {
+        e.preventDefault();
+        toggleVoice();
+        return;
+      }
+
+      // [ : Trạm trước đó
+      if (e.key === '[') {
+        e.preventDefault();
+        sfx.playWarp();
+        const curRole = useTownStore.getState().selectedAgentRole || 'orchestrator';
+        const curIdx = STAGE_ORDER.indexOf(curRole);
+        const prevRole = STAGE_ORDER[(curIdx - 1 + STAGE_ORDER.length) % STAGE_ORDER.length];
+        selectAgent(prevRole);
+        return;
+      }
+
+      // ] : Trạm kế tiếp
+      if (e.key === ']') {
+        e.preventDefault();
+        sfx.playWarp();
+        const curRole = useTownStore.getState().selectedAgentRole || 'orchestrator';
+        const curIdx = STAGE_ORDER.indexOf(curRole);
+        const nextRole = STAGE_ORDER[(curIdx + 1) % STAGE_ORDER.length];
+        selectAgent(nextRole);
+        return;
+      }
+
+      // C: Bật / Tắt Desk Cam PiP
+      if (e.key === 'c' || e.key === 'C') {
+        e.preventDefault();
+        sfx.playPop();
+        toggleDeskCam();
+        return;
+      }
+
+      // L: Bật / Tắt Nhật ký
+      if (e.key === 'l' || e.key === 'L') {
+        e.preventDefault();
+        sfx.playPop();
+        toggleLogDrawer();
+        return;
+      }
+
+      // R: Bật / Tắt xoay đảo
+      if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        sfx.playPop();
+        toggleRotating();
+        return;
+      }
+
+      // F: Bật / Tắt đạo diễn Auto-follow
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        sfx.playPop();
+        toggleAutoFollow();
+        return;
+      }
+
+      // D: Bảng chẩn đoán SRE & Telemetry
+      if (e.key === 'd' || e.key === 'D') {
+        e.preventDefault();
+        sfx.playPop();
+        openDiagnosticsModal(true);
+        return;
+      }
+
+      // ? hoặc H: Bảng tra cứu phím tắt RTS
+      if (e.key === '?' || e.key === 'h' || e.key === 'H') {
+        e.preventDefault();
+        sfx.playPop();
+        openKeyboardModal(true);
+        return;
+      }
+
+      // + / =: Zoom in
+      if (e.key === '+' || e.key === '=') {
+        e.preventDefault();
+        zoomIn();
+        return;
+      }
+
+      // - / _: Zoom out
+      if (e.key === '-' || e.key === '_') {
+        e.preventDefault();
+        zoomOut();
+        return;
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [openPromptModal]);
+  }, [
+    openPromptModal,
+    openKeyboardModal,
+    openDiagnosticsModal,
+    selectAgent,
+    resetCamera,
+    toggleSimulating,
+    toggleThemeMode,
+    toggleSound,
+    toggleVoice,
+    toggleDeskCam,
+    toggleLogDrawer,
+    toggleRotating,
+    toggleAutoFollow,
+    zoomIn,
+    zoomOut,
+  ]);
 
   return (
     <header className="absolute top-2 left-2 right-2 sm:top-3 sm:left-3 sm:right-3 z-30 pointer-events-none flex items-center justify-between gap-1.5 sm:gap-2.5 flex-nowrap">
@@ -77,7 +245,7 @@ export const Topbar: React.FC = () => {
                 <span className="hidden md:inline">Thị trấn </span>DevOps
               </h1>
               <span className="px-1 sm:px-1.5 py-0.2 text-[8px] sm:text-[9px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-md">
-                v1.5
+                v1.6
               </span>
             </div>
           </div>
@@ -325,6 +493,32 @@ export const Topbar: React.FC = () => {
         >
           <span>{isChaosRunning ? '🔥' : '🚨'}</span>
           <span className="hidden 2xl:inline">{isChaosRunning ? 'Bão tải...' : 'Chaos'}</span>
+        </button>
+
+        {/* System SRE Diagnostics Modal Button */}
+        <button
+          onClick={() => {
+            sfx.playPop();
+            openDiagnosticsModal(true);
+          }}
+          className="flex items-center gap-1 px-2 sm:px-2.5 py-1 text-xs font-semibold rounded-xl border transition-all bg-slate-800/80 text-cyan-300 border-cyan-500/40 hover:bg-cyan-600/20 shadow-sm whitespace-nowrap shrink-0"
+          title="Mở Bảng Chẩn đoán SRE & Telemetry Hệ thống (Phím tắt: D)"
+        >
+          <span>📊</span>
+          <span className="hidden 2xl:inline">SRE</span>
+        </button>
+
+        {/* Keyboard Shortcuts Guide Button */}
+        <button
+          onClick={() => {
+            sfx.playPop();
+            openKeyboardModal(true);
+          }}
+          className="flex items-center gap-1 px-2 sm:px-2.5 py-1 text-xs font-semibold rounded-xl border transition-all bg-slate-800/80 text-slate-300 border-slate-700 hover:text-white hover:bg-slate-700/80 shadow-sm whitespace-nowrap shrink-0"
+          title="Xem bảng tra cứu phím tắt RTS (Phím tắt: ? hoặc H)"
+        >
+          <span>⌨️</span>
+          <span className="hidden 2xl:inline">Phím tắt</span>
         </button>
 
         {/* Executive Release Export Button */}

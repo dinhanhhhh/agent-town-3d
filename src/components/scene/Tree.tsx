@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import * as THREE from 'three';
+import { useFrame } from '@react-three/fiber';
+import { useTownStore } from '../../store/useTownStore';
 
 const TREE_DATA = [
   // Cây kẹo mút hồng phấn (Pink Lollipop)
@@ -29,8 +31,23 @@ const TREE_DATA = [
  * Phong cách đồ họa hoạt hình ấm cúng (Cozy Pastel Aesthetic)
  */
 export const Trees: React.FC = () => {
+  const treesGroupRef = useRef<THREE.Group>(null);
+  const isChaosRunning = useTownStore((s) => s.isChaosRunning);
+
+  useFrame((state) => {
+    if (!treesGroupRef.current) return;
+    const t = state.clock.elapsedTime;
+    const windSpeed = isChaosRunning ? 7.5 : 1.8;
+    const windAngle = isChaosRunning ? 0.08 : 0.018;
+
+    treesGroupRef.current.children.forEach((child, i) => {
+      child.rotation.z = Math.sin(t * windSpeed + i * 0.7) * windAngle;
+      child.rotation.x = Math.cos(t * windSpeed * 0.8 + i * 0.5) * (windAngle * 0.5);
+    });
+  });
+
   return (
-    <group position={[0, 0.6, 0]}>
+    <group ref={treesGroupRef} position={[0, 0.6, 0]}>
       {TREE_DATA.map((t, idx) => (
         <group key={idx} position={[t.x, 0, t.z]}>
           {/* Thân cây gỗ tròn mịn màng */}

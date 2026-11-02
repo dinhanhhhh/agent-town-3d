@@ -73,19 +73,45 @@ export const DeskCamPiP: React.FC = () => {
     }
   };
 
+  const handleCycleCam = (direction: 'prev' | 'next') => {
+    sfx.playPop();
+    const curIdx = STAGE_ORDER.indexOf(activeRole);
+    const nextIdx =
+      direction === 'next'
+        ? (curIdx + 1) % STAGE_ORDER.length
+        : (curIdx - 1 + STAGE_ORDER.length) % STAGE_ORDER.length;
+    setDeskCamPinnedRole(STAGE_ORDER[nextIdx]);
+  };
+
   return (
     <div className="fixed bottom-16 left-2 sm:bottom-16 sm:left-3 z-30 pointer-events-auto transition-all animate-scale-up">
       <div className="w-[300px] sm:w-[350px] bg-slate-950/90 border border-slate-700/80 rounded-2xl shadow-2xl backdrop-blur-md overflow-hidden flex flex-col text-xs font-mono">
         {/* Header Bar */}
         <div className="flex items-center justify-between px-3 py-2 bg-slate-900/90 border-b border-slate-800 text-slate-300">
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-1.5 min-w-0">
             <span className="flex items-center gap-1 text-[10px] text-rose-400 font-bold">
               <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping inline-block" />
               REC
             </span>
-            <span className="text-[11px] font-bold text-white truncate font-sans">
-              CAM-{roleIndex}: {layout?.name || activeRole}
-            </span>
+            <div className="flex items-center gap-0.5">
+              <button
+                onClick={() => handleCycleCam('prev')}
+                className="px-1 py-0.2 rounded hover:bg-slate-800 text-slate-400 hover:text-white text-[10px]"
+                title="Chuyển sang Camera trạm trước đó"
+              >
+                ‹
+              </button>
+              <span className="text-[11px] font-bold text-white truncate font-sans max-w-[130px] sm:max-w-[160px]">
+                CAM-{roleIndex}: {layout?.name || activeRole}
+              </span>
+              <button
+                onClick={() => handleCycleCam('next')}
+                className="px-1 py-0.2 rounded hover:bg-slate-800 text-slate-400 hover:text-white text-[10px]"
+                title="Chuyển sang Camera trạm kế tiếp"
+              >
+                ›
+              </button>
+            </div>
           </div>
 
           <div className="flex items-center gap-1">

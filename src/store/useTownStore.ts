@@ -184,6 +184,8 @@ export interface TownState {
   isPromptModalOpen: boolean;
   isDossierModalOpen: boolean;
   isExportModalOpen: boolean;
+  isKeyboardModalOpen: boolean;
+  isDiagnosticsModalOpen: boolean;
   isChaosRunning: boolean;
   isRollingBack: boolean;
 
@@ -222,6 +224,8 @@ export interface TownState {
   openApiKeyModal: (open: boolean) => void;
   openPromptModal: (open: boolean) => void;
   openExportModal: (open: boolean) => void;
+  openKeyboardModal: (open: boolean) => void;
+  openDiagnosticsModal: (open: boolean) => void;
   runChaosSimulation: () => Promise<void>;
   runRealPipeline: (userPrompt: string, scenario?: ScenarioMode) => Promise<void>;
   runGitHubPrAudit: (prUrl: string) => Promise<void>;
@@ -574,6 +578,8 @@ export const useTownStore = create<TownState>((set, get) => {
     isPromptModalOpen: false,
     isDossierModalOpen: false,
     isExportModalOpen: false,
+    isKeyboardModalOpen: false,
+    isDiagnosticsModalOpen: false,
     isChaosRunning: false,
     isRollingBack: false,
 
@@ -790,6 +796,8 @@ export const useTownStore = create<TownState>((set, get) => {
         isArtifactModalOpen: isDossierModalOpen ? false : s.isArtifactModalOpen,
       })),
     openExportModal: (isExportModalOpen) => set({ isExportModalOpen }),
+    openKeyboardModal: (isKeyboardModalOpen) => set({ isKeyboardModalOpen }),
+    openDiagnosticsModal: (isDiagnosticsModalOpen) => set({ isDiagnosticsModalOpen }),
 
     updateAgent: (role, updates) =>
       set((state) => ({
@@ -1236,6 +1244,7 @@ export const useTownStore = create<TownState>((set, get) => {
       const state = get();
       if (state.isRollingBack) return;
       set({ isRollingBack: true });
+      sfx.playRewind();
 
       // Hủy mọi tiến trình AI stream đang chạy dở
       if (activePipelineAbortController) {
@@ -1449,7 +1458,7 @@ export const useTownStore = create<TownState>((set, get) => {
       set({ isChaosRunning: true, weather: getDynamicWeatherString(get().resolvedTheme, true) });
       state.setIsSimulating(false);
 
-      sfx.playBugAlert();
+      sfx.playSiren();
       state.updateTelemetry({ cpuUsage: 96, latencyMs: 168, tps: 2500 });
       state.setAgentStatus('monitor', 'error', '🚨 BÁO ĐỘNG ĐỎ: Bão request 10x! TPS vọt 2,500, Latency 168ms!');
       state.addEvent({

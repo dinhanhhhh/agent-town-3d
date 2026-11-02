@@ -2,7 +2,7 @@ import { IEventSource } from './EventSource';
 import { useTownStore } from '../../store/useTownStore';
 import { AgentRole, PIPELINE_PROBABILITIES, STAGE_ORDER, Task } from '../pipeline/stages';
 
-const FEATURE_TASKS = [
+export const FEATURE_TASKS = [
   {
     title: 'Xác thực đăng nhập Google OAuth 2.0 & JWT',
     refNo: 'TICK-142',
@@ -26,6 +26,54 @@ const FEATURE_TASKS = [
     refNo: 'TICK-145',
     prNo: 'PR-90',
     qaTests: 28,
+  },
+  {
+    title: 'Triển khai gRPC Microservices & Protocol Buffers v3',
+    refNo: 'TICK-146',
+    prNo: 'PR-91',
+    qaTests: 64,
+  },
+  {
+    title: 'Vá lỗ hổng OWASP Top 10 Injection & Data Sanitizer',
+    refNo: 'TICK-147',
+    prNo: 'PR-92',
+    qaTests: 42,
+  },
+  {
+    title: 'Xây dựng Realtime WebSocket Chat & Redis Pub/Sub',
+    refNo: 'TICK-148',
+    prNo: 'PR-93',
+    qaTests: 58,
+  },
+  {
+    title: 'Cấu hình Prometheus APM Metrics & Grafana Alert Rule',
+    refNo: 'TICK-149',
+    prNo: 'PR-94',
+    qaTests: 34,
+  },
+  {
+    title: 'Tích hợp Vector Search RAG với pgvector PostgreSQL',
+    refNo: 'TICK-150',
+    prNo: 'PR-95',
+    qaTests: 50,
+  },
+  {
+    title: 'Đóng gói Distroless Multi-Stage Node.js Docker Container',
+    refNo: 'TICK-151',
+    prNo: 'PR-96',
+    qaTests: 38,
+  },
+  {
+    title: 'Tự động hóa CI/CD Pipeline với GitHub Actions & SAST',
+    refNo: 'TICK-152',
+    prNo: 'PR-97',
+    qaTests: 46,
+  },
+  {
+    title: 'Triển khai ArgoCD Canary Rollout & Istio Service Mesh',
+    refNo: 'TICK-153',
+    prNo: 'PR-98',
+    qaTests: 60,
   },
 ];
 
@@ -104,6 +152,64 @@ export class MockSimulator implements IEventSource {
       kind: 'start',
       message: `Prompt mới: ${title}`,
       severity: 'ok',
+    });
+  }
+
+  /**
+   * Kích hoạt sự cố DevOps tự trị ngẫu nhiên (Autonomous DevOps Incident Injection):
+   * Tự động điều phối lỗi bảo mật, test fail, hoặc độ trễ mạng kèm Toast và Shipper phản hồi
+   */
+  triggerRandomIncident() {
+    const store = useTownStore.getState();
+    const incidents = [
+      {
+        type: 'security',
+        role: 'security' as AgentRole,
+        title: 'Cảnh báo Bảo mật SAST',
+        message: 'Phát hiện lỗ hổng CVE-2026-4912 trong thư viện jsonwebtoken. Yêu cầu vá khẩn!',
+        toastSeverity: 'error' as const,
+      },
+      {
+        type: 'qa',
+        role: 'qa' as AgentRole,
+        title: 'Thất bại Kiểm thử Tự động',
+        message: 'Vitest Suite: 3 unit tests failed tại module payment webhook (Timeout 5000ms).',
+        toastSeverity: 'warn' as const,
+      },
+      {
+        type: 'apm',
+        role: 'monitor' as AgentRole,
+        title: 'Đột biến Độ trễ APM P99',
+        message: 'P99 Latency vượt 280ms trên cụm API Gateway! Kích hoạt HPA Auto-scaler.',
+        toastSeverity: 'warn' as const,
+      },
+      {
+        type: 'review',
+        role: 'review' as AgentRole,
+        title: 'Tech Lead Review Reject',
+        message: 'Thiếu try/catch và boundary check tại endpoint user refresh token.',
+        toastSeverity: 'info' as const,
+      },
+    ];
+
+    const inc = incidents[Math.floor(Math.random() * incidents.length)];
+    store.setAgentStatus(inc.role, 'debugging', inc.message);
+    store.addToast({
+      title: inc.title,
+      message: inc.message,
+      severity: inc.toastSeverity,
+      role: inc.role,
+      actionLabel: 'Xem Trạm',
+      onAction: () => store.selectAgent(inc.role),
+    });
+
+    // Spawn feedback courier to Dev
+    store.addCourier({
+      type: 'feedback',
+      fromRole: inc.role,
+      toRole: 'dev',
+      boxType: 'bug',
+      label: inc.title,
     });
   }
 

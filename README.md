@@ -1,4 +1,4 @@
-# 🏰 Thị trấn DevOps 3D (Agent Town 3D) v1.5.0
+# 🏰 Thị trấn DevOps 3D (Agent Town 3D) v1.6.0
 
 > **Mô phỏng Hệ thống 8 Autonomous AI Agents & DevOps SDLC Pipeline trên Hòn đảo bay 3D Isometric Diorama**  
 > Xây dựng với **Next.js 16 (Turbopack)**, **React 19**, **Three.js / React Three Fiber v9**, **Google Gemini API**, **DeepSeek V3**, **Zustand**, và **Web Speech & Audio API**.
@@ -7,7 +7,7 @@
 [![React](https://img.shields.io/badge/React-19.3-blue?logo=react)](https://react.dev/)
 [![React Three Fiber](https://img.shields.io/badge/R3F-v9-blue?logo=three.js)](https://docs.pmnd.rs/react-three-fiber)
 [![Gemini & DeepSeek](https://img.shields.io/badge/AI_Engine-Gemini_3.8_|_DeepSeek_V3-orange?logo=google)](https://ai.google.dev/)
-[![Version](https://img.shields.io/badge/Release-v1.5.0-emerald)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Release-v1.6.0-emerald)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ---
@@ -32,7 +32,14 @@
 - 🌐 **Kiến Trúc Đa Mô Hình Hybrid (Gemini 3.8 Flash & DeepSeek V3)**: Quản lý 2 API Key độc lập, lựa chọn Model Provider linh hoạt cho từng phòng ban trong AI Playground và thống kê chi phí FinOps chi tiết.
 - 🚀 **Ma Trận CI/CD Đa Môi Trường & Cổng Khẩn Cấp Rollback Gate**: Kiểm thử Staging song song (Node 18/20/22), tiến trình ArgoCD Canary (10% ➔ 50% ➔ 100%) và nút Emergency Rollback điều phối Shipper quay đầu giải cứu hệ thống.
 - ⚡ **Bản Đồ Nhiệt Cáp Quang Dữ Liệu (Photon Heatmap)**: Cáp quang tự động đổi màu phản ứng theo tải lượng (Cyan ➔ Amber ➔ Red Glow) và gia tốc hạt photon theo TPS thời gian thực.
-- 🎮 **Trình Thanh Tra Trạm Chuẩn Game RTS (Game-Style Station Inspector & Camera Focus)**: Bấm vào bất kỳ trạm nào trong không gian 3D hoặc dock điều khiển, camera tự động lướt và zoom cận cảnh vào trạm làm việc, đồng thời trượt mở ngăn Inspector cạnh phải màn hình không dùng backdrop che phủ, giữ trọn 70% không gian 3D sống động. Tích hợp xem Git Diff (Unified/Split), chỉnh sửa lưu SOP/System Prompt, thống kê Telemetry và thanh lướt 8 trạm liên hoàn (Station Carousel).
+- 🎮 **Trình Thanh Tra Trạm Chuẩn Game RTS (Game-Style Station Inspector & Multi-Agent Dashboards)**: Bấm vào bất kỳ trạm nào trong không gian 3D hoặc dock điều khiển, camera tự động lướt và zoom cận cảnh vào trạm làm việc, đồng thời trượt mở ngăn Inspector cạnh phải màn hình không dùng backdrop che phủ, giữ trọn 70% không gian 3D sống động. Tích hợp bộ thẻ báo cáo đồ họa chuyên biệt (Git Diff Viewer cho Dev, Bảng điểm SAST AppSec cho DevSecOps, 4 Tín hiệu vàng APM cho Monitor, Kế hoạch Sprint INVEST cho Claude Code Hub), chuyển đổi nhanh Raw JSON, chỉnh sửa lưu SOP/System Prompt, thống kê Telemetry và thanh lướt 8 trạm liên hoàn (phím `[` và `]`).
+- 🔮 **Vành Hologram Trạng Thái 3D & Khối Artifact Phát Quang (`StationHoloBeacon`)**: Lắp đặt thiết bị holographic status beacon trên nóc 7 trạm chuyên môn và Sky Command Holo Crown trên nóc Lâu đài trung tâm. Trực quan hóa tức thì trạng thái AI (kim cương đỏ cảnh báo lỗi, lăng kính hổ phách gỡ lỗi, khối xanh ngọc Data-Cube khi bàn giao artifact) cùng âm thanh tương tác xúc giác 3D.
+- ⛈️ **Thời Tiết Bão Tải Kỹ Thuật Số & Cây Cối Đung Đưa Trong Gió**: Khi xảy ra bão tải Chaos Surge 10x, bầu trời đổ 90 vệt mưa neon kỹ thuật số, sấm chớp giật sáng kèm tiếng sấm rền sfx (`playThunder()`), tán cây và hoa anh đào đung đưa theo sức gió vật lý.
+- ⌨️ **Hệ Thống Phím Tắt Điều Khiển Chuẩn RTS Game (RTS Game Engine Hotkeys & Modal)**: Phím `1-8` bay tới 8 trạm, `0` reset overview, `Space` play/pause mô phỏng, `T` chu kỳ thời gian, `M` âm thanh, `V` voice TTS, `C` desk cam, `L` nhật ký, `R` xoay đảo, `F` đạo diễn auto-follow, `D` bảng chẩn đoán SRE, `?` hoặc `H` mở bảng tra cứu phím tắt RTS.
+- 📊 **Trung Tâm Chẩn Đoán Cụm & Telemetry Chuẩn SRE Google (SRE Golden Signals & Hardware Diagnostics)**: Theo dõi 4 Tín hiệu Vàng của Google SRE (Latency P99 sóng động SVG, Traffic TPS, Error Rate %, Saturation CPU/RAM Heap), đo FPS thực tế, bảng ma trận đa mô hình FinOps, hàng đợi Shipper đang chạy và cụm nút kích hoạt Chaos Surge 10x & Rollback khẩn cấp.
+- 🧪 **Thử Nghiệm Sinh Mã Riêng Từng Trạm (Quick Station Sandbox Run)**: Lưu prompt và chạy thử nghiệm AI độc lập cho từng trạm trực tiếp từ Station Inspector Panel mà không cần nạp lại 7 trạm còn lại.
+- 🛡️ **Ngân Hàng 12 User Stories & Bộ Tiêm Sự Cố Tự Trị (12 SDLC Tasks & Chaos Incidents)**: Thư viện 12 tác vụ kỹ thuật thực chiến (gRPC, Redis caching, Stripe HMAC, pgvector, Distroless Docker...) kèm cơ chế tự động tiêm sự cố SAST CVE, Vitest fail, P99 spike.
+- 🔍 **Bộ Kiểm Thử Toàn Vẹn Hệ Thống Tự Động (`npm test`)**: 64 ca kiểm thử tự động xác nhận tính toàn vẹn của bố cục Polar 8 trạm, tính liên tục của hệ thống Waypoints nan hoa và feedback loops.
 - ⏱️ **Chu Kỳ Thời Gian Thực Tự Động & Đồng Hồ Telemetry (`themeMode: 'auto'`)**: Tự động đồng bộ ánh sáng 3D theo giờ thực của bạn (Ban ngày ☀️, Hoàng hôn 🌆, Ban đêm 🌙 kèm đom đóm & đèn lồng phát sáng), hiển thị thời tiết và đồng hồ số nhịp giây trên mọi kích cỡ màn hình.
 - 🔔 **Hệ Thống Toast Notification & Bong Bóng Thoại 3D Kẹp Biên**: Tự động đẩy thẻ thông báo kính mờ khi có sự kiện quan trọng (Cảnh báo CVE, Cổng duyệt, Bão tải SRE) và kẹp biên 100% tọa độ hiển thị chống tràn màn hình di động.
 - 🤖 **Ba Chế Độ Vận Hành Chuyên Nghiệp**:

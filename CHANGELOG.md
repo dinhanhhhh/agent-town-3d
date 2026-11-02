@@ -4,6 +4,71 @@ Tất cả các thay đổi đáng chú ý của dự án **Agent Town 3D** sẽ
 
 ---
 
+## [v1.6.0] - 2026-11-01
+### ⌨️ Hệ Thống Phím Tắt Chuẩn Game RTS & Trung Tâm Chẩn Đoán SRE (RTS Hotkeys, SRE Cluster Diagnostics & Station Sandbox)
+- **Hệ Thống Phím Tắt Điều Khiển Chuẩn RTS Game (`src/components/ui/KeyboardShortcutsModal.tsx`, `src/components/ui/Topbar.tsx`, `src/components/ui/RoleChips.tsx`)**:
+  - Tích hợp bộ bắt phím toàn cục cho trải nghiệm điều khiển như game chiến thuật thời gian thực (RTS):
+    - `1` – `8`: Bay camera cận cảnh và mở thanh tra 8 Trạm AI (0 · Hub ➔ 7 · APM).
+    - `0`: Đặt lại góc nhìn toàn cảnh đảo 3D (Overview).
+    - `Space`: Tạm dừng / Tiếp tục chu kỳ mô phỏng (Play / Pause).
+    - `T`: Đổi chu kỳ thời gian (Tự động ➔ Ngày ➔ Hoàng hôn ➔ Đêm).
+    - `M`: Bật / Tắt hiệu ứng âm thanh Synthesizer (Mute / Unmute).
+    - `V`: Bật / Tắt giọng nói AI thuyết minh (TTS).
+    - `C`: Bật / Tắt camera giám sát bàn làm việc (Desk Cam PiP).
+    - `L`: Bật / Tắt ngăn kéo Nhật ký sự kiện (Log Drawer).
+    - `R`: Bật / Tắt xoay đảo tự động 360° (Auto-Rotate).
+    - `F`: Bật / Tắt chế độ Đạo diễn tự bám theo Shipper (Auto-Follow).
+    - `D`: Mở bảng chẩn đoán SRE Telemetry & 4 Tín hiệu vàng.
+    - `?` hoặc `H`: Mở bảng tra cứu phím tắt RTS (`KeyboardShortcutsModal.tsx`).
+    - `+` / `-`: Phóng to / Thu nhỏ mức zoom không gian 3D.
+  - Bổ sung nhãn số phím tắt trực tiếp trên các thẻ dock điều hướng (`RoleChips.tsx`) giúp người dùng nhận diện phím bấm siêu tốc.
+  - Thiết kế bảng tra cứu phím tắt phím cơ tactile `<kbd>` siêu sắc nét, phân loại 3 cụm chức năng (Camera RTS, Pipeline, Môi trường & Âm thanh).
+- **Vành Hologram Trạng Thái 3D & Khối Artifact Phát Quang (`src/components/scene/Building.tsx`, `src/components/scene/Castle.tsx`, `src/components/scene/Character.tsx`)**:
+  - Tích hợp thiết bị Hologram trạng thái 3D (`StationHoloBeacon`) lơ lửng trên nóc 7 trạm chuyên môn:
+    - Vành quỹ đạo kép tự xoay theo accentColor từng phòng ban.
+    - Lõi năng lượng động: Khối kim cương đỏ nhấp nháy khi có sự cố (Error), lăng kính hổ phách khi sửa lỗi (Debugging), khối dữ liệu xanh ngọc (Data Cube) nổi bật khi Artifact đã sẵn sàng bàn giao.
+    - Vòng hào quang vàng (Active Selection Halo) phát sáng khi người dùng đang thanh tra trạm.
+  - Bổ sung Vương miện Hologram chỉ huy trên nóc Lâu đài trung tâm (`Sky Command Holo Crown` trong `Castle.tsx`) xoay 3 trục theo nhịp lập kế hoạch của Claude Code.
+  - Phản hồi xúc giác âm thanh 3D (`sfx.playPop()`) khi click trực tiếp vào trạm, tòa nhà hoặc kỹ sư AI.
+- **Thời Tiết Bão Tải Kỹ Thuật Số & Cây Cối Đung Đưa Trong Gió (`src/components/scene/Particles.tsx`, `src/components/scene/TownScene.tsx`, `src/components/scene/Tree.tsx`)**:
+  - Cơn mưa hạt kỹ thuật số (90 vệt Digital Rain) rơi chéo với vận tốc cao khi kích hoạt Chaos Surge bão tải.
+  - Sấm chớp ngẫu nhiên (`ChaosLightningStorm`) rọi sáng toàn đảo kèm hiệu ứng âm thanh sấm rền sfx (`playThunder()`).
+  - Tán cây cối và hoa anh đào đung đưa vật lý chân thực trong gió, tăng biên độ dao động mãnh liệt trong bão tải.
+- **Mở Rộng Thư Viện Nhiệm Vụ & Bơm Sự Cố Tự Trị (`src/lib/events/MockSimulator.ts`)**:
+  - Mở rộng ngân hàng tính năng từ 4 lên 12 User Stories thực chiến (gRPC v3, Redis Caching, Stripe HMAC, pgvector, Distroless Docker, ArgoCD Canary, Prometheus APM...).
+  - Tích hợp bộ tiêm sự cố ngẫu nhiên (`triggerRandomIncident()`): Tự động tạo cảnh báo SAST CVE, Vitest test failure, P99 Latency spike và Tech Lead Review reject kèm thông báo Toast và shipper phản hồi.
+- **Bộ Kiểm Thử & Xác Nhận Toàn Vẹn Hệ Thống (`scripts/verify_system_integrity.mjs`, `package.json`)**:
+  - Bổ sung lệnh `npm test` tự động kiểm thử 64 chỉ số: Layout 8 trạm, tọa độ 3D polar, tính liên tục của tuyến đường waypoints và feedback loops, tính đầy đủ của 12 feature tasks.
+- **Bảng Chẩn Đoán Cụm & Telemetry Chuẩn SRE Google (`src/components/ui/SystemDiagnosticsModal.tsx`, `src/components/ui/StatusBar.tsx`, `src/components/ui/Topbar.tsx`)**:
+  - Trực quan hóa 4 Tín hiệu Vàng của Google SRE:
+    - **Latency P99 / P95 / P50**: Sóng độ trễ động (Dynamic SVG Waveform) cập nhật liên tục 24 điểm mẫu.
+    - **Traffic (TPS)**: Đo lường tốc độ giao dịch / giây và trạng thái SLO (> 99.9%).
+    - **Errors**: Thống kê số lượng task thành công / cảnh báo và tỷ lệ lỗi (Error Rate %).
+    - **Saturation**: Mức tải bão hòa CPU với thanh trạng thái đổi màu động, đo bộ nhớ Heap JavaScript (`performance.memory`).
+  - Đo đạc tốc độ khung hình thực tế (FPS) bằng `requestAnimationFrame`, hiển thị tình trạng phần cứng WebGL.
+  - Ma trận Đa mô hình FinOps: Bảng theo dõi 8 phòng ban với model engine chỉ định (Gemini 3.8 / DeepSeek V3 / Auto), trạng thái thực thi, token tiêu thụ và thời gian phản hồi.
+  - Hàng đợi Shipper đang lưu thông: Theo dõi tiến độ % vận chuyển của các tàu hàng trên 7 đại lộ nan hoa.
+  - Cụm điều khiển SRE khẩn cấp: Nút kích hoạt Chaos Surge 10x, Rollback phục hồi phiên bản Stable và tiêm sự cố ngẫu nhiên.
+  - Kích hoạt nhanh bằng cách nhấn phím `D` hoặc nhấp vào thanh Telemetry ở góc dưới bên phải màn hình.
+- **Thẻ Thanh Tra Trực Quan Đa Phòng Ban & Chuyển Đổi Raw JSON (`src/components/ui/StationInspectorPanel.tsx`)**:
+  - Nâng cấp toàn diện Tab 1 (Mã nguồn / Artifact) với giao diện thẻ trực quan chuyên biệt theo Output Contract của từng vai trò:
+    - **DevSecOps (`SecurityAudit.json`)**: Bảng điểm SAST AppSec với huy hiệu an toàn/nguy hiểm, số lượng CVE, danh sách các tiêu chuẩn tuân thủ OWASP Top 10, và thẻ chi tiết từng lỗ hổng (CWE, độ nghiêm trọng, vị trí dòng code, mô tả rủi ro và khuyến nghị khắc phục).
+    - **APM Monitor (`ClusterHealth.json`)**: Bảng điều khiển Kubernetes Production với 4 Tín hiệu Vàng của Google SRE (Latency P99, Traffic TPS, Error Rate %, CPU/Memory Saturation), trạng thái Pods HPA và chỉ số SLO Compliance.
+    - **Claude Code Hub (`MilestonePlan.json`)**: Kế hoạch Sprint & Mục tiêu cốt lõi, danh sách thẻ phạm vi kỹ thuật, cảnh báo rủi ro kiến trúc và bảng User Stories chuẩn INVEST (P0/P1/P2, Story Points, Acceptance Gate).
+    - **Nút chuyển đổi đa năng `[Xem Thẻ Báo Cáo / Xem Raw JSON]`**: Cho phép người dùng chuyển qua lại mượt mà giữa giao diện dashboard thẻ đồ họa và mã nguồn JSON thô.
+- **Điều Hướng Trạm Liên Hoàn & Đổi Camera CCTV (`src/components/ui/DeskCamPiP.tsx`, `src/components/ui/Topbar.tsx`, `src/components/ui/KeyboardShortcutsModal.tsx`)**:
+  - Bổ sung phím tắt toàn cục `[` và `]` cho phép nhảy nhanh sang trạm trước đó / trạm kế tiếp theo thứ tự chuỗi DAG.
+  - Tích hợp 2 nút điều hướng `‹` và `›` ngay trên thanh tiêu đề của cửa sổ Desk Cam PiP giúp lướt qua 8 góc máy CCTV cực kỳ thuận tiện.
+  - Bổ sung khối thử nghiệm nhanh trong Tab SOP & Prompt của Inspector Panel: Cho phép lưu Prompt tùy chỉnh và kích hoạt sinh mã độc lập cho trạm đó mà không cần chạy lại toàn bộ pipeline 7 trạm.
+- **Nâng Cấp Bộ Tổng Hợp Âm Thanh Synthesizer (`src/lib/audio/sfx.ts`, `src/store/useTownStore.ts`)**:
+  - Bổ sung hiệu ứng âm thanh Web Audio API:
+    - `playWarp()`: Tiếng lướt không gian khi nhảy góc máy qua phím tắt 1-8.
+    - `playSiren()`: Còi báo động đỏ hai tần số khi kích hoạt Chaos Surge.
+    - `playRewind()`: Tiếng tua ngược thời gian tần số giảm dần khi kích hoạt Rollback khẩn cấp.
+    - `playThunder()`: Tiếng sấm sét rền rĩ khi xuất hiện chớp bão tải.
+
+---
+
 ## [v1.5.1] - 2026-11-01
 ### 🎮 Trải Nghiệm Thanh Tra Trạm Chuẩn Game RTS (Game-Style Station Inspector & Camera Focus)
 - **Trình Thanh Tra Cạnh Bên Không Phong Tỏa Màn Hình (`src/components/ui/StationInspectorPanel.tsx`, `src/app/page.tsx`)**:

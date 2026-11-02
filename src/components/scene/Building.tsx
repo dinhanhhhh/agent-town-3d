@@ -5,6 +5,161 @@ import { AgentRole } from '../../lib/pipeline/stages';
 import { STATIONS_LAYOUT } from '../../lib/scene/layout';
 import { TOKENS } from '../../styles/tokens';
 import { useTownStore } from '../../store/useTownStore';
+import { sfx } from '../../lib/audio/sfx';
+
+interface StationHoloBeaconProps {
+  role: AgentRole;
+  accentColor: number;
+  status?: string;
+  hasArtifact: boolean;
+  isSelected: boolean;
+}
+
+/**
+ * Vành Hologram Trạng Thái 3D (Holographic Status Beacon)
+ * Nổi bật trên nóc trạm làm việc, phản chiếu real-time trạng thái làm việc,
+ * cảnh báo lỗi, gỡ lỗi và biểu tượng kiện hàng artifact hoàn thành
+ */
+const StationHoloBeacon: React.FC<StationHoloBeaconProps> = ({
+  role,
+  accentColor,
+  status,
+  hasArtifact,
+  isSelected,
+}) => {
+  const beaconGroupRef = useRef<THREE.Group>(null);
+  const ring1Ref = useRef<THREE.Mesh>(null);
+  const ring2Ref = useRef<THREE.Mesh>(null);
+  const coreRef = useRef<THREE.Mesh>(null);
+  const beaconLightRef = useRef<THREE.PointLight>(null);
+
+  const isWorking = status === 'working';
+  const isDebugging = status === 'debugging';
+  const isError = status === 'error';
+  const isWaiting = status === 'waiting';
+
+  useFrame((state, delta) => {
+    const t = state.clock.elapsedTime;
+    const speedMult = isWorking ? 2.4 : isDebugging ? 1.8 : 1.0;
+
+    if (beaconGroupRef.current) {
+      beaconGroupRef.current.position.y = 2.45 + Math.sin(t * 2.5 + role.length) * 0.05;
+    }
+    if (ring1Ref.current) {
+      ring1Ref.current.rotation.z += delta * 1.5 * speedMult;
+    }
+    if (ring2Ref.current) {
+      ring2Ref.current.rotation.x -= delta * 1.2 * speedMult;
+      ring2Ref.current.rotation.y += delta * 0.9 * speedMult;
+    }
+    if (coreRef.current) {
+      coreRef.current.rotation.y += delta * 2.0 * speedMult;
+      coreRef.current.rotation.z = Math.sin(t * 3) * 0.15;
+    }
+    if (beaconLightRef.current) {
+      const pulseSpeed = isError ? 12 : isWorking ? 8 : 3;
+      const baseIntensity = isError ? 1.4 : isWorking ? 1.1 : isSelected ? 0.9 : 0.45;
+      beaconLightRef.current.intensity = baseIntensity + Math.sin(t * pulseSpeed) * 0.25;
+    }
+  });
+
+  const coreColor = isError
+    ? 0xef4444
+    : isDebugging
+      ? 0xf59e0b
+      : isWaiting
+        ? 0xa855f7
+        : hasArtifact && !isWorking
+          ? 0x06b6d4
+          : accentColor;
+
+  return (
+    <group ref={beaconGroupRef} position={[0, 2.45, -0.6]}>
+      {/* Vòng holographic chính ngoài cùng */}
+      <mesh ref={ring1Ref} rotation={[0.4, 0, 0]}>
+        <torusGeometry args={[0.26, 0.012, 12, 32]} />
+        <meshBasicMaterial
+          color={isSelected ? 0xfbbf24 : coreColor}
+          transparent
+          opacity={isSelected ? 0.95 : 0.75}
+        />
+      </mesh>
+
+      {/* Vành holographic nghiêng thứ hai quay ngược chiều */}
+      <mesh ref={ring2Ref} rotation={[-0.4, 0.4, 0]}>
+        <torusGeometry args={[0.20, 0.009, 12, 28]} />
+        <meshBasicMaterial
+          color={isError ? 0xf87171 : 0x38bdf8}
+          transparent
+          opacity={0.65}
+        />
+      </mesh>
+
+      {/* Lõi năng lượng / Biểu tượng trạng thái 3D */}
+      <group>
+        {isError ? (
+          <mesh ref={coreRef}>
+            <octahedronGeometry args={[0.13, 0]} />
+            <meshStandardMaterial
+              color={0xef4444}
+              emissive={0xef4444}
+              emissiveIntensity={1.8}
+            />
+          </mesh>
+        ) : isDebugging ? (
+          <mesh ref={coreRef}>
+            <octahedronGeometry args={[0.12, 0]} />
+            <meshStandardMaterial
+              color={0xf59e0b}
+              emissive={0xf59e0b}
+              emissiveIntensity={1.4}
+            />
+          </mesh>
+        ) : hasArtifact && !isWorking ? (
+          /* Khối data-cube phát quang khi đã có artifact bàn giao */
+          <mesh ref={coreRef}>
+            <boxGeometry args={[0.14, 0.14, 0.14]} />
+            <meshStandardMaterial
+              color={0x06b6d4}
+              emissive={0x38bdf8}
+              emissiveIntensity={1.3}
+              roughness={0.2}
+            />
+          </mesh>
+        ) : (
+          /* Khối tinh thể trạng thái làm việc / idle */
+          <mesh ref={coreRef}>
+            <octahedronGeometry args={[isWorking ? 0.12 : 0.08, 0]} />
+            <meshStandardMaterial
+              color={coreColor}
+              emissive={coreColor}
+              emissiveIntensity={isWorking ? 1.5 : 0.7}
+              transparent
+              opacity={isWorking ? 0.95 : 0.65}
+            />
+          </mesh>
+        )}
+      </group>
+
+      {/* Vòng hào quang vàng khi trạm được chọn (Active Selection Halo) */}
+      {isSelected && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]}>
+          <ringGeometry args={[0.32, 0.36, 32]} />
+          <meshBasicMaterial color={0xfbbf24} side={THREE.DoubleSide} transparent opacity={0.85} />
+        </mesh>
+      )}
+
+      {/* Nguồn sáng phát quang từ Hologram rọi xuống */}
+      <pointLight
+        ref={beaconLightRef}
+        color={coreColor}
+        distance={2.8}
+        decay={2}
+        position={[0, 0, 0]}
+      />
+    </group>
+  );
+};
 
 interface BuildingProps {
   role: AgentRole;
@@ -83,6 +238,7 @@ export const Building: React.FC<BuildingProps> = ({ role }) => {
       rotation={[0, layout.rotationY, 0]}
       onClick={(e) => {
         e.stopPropagation();
+        sfx.playPop();
         selectAgent(role);
       }}
       onPointerOver={() => {
@@ -255,6 +411,15 @@ export const Building: React.FC<BuildingProps> = ({ role }) => {
           position={[0, -0.15, 0]}
         />
       </group>
+
+      {/* 4.1 TRẠM HOLOGRAPHIC STATUS BEACON (3D Floating Status Badge & Artifact Indicator) */}
+      <StationHoloBeacon
+        role={role}
+        accentColor={layout.accentColor}
+        status={agentStatus}
+        hasArtifact={hasArtifact}
+        isSelected={isSelected}
+      />
 
       {/* 5. BÀN NÂNG CÔNG THÁI HỌC CÔNG NGHỆ CAO (High-Tech Smart Standing Desk) */}
       <group position={[0, 0.22, -0.6]}>

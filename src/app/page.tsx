@@ -13,6 +13,8 @@ import { ArtifactModal } from '../components/ui/ArtifactModal';
 import { ApiKeyModal } from '../components/ui/ApiKeyModal';
 import { AgentDossierModal } from '../components/ui/AgentDossierModal';
 import { ExportModal } from '../components/ui/ExportModal';
+import { KeyboardShortcutsModal } from '../components/ui/KeyboardShortcutsModal';
+import { SystemDiagnosticsModal } from '../components/ui/SystemDiagnosticsModal';
 import { LiveStreamConsole } from '../components/ui/LiveStreamConsole';
 import { DeskCamPiP } from '../components/ui/DeskCamPiP';
 import { ToastContainer } from '../components/ui/ToastContainer';
@@ -67,6 +69,8 @@ export default function Home() {
       <ApiKeyModal />
       <AgentDossierModal />
       <ExportModal />
+      <KeyboardShortcutsModal />
+      <SystemDiagnosticsModal />
     </main>
   );
 }

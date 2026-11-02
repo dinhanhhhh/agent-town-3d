@@ -13,6 +13,7 @@ export const StatusBar: React.FC = () => {
   const zoomIn = useTownStore((s) => s.zoomIn);
   const zoomOut = useTownStore((s) => s.zoomOut);
   const resetCamera = useTownStore((s) => s.resetCamera);
+  const openDiagnosticsModal = useTownStore((s) => s.openDiagnosticsModal);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sparklineData = useRef<number[]>([18, 22, 25, 20, 24, 28, 22, 26, 30, 24, 28]);
@@ -131,7 +132,13 @@ export const StatusBar: React.FC = () => {
       </div>
 
       {/* APM, Dynamic Weather & Real-Time Clock Telemetry Bar */}
-      <div className="pointer-events-auto flex items-center gap-1.5 sm:gap-2.5 px-2 sm:px-3.5 py-1 sm:py-1.5 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-xl sm:rounded-2xl shadow-xl text-[10px] sm:text-xs whitespace-nowrap">
+      <div
+        onClick={() => {
+          openDiagnosticsModal(true);
+        }}
+        className="pointer-events-auto cursor-pointer hover:border-cyan-500/80 hover:bg-slate-900/95 transition-all flex items-center gap-1.5 sm:gap-2.5 px-2 sm:px-3.5 py-1 sm:py-1.5 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-xl sm:rounded-2xl shadow-xl text-[10px] sm:text-xs whitespace-nowrap group"
+        title="Bấm để mở Bảng Chẩn đoán SRE & Telemetry Hệ thống (Phím tắt: D)"
+      >
         {/* Weather & Real-Time Clock (Responsive across all screens) */}
         <div className="flex items-center gap-1 sm:gap-1.5 text-slate-300">
           <span className="text-xs sm:text-sm">{weatherDisplay.icon}</span>

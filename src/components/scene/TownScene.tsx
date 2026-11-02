@@ -17,6 +17,47 @@ import { CameraRig } from './CameraRig';
 import { AgentRole, STAGE_ORDER } from '../../lib/pipeline/stages';
 import { useTownStore } from '../../store/useTownStore';
 import { simulator } from '../../lib/events/MockSimulator';
+import { sfx } from '../../lib/audio/sfx';
+
+const ChaosLightningStorm: React.FC = () => {
+  const isChaosRunning = useTownStore((s) => s.isChaosRunning);
+  const lightRef = React.useRef<THREE.PointLight>(null);
+  const flashTimer = React.useRef(0);
+
+  useFrame((_, delta) => {
+    if (!lightRef.current) return;
+    if (!isChaosRunning) {
+      lightRef.current.intensity = 0;
+      return;
+    }
+
+    flashTimer.current -= delta;
+    if (flashTimer.current <= 0) {
+      // Tần suất ngẫu nhiên chớp sấm sét trong bão tải
+      if (Math.random() < 0.035) {
+        lightRef.current.intensity = 3.6 + Math.random() * 2.2;
+        flashTimer.current = 0.28;
+        sfx.playThunder();
+      } else {
+        lightRef.current.intensity = 0;
+      }
+    } else {
+      // Phai dần cường độ chớp
+      lightRef.current.intensity = Math.max(0, lightRef.current.intensity - delta * 14);
+    }
+  });
+
+  return (
+    <pointLight
+      ref={lightRef}
+      position={[0, 18, 0]}
+      color="#e0f2fe"
+      intensity={0}
+      distance={80}
+      decay={1.5}
+    />
+  );
+};
 
 const CourierTicker: React.FC = () => {
   useFrame((_, delta) => {
@@ -127,6 +168,9 @@ export const TownScene: React.FC = () => {
 
         {/* Nguồn sáng phụ fill light */}
         <directionalLight position={[-20, 15, -15]} intensity={fillIntensity} color={fillColor} />
+
+        {/* Nguồn chớp sấm sét động khi bão tải Chaos Surge */}
+        <ChaosLightningStorm />
 
         {/* Hòn đảo bay 3D diorama (vát tự nhiên và chóp đá lơ lửng) */}
         <Island />

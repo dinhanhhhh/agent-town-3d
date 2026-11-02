@@ -61,6 +61,8 @@ export const StationInspectorPanel: React.FC = () => {
   const isDossierModalOpen = useTownStore((s) => s.isDossierModalOpen);
   const isArtifactModalOpen = useTownStore((s) => s.isArtifactModalOpen);
   const isExportModalOpen = useTownStore((s) => s.isExportModalOpen);
+  const isKeyboardModalOpen = useTownStore((s) => s.isKeyboardModalOpen);
+  const isDiagnosticsModalOpen = useTownStore((s) => s.isDiagnosticsModalOpen);
 
   const [activeTab, setActiveTab] = useState<'artifact' | 'prompt' | 'telemetry'>('artifact');
   const [copied, setCopied] = useState(false);
@@ -89,7 +91,7 @@ export const StationInspectorPanel: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedAgentRole, isApprovalModalOpen, isArtifactModalOpen, isDossierModalOpen, selectAgent]);
 
-  // Phân tích review comments luôn đặt TRƯỚC early return để tuân thủ tuyệt đối React Rules of Hooks (tránh React Error #310/#300)
+  // Phân tích review, security, monitor, orchestrator JSON luôn đặt TRƯỚC early return để tuân thủ tuyệt đối React Rules of Hooks (tránh React Error #310/#300)
   const reviewArtifactSource =
     isRealRunning && streamingStage === 'review'
       ? streamingContent
@@ -104,6 +106,48 @@ export const StationInspectorPanel: React.FC = () => {
     }
   }, [reviewArtifactSource]);
 
+  const securityArtifactSource =
+    isRealRunning && streamingStage === 'security'
+      ? streamingContent
+      : realArtifacts.security?.content || ARTIFACT_PREVIEWS.security?.content || '';
+
+  const securityData = useMemo(() => {
+    if (!securityArtifactSource) return null;
+    try {
+      return JSON.parse(securityArtifactSource);
+    } catch {
+      return null;
+    }
+  }, [securityArtifactSource]);
+
+  const monitorArtifactSource =
+    isRealRunning && streamingStage === 'monitor'
+      ? streamingContent
+      : realArtifacts.monitor?.content || ARTIFACT_PREVIEWS.monitor?.content || '';
+
+  const monitorData = useMemo(() => {
+    if (!monitorArtifactSource) return null;
+    try {
+      return JSON.parse(monitorArtifactSource);
+    } catch {
+      return null;
+    }
+  }, [monitorArtifactSource]);
+
+  const orchestratorArtifactSource =
+    isRealRunning && streamingStage === 'orchestrator'
+      ? streamingContent
+      : realArtifacts.orchestrator?.content || ARTIFACT_PREVIEWS.orchestrator?.content || '';
+
+  const orchestratorData = useMemo(() => {
+    if (!orchestratorArtifactSource) return null;
+    try {
+      return JSON.parse(orchestratorArtifactSource);
+    } catch {
+      return null;
+    }
+  }, [orchestratorArtifactSource]);
+
   // Nếu không chọn trạm nào hoặc đang mở modal toàn màn hình khác thì không render
   if (
     !selectedAgentRole ||
@@ -112,7 +156,9 @@ export const StationInspectorPanel: React.FC = () => {
     isApiKeyModalOpen ||
     isDossierModalOpen ||
     isArtifactModalOpen ||
-    isExportModalOpen
+    isExportModalOpen ||
+    isKeyboardModalOpen ||
+    isDiagnosticsModalOpen
   ) {
     return null;
   }
@@ -444,12 +490,18 @@ export const StationInspectorPanel: React.FC = () => {
                   )}
                 </div>
 
-                {selectedAgentRole === 'review' && (
+                {(selectedAgentRole === 'review' ||
+                  selectedAgentRole === 'security' ||
+                  selectedAgentRole === 'monitor' ||
+                  selectedAgentRole === 'orchestrator') && (
                   <button
-                    onClick={() => setShowRawJson(!showRawJson)}
+                    onClick={() => {
+                      sfx.playPop();
+                      setShowRawJson(!showRawJson);
+                    }}
                     className="text-[10px] text-cyan-300 hover:underline shrink-0"
                   >
-                    {showRawJson ? 'Xem thẻ Review' : 'Xem Raw JSON'}
+                    {showRawJson ? 'Xem Thẻ Báo Cáo' : 'Xem Raw JSON'}
                   </button>
                 )}
               </div>
@@ -528,8 +580,244 @@ export const StationInspectorPanel: React.FC = () => {
                 </div>
               )}
 
-              {/* Other Roles: Formatted Code Block */}
-              {(selectedAgentRole !== 'dev' && (selectedAgentRole !== 'review' || showRawJson)) && (
+              {/* DevSecOps: SAST Vulnerabilities & OWASP Scorecard */}
+              {selectedAgentRole === 'security' && !showRawJson && securityData && (
+                <div className="space-y-2.5">
+                  <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-400">KẾT QUẢ KIỂM TOÁN SAST</span>
+                      <h4
+                        className={`text-base font-bold flex items-center gap-1.5 ${
+                          securityData.status === 'PASSED'
+                            ? 'text-emerald-400'
+                            : securityData.status === 'WARNING'
+                            ? 'text-amber-400'
+                            : 'text-rose-400'
+                        }`}
+                      >
+                        {securityData.status === 'PASSED'
+                          ? '🛡️ SAST PASSED · AN TOÀN'
+                          : securityData.status === 'WARNING'
+                          ? '⚠️ CẢNH BÁO BẢO MẬT'
+                          : '🚨 CRITICAL VULNERABILITY'}
+                      </h4>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] text-slate-400">SỐ LỖ HỔNG (CVE)</span>
+                      <p
+                        className={`text-base font-bold ${
+                          (securityData.cveCount || 0) === 0 ? 'text-emerald-400' : 'text-rose-400'
+                        }`}
+                      >
+                        {securityData.cveCount ?? 0} CVEs
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Compliance badges */}
+                  {Array.isArray(securityData.compliance) && securityData.compliance.length > 0 && (
+                    <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+                        Tiêu Chuẩn Tuân Thủ:
+                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {securityData.compliance.map((item: string, idx: number) => (
+                          <span
+                            key={idx}
+                            className="px-2 py-0.5 rounded-full bg-emerald-950/60 text-emerald-300 border border-emerald-500/30 text-[10px] font-semibold"
+                          >
+                            ✓ {item}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Vulnerabilities list */}
+                  {Array.isArray(securityData.vulnerabilities) && securityData.vulnerabilities.length > 0 ? (
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                        Danh sách rủi ro phát hiện ({securityData.vulnerabilities.length}):
+                      </span>
+                      {securityData.vulnerabilities.map((vuln: any, idx: number) => (
+                        <div
+                          key={idx}
+                          className="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800 text-xs space-y-1"
+                        >
+                          <div className="flex items-center justify-between gap-1 text-[10px]">
+                            <span className="font-bold text-rose-300 font-mono">
+                              {vuln.id || 'CVE-UNKNOWN'}
+                            </span>
+                            <span
+                              className={`px-1.5 py-0.2 rounded font-bold uppercase text-[9px] ${
+                                vuln.severity === 'CRITICAL' || vuln.severity === 'HIGH'
+                                  ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                              }`}
+                            >
+                              {vuln.severity || 'HIGH'}
+                            </span>
+                          </div>
+                          {vuln.location && (
+                            <p className="text-[10px] text-cyan-400 font-mono">{vuln.location}</p>
+                          )}
+                          <p className="text-slate-300 font-sans leading-relaxed">{vuln.issue}</p>
+                          {vuln.remediation && (
+                            <div className="p-1.5 rounded bg-slate-950 border border-slate-800 text-[10px] text-slate-300 font-sans">
+                              <span className="font-bold text-emerald-400">Khắc phục: </span>
+                              {vuln.remediation}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-3 rounded-xl bg-slate-900/40 border border-slate-800 text-center text-xs text-slate-400">
+                      ✨ Không phát hiện rủi ro bảo mật hay rò rỉ Secret trong bản vá này.
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* APM Monitor: 4 Golden Signals & Cluster Health */}
+              {selectedAgentRole === 'monitor' && !showRawJson && monitorData && (
+                <div className="space-y-2.5">
+                  <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-400">CỤM KUBERNETES PRODUCTION</span>
+                      <h4 className="text-base font-bold text-emerald-400 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        {monitorData.cluster || 'k8s-prod-cluster'}
+                      </h4>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] text-slate-400">TRẠNG THÁI RELEASE</span>
+                      <p className="text-xs font-bold text-cyan-300">{monitorData.canaryStage || '100% Traffic'}</p>
+                    </div>
+                  </div>
+
+                  {/* 4 Golden Signals Scorecard */}
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="p-2.5 rounded-xl bg-slate-900/70 border border-slate-800">
+                      <span className="text-[10px] text-slate-400 block mb-0.5">LATENCY (P99)</span>
+                      <span className="text-base font-bold text-emerald-300 font-mono">
+                        {monitorData.p99Latency || '16ms'}
+                      </span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-slate-900/70 border border-slate-800">
+                      <span className="text-[10px] text-slate-400 block mb-0.5">TRAFFIC (TPS)</span>
+                      <span className="text-base font-bold text-cyan-300 font-mono">
+                        {monitorData.tps || 385} TPS
+                      </span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-slate-900/70 border border-slate-800">
+                      <span className="text-[10px] text-slate-400 block mb-0.5">ERROR RATE</span>
+                      <span className="text-base font-bold text-amber-300 font-mono">
+                        {monitorData.errorRate || '0.01%'}
+                      </span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-slate-900/70 border border-slate-800">
+                      <span className="text-[10px] text-slate-400 block mb-0.5">CPU & MEMORY</span>
+                      <span className="text-xs font-bold text-purple-300 font-mono block truncate">
+                        {monitorData.cpuUsage || '26%'} · {monitorData.memoryUsage || '410Mi'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* SLO Compliance & Pods */}
+                  <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between text-xs">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block">SLO Compliance</span>
+                      <span className="text-emerald-400 font-bold">{monitorData.sloCompliance || '99.98% Healthy'}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] text-slate-400 block">HPA Auto-Scaler Pods</span>
+                      <span className="text-slate-300 font-mono font-bold">{monitorData.activePods || '4/12 Pods'}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Orchestrator: Milestone Plan & INVEST User Stories */}
+              {selectedAgentRole === 'orchestrator' && !showRawJson && orchestratorData && (
+                <div className="space-y-2.5">
+                  <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                    <span className="text-[10px] text-purple-400 font-bold uppercase tracking-wider block mb-0.5">
+                      {orchestratorData.milestone || 'Sprint #24 Milestone'}
+                    </span>
+                    <h4 className="text-sm font-bold text-white leading-snug">
+                      {orchestratorData.goal || 'Mục tiêu kỹ thuật & điều phối'}
+                    </h4>
+                  </div>
+
+                  {/* Technical Scope & Risks */}
+                  {Array.isArray(orchestratorData.technicalScope) && orchestratorData.technicalScope.length > 0 && (
+                    <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                        Phạm vi kỹ thuật:
+                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {orchestratorData.technicalScope.map((scope: string, idx: number) => (
+                          <span
+                            key={idx}
+                            className="px-2 py-0.5 rounded-lg bg-blue-950/60 text-blue-300 border border-blue-500/30 text-[10px]"
+                          >
+                            {scope}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* User Stories */}
+                  {Array.isArray(orchestratorData.userStories) && orchestratorData.userStories.length > 0 && (
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                        Kế hoạch User Stories ({orchestratorData.userStories.length} stories):
+                      </span>
+                      {orchestratorData.userStories.map((story: any, idx: number) => (
+                        <div
+                          key={idx}
+                          className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs space-y-1"
+                        >
+                          <div className="flex items-center justify-between gap-1 text-[10px]">
+                            <span className="font-bold text-purple-300 font-mono">
+                              {story.id || `US-${idx + 1}`}
+                            </span>
+                            <div className="flex items-center gap-1">
+                              <span className="px-1.5 py-0.2 rounded bg-purple-900/60 text-purple-300 border border-purple-700/60 font-bold">
+                                {story.priority || 'P0'}
+                              </span>
+                              <span className="px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                                {story.storyPoints ? `${story.storyPoints} pts` : '3 pts'}
+                              </span>
+                            </div>
+                          </div>
+                          <p className="font-semibold text-white leading-snug">{story.title}</p>
+                          {story.acceptanceGate && (
+                            <p className="text-[10px] text-slate-400 font-sans">
+                              <span className="text-emerald-400 font-bold">Nghiệm thu: </span>
+                              {story.acceptanceGate}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Other Roles or Raw JSON fallback */}
+              {selectedAgentRole !== 'dev' &&
+                (showRawJson ||
+                  (selectedAgentRole === 'review' && !reviewData) ||
+                  (selectedAgentRole === 'security' && !securityData) ||
+                  (selectedAgentRole === 'monitor' && !monitorData) ||
+                  (selectedAgentRole === 'orchestrator' && !orchestratorData) ||
+                  (selectedAgentRole !== 'review' &&
+                    selectedAgentRole !== 'security' &&
+                    selectedAgentRole !== 'monitor' &&
+                    selectedAgentRole !== 'orchestrator')) && (
                 <div className="rounded-xl border border-slate-800 bg-slate-950 p-3 overflow-x-auto">
                   <pre className="text-slate-300 leading-relaxed font-mono whitespace-pre-wrap word-break">
                     {artifactContent || '(Chưa có dữ liệu sinh ra từ trạm này)'}
@@ -585,6 +873,46 @@ export const StationInspectorPanel: React.FC = () => {
                   className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition shadow-lg shadow-purple-900/30"
                 >
                   💾 Lưu Thay Đổi
+                </button>
+              </div>
+
+              {/* Quick Station Run / Sandbox Execution Card */}
+              <div className="mt-3 p-3 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-200 flex items-center gap-1.5">
+                    <span>⚡</span>
+                    <span>Thử nghiệm Sinh mã Riêng trạm này</span>
+                  </span>
+                  <span className="text-[10px] text-cyan-400 font-mono uppercase">
+                    {agentModelProviders[selectedAgentRole] || 'auto'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 font-sans">
+                  Chạy riêng AI cho trạm này với System Prompt vừa sửa mà không cần kích hoạt lại toàn bộ 7 trạm khác.
+                </p>
+                <button
+                  onClick={() => {
+                    handleSavePrompt();
+                    rerunStage(selectedAgentRole);
+                  }}
+                  disabled={isRealRunning}
+                  className={`w-full py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition shadow-md ${
+                    isRealRunning
+                      ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-cyan-950/40'
+                  }`}
+                >
+                  {isStreamingHere ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Đang sinh mã AI trực tiếp...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>▶️</span>
+                      <span>Lưu & Chạy Thử Nghiệm Ngay</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
