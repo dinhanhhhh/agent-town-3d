@@ -4,6 +4,22 @@ Tất cả các thay đổi đáng chú ý của dự án **Agent Town 3D** sẽ
 
 ---
 
+## [v1.6.3] - 2026-11-02
+### 🚀 Thanh Dock Đáy Trung Tâm Tích Hợp (Unified Center HUD), Tối Ưu Tốc Độ Đổi Bầu Trời & Tinh Chỉnh Bong Bóng Thoại 3D
+- **Hợp nhất Thanh Dock Trung Tâm Đáy Màn Hình (`src/app/page.tsx`, `src/components/ui/RoleChips.tsx`, `src/components/ui/StatusBar.tsx`)**:
+  - Gom toàn bộ các nút điều khiển đáy vào **một thanh dock trung tâm duy nhất** (`bottom-2 sm:bottom-3 left-1/2 -translate-x-1/2`), đồng bộ phong cách bo tròn và màu sắc cao cấp với `Topbar`.
+  - Thứ tự trên thanh: `[8 Trạm AI] | [Cụm Zoom + - Reset] | [Thời tiết & SRE Telemetry P99/TPS/CPU]`.
+  - Triệt tiêu hoàn toàn khoảng trống lớn vô lý khi kéo dãn cửa sổ và loại bỏ nguy cơ va chạm đè chồng trên màn hình nhỏ.
+- **Triệt tiêu độ trễ khi chuyển đổi bầu trời (`src/components/scene/Lanterns.tsx`, `src/components/scene/TownScene.tsx`)**:
+  - Mount thường trực 11 nguồn sáng `pointLight` với `intensity = 0` khi ban ngày, giúp Three.js biên dịch shaders cố định ngay từ frame đầu tiên thay vì bị đơ khựng 1-2s khi người dùng bấm chuyển sang hoàng hôn/đêm.
+  - Sử dụng 3 lớp background cross-fade bằng `opacity` chuyển cảnh 60fps trên GPU compositor thread.
+  - Gỡ bỏ lệnh `gl.compile` cưỡng bức để tránh lỗi unmount canvas.
+- **Khắc phục triệt để rung giật nhãn 3D và che khuất trạm phía sau (`src/components/scene/Labels.tsx`, `src/lib/scene/layout.ts`)**:
+  - Hạ cao độ `bubbleOffset` xuống $[0, 2.9, 0]$ sát nóc trạm ($y = 2.45\text{m}$), mũi nhọn bóng thoại cắm thẳng vào đỉnh trạm của chính nó, không bay lơ lửng che Hub 0 hoặc các trạm lân cận.
+  - Bỏ `.toFixed(1)` để trình duyệt tận dụng khả năng định vị subpixel mượt mà của GPU, xóa bỏ `transition-all` trên container `translate3d`.
+- **Defensive Stringification phòng thủ toàn diện (`src/components/ui/StationInspectorPanel.tsx`)**:
+  - Kiểm tra và serialize an toàn cho mọi trường `vulnerabilities`, `compliance`, `technicalScope`, `userStories` để ngăn chặn tuyệt đối lỗi React Error #31.
+
 ## [v1.6.2] - 2026-11-02
 ### ⚡ Triệt Tiêu Rung Lắc Nhãn 3D, Sửa Lỗi Crash React #31 & Tách Tầng Chống Đè Thanh Dock
 - **Triệt tiêu hoàn toàn hiện tượng rung lắc giật cục của nhãn 3D (`src/components/scene/Labels.tsx`, `src/components/scene/TownScene.tsx`)**:

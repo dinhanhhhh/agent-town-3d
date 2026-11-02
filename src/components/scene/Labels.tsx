@@ -92,14 +92,12 @@ export const OverlayProjector: React.FC = () => {
         } else {
           const bx = (vec.x * 0.5 + 0.5) * size.width;
           const by = (-vec.y * 0.5 + 0.5) * size.height;
-          // Nếu nằm ngoài màn hình thì ẩn, chỉ kẹp nhẹ 20px ở sát mép để không giật bóng thoại vào giữa đảo
-          if (bx < -200 || bx > size.width + 200 || by < -150 || by > size.height + 150) {
+          // Ẩn khi nằm ngoài màn hình; không kẹp biên nhân tạo để không bị giật snapping
+          if (bx < -220 || bx > size.width + 220 || by < -160 || by > size.height + 160) {
             bubbleEl.style.display = 'none';
           } else {
             bubbleEl.style.display = 'block';
-            const clampedBx = Math.max(20, Math.min(size.width - 20, bx));
-            const clampedBy = Math.max(50, Math.min(size.height - 30, by));
-            bubbleEl.style.transform = `translate3d(${clampedBx.toFixed(1)}px, ${clampedBy.toFixed(1)}px, 0) translate(-50%, -100%)`;
+            bubbleEl.style.transform = `translate3d(${bx}px, ${by}px, 0) translate(-50%, -100%)`;
           }
         }
       }
@@ -118,12 +116,12 @@ export const OverlayProjector: React.FC = () => {
         } else {
           const lx = (vec.x * 0.5 + 0.5) * size.width;
           const ly = (-vec.y * 0.5 + 0.5) * size.height;
-          // Neo tuyệt đối theo nóc tòa nhà 3D, không kẹp lề để nhãn không bị giằng xé hay rung lắc khi xoay camera
-          if (lx < -120 || lx > size.width + 120 || ly < -80 || ly > size.height + 80) {
+          // Neo tuyệt đối theo nóc tòa nhà 3D mượt mà 60fps không rung giật
+          if (lx < -140 || lx > size.width + 140 || ly < -100 || ly > size.height + 100) {
             labelEl.style.display = 'none';
           } else {
             labelEl.style.display = 'block';
-            labelEl.style.transform = `translate3d(${lx.toFixed(1)}px, ${ly.toFixed(1)}px, 0) translate(-50%, -50%)`;
+            labelEl.style.transform = `translate3d(${lx}px, ${ly}px, 0) translate(-50%, -50%)`;
           }
         }
       }
@@ -147,7 +145,7 @@ export const OverlayProjector: React.FC = () => {
             courierEl.style.display = 'none';
           } else {
             courierEl.style.display = 'block';
-            courierEl.style.transform = `translate3d(${cx.toFixed(1)}px, ${cy.toFixed(1)}px, 0) translate(-50%, -50%)`;
+            courierEl.style.transform = `translate3d(${cx}px, ${cy}px, 0) translate(-50%, -50%)`;
           }
         }
       }
@@ -231,7 +229,7 @@ export const StationOverlay: React.FC = () => {
                       selectAgent(role);
                     }
                   }}
-                  className={`cursor-pointer group transition-all duration-300 transform hover:scale-105 select-none w-max min-w-[120px] max-w-[180px] sm:max-w-[220px] md:max-w-[250px] p-1.5 sm:p-2 rounded-xl sm:rounded-2xl shadow-xl border backdrop-blur-xl bg-slate-950/95 mb-0.5 ${glowStyle.border} ${glowStyle.shadow}`}
+                  className={`cursor-pointer group select-none w-max min-w-[120px] max-w-[180px] sm:max-w-[220px] md:max-w-[250px] p-1.5 sm:p-2 rounded-xl sm:rounded-2xl shadow-xl border backdrop-blur-xl bg-slate-950/95 mb-0.5 transition-colors duration-150 hover:border-cyan-400 ${glowStyle.border} ${glowStyle.shadow}`}
                 >
                   {/* Bubble Header: Avatar, Name & Live status dot */}
                   <div className="flex items-center justify-between gap-1 pb-0.5 border-b border-slate-800/80 mb-1">
@@ -288,8 +286,8 @@ export const StationOverlay: React.FC = () => {
                     e.stopPropagation();
                     selectAgent(role);
                   }}
-                  className={`cursor-pointer flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-slate-950/90 border border-slate-700/80 text-white shadow-xl hover:border-slate-400 transition-all duration-300 whitespace-nowrap backdrop-blur-md ${
-                    shouldShowBubble ? 'opacity-0 scale-90 pointer-events-none' : 'opacity-100 scale-100'
+                  className={`cursor-pointer flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-slate-950/90 border border-slate-700/80 text-white shadow-xl hover:border-slate-400 transition-colors duration-150 whitespace-nowrap backdrop-blur-md ${
+                    shouldShowBubble ? 'opacity-0 pointer-events-none' : 'opacity-100'
                   }`}
                 >
                   <span

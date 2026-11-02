@@ -1,4 +1,4 @@
-# 🏰 Thị trấn DevOps 3D (Agent Town 3D) v1.6.0
+# 🏰 Thị trấn DevOps 3D (Agent Town 3D) v1.6.3
 
 > **Mô phỏng Hệ thống 8 Autonomous AI Agents & DevOps SDLC Pipeline trên Hòn đảo bay 3D Isometric Diorama**  
 > Xây dựng với **Next.js 16 (Turbopack)**, **React 19**, **Three.js / React Three Fiber v9**, **Google Gemini API**, **DeepSeek V3**, **Zustand**, và **Web Speech & Audio API**.
@@ -7,7 +7,7 @@
 [![React](https://img.shields.io/badge/React-19.3-blue?logo=react)](https://react.dev/)
 [![React Three Fiber](https://img.shields.io/badge/R3F-v9-blue?logo=three.js)](https://docs.pmnd.rs/react-three-fiber)
 [![Gemini & DeepSeek](https://img.shields.io/badge/AI_Engine-Gemini_3.8_|_DeepSeek_V3-orange?logo=google)](https://ai.google.dev/)
-[![Version](https://img.shields.io/badge/Release-v1.6.0-emerald)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Release-v1.6.3-emerald)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ---

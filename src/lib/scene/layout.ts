@@ -33,7 +33,7 @@ export const STATIONS_LAYOUT: Record<AgentRole, StationLayout> = {
     wallColor: TOKENS.palette3D.creamWall,
     accentColor: 0x38bdf8,
     buildingType: 'office',
-    bubbleOffset: [0, 4.5, 0],
+    bubbleOffset: [0, 2.9, 0],
     focusCamera: [0, 2.0, 0],
   },
   pm: {
@@ -46,7 +46,7 @@ export const STATIONS_LAYOUT: Record<AgentRole, StationLayout> = {
     wallColor: TOKENS.palette3D.creamWall,
     accentColor: 0x3b82f6,
     buildingType: 'office',
-    bubbleOffset: [0, 4.8, 0],
+    bubbleOffset: [0, 2.9, 0],
     focusCamera: [-6.5, 1.6, -6.5],
   },
   dev: {
@@ -59,7 +59,7 @@ export const STATIONS_LAYOUT: Record<AgentRole, StationLayout> = {
     wallColor: TOKENS.palette3D.wood,
     accentColor: 0xef4444,
     buildingType: 'workshop',
-    bubbleOffset: [0, 4.6, 0],
+    bubbleOffset: [0, 2.9, 0],
     focusCamera: [-9.2, 1.6, 0],
   },
   review: {
@@ -72,7 +72,7 @@ export const STATIONS_LAYOUT: Record<AgentRole, StationLayout> = {
     wallColor: TOKENS.palette3D.creamWall,
     accentColor: 0xeab308,
     buildingType: 'windmill',
-    bubbleOffset: [0, 4.5, 0],
+    bubbleOffset: [0, 2.9, 0],
     focusCamera: [-6.5, 1.6, 6.5],
   },
   qa: {
@@ -85,7 +85,7 @@ export const STATIONS_LAYOUT: Record<AgentRole, StationLayout> = {
     wallColor: TOKENS.palette3D.creamWall,
     accentColor: 0xa855f7,
     buildingType: 'lab',
-    bubbleOffset: [0, 4.4, 0],
+    bubbleOffset: [0, 2.9, 0],
     focusCamera: [6.5, 1.6, -6.5],
   },
   security: {
@@ -98,7 +98,7 @@ export const STATIONS_LAYOUT: Record<AgentRole, StationLayout> = {
     wallColor: TOKENS.palette3D.stone,
     accentColor: 0x14b8a6,
     buildingType: 'fortress',
-    bubbleOffset: [0, 4.4, 0],
+    bubbleOffset: [0, 2.9, 0],
     focusCamera: [9.2, 1.6, 0],
   },
   devops: {
@@ -111,7 +111,7 @@ export const STATIONS_LAYOUT: Record<AgentRole, StationLayout> = {
     wallColor: TOKENS.palette3D.darkStone,
     accentColor: 0xf97316,
     buildingType: 'harbor',
-    bubbleOffset: [0, 4.8, 0],
+    bubbleOffset: [0, 2.9, 0],
     focusCamera: [6.5, 1.6, 6.5],
   },
   monitor: {
@@ -124,7 +124,7 @@ export const STATIONS_LAYOUT: Record<AgentRole, StationLayout> = {
     wallColor: TOKENS.palette3D.stone,
     accentColor: 0x22c55e,
     buildingType: 'watchtower',
-    bubbleOffset: [0, 4.8, 0],
+    bubbleOffset: [0, 2.9, 0],
     focusCamera: [0, 2.6, -9.2],
   },
 };

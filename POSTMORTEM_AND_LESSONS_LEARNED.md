@@ -662,6 +662,41 @@
 
 ---
 
+## 27. Sự cố 27: Đơ giao diện khi chuyển bầu trời lần đầu; Canvas 3D mất đối tượng; Thanh Dock đáy bị hở khoảng trống lớn và Bong bóng thoại 3D che khuất trạm phía sau
+
+### 🔴 Triệu chứng (Symptom)
+1. **Đơ/khựng 1-2 giây khi bấm chuyển chu kỳ ngày/đêm lần đầu:** Người dùng bấm nút chuyển đổi bầu trời (Ngày ➔ Hoàng hôn ➔ Đêm) thì trang web bị khựng đơ một khoảng thời gian trước khi hiển thị ánh đèn.
+2. **Hòn đảo 3D biến mất hoàn toàn, chỉ còn nhãn HTML lơ lửng trên nền trời xanh:** Sau khi phục hồi từ lỗi giao diện hoặc khởi tạo, Canvas WebGL bị trắng/trong suốt, cây cối, lâu đài và đảo đá biến mất, chỉ còn các nhãn 2D HTML trôi nổi.
+3. **Thanh Dock mép dưới bị chia cắt rời rạc, tạo khoảng trống lớn vô lý:** `RoleChips` dạt tít sang góc trái, `StatusBar` dạt sang góc phải, ở giữa hở một khoảng trống mênh mông trên màn hình rộng; trên màn hình nhỏ lại có nguy cơ va chạm.
+4. **Bong bóng thoại 3D trôi quá cao che khuất các trạm phía sau và nhãn trạm rung lắc:** Bóng thoại của Release Eng đè lên Lâu đài Hub 0, bóng thoại của DevSecOps đè lên nhãn trạm QA; khi lia camera các nhãn trạm bị rung giật vi mô.
+
+### 🔍 Nguyên nhân gốc rễ (Root Cause)
+1. **Tái biên dịch Shaders hàng loạt do Mount/Unmount Nguồn sáng & Gọi `gl.compile`:**
+   - Trong `Lanterns.tsx`, 11 nguồn sáng `pointLight` được render điều kiện `{isLit && <pointLight ... />}`. Khi chuyển sang hoàng hôn/đêm, 11 nguồn sáng mới được gắn vào scene graph, làm Three.js thay đổi chỉ thị tiền xử lý `#define NUM_POINT_LIGHTS`, buộc tất cả `MeshStandardMaterial` trên toàn bộ hòn đảo phải biên dịch lại đồng bộ trên GPU thread.
+   - Việc gọi `gl.compile(scene, camera)` trong `useEffect` gây unhandled exception khi cấu trúc scene chưa ổn định, khiến React Tree bên trong `<Canvas>` bị unmount hoàn toàn.
+2. **Cấu trúc Flexbox `justify-between` đẩy 2 đầu:**
+   - Đặt `RoleChips` và `StatusBar` trong container `flex justify-between` khiến hai thành phần bị kéo dạt ra 2 biên màn hình, phá vỡ tính đối xứng của một HUD thanh dock trung tâm giống như `Topbar`.
+3. **Cao độ `bubbleOffset` quá lớn trong phép chiếu Isometric:**
+   - `bubbleOffset` được đặt ở $[0, 4.4 \sim 4.8, 0]$ kết hợp với `translate(-50%, -100%)` đã đẩy trọng tâm bóng thoại lên độ cao tương đương $y \approx 7.5\text{m}$. Trong góc nhìn isometric 35 độ, điểm này bị chiếu lệch lên trên theo trục $Y$ màn hình tới hơn 100px, nằm đè trực tiếp lên trạm Hub 0 và QA ở phía sau.
+4. **Nội suy tọa độ gián đoạn bởi `.toFixed(1)` và CSS Transition:**
+   - `.toFixed(1)` làm tròn tọa độ pixel về 1 chữ số thập phân, tạo các bước nhảy giật nấc 0.1px. Class `transition-all duration-300` trên container cố gắng kéo trễ chuyển động 300ms trong khi vị trí bị ghi đè liên tục mỗi 16ms (60fps).
+
+### ✅ Giải pháp chuẩn hóa (Solution & Prevention)
+1. **Mount vĩnh viễn PointLight với cường độ 0 & Chuyển cảnh Opacity GPU:**
+   - Trong `Lanterns.tsx`, luôn mount sẵn 11 `pointLight` với `intensity = isLit ? lightIntensity : 0`. Khi ban ngày, đèn vẫn tồn tại trong scene graph nhưng tắt sáng, giúp Three.js biên dịch cố định số lượng đèn ngay từ đầu.
+   - Loại bỏ hoàn toàn `SceneWarmup` (`gl.compile`) để tránh crash Canvas.
+   - Dùng 3 lớp `div` gradient nền chồng nhau và chuyển cảnh bằng `transition-opacity duration-700 ease-in-out` trên GPU compositor thread.
+2. **Hợp nhất Thanh Dock Trung Tâm Duy Nhất (Single Center Floating HUD Dock):**
+   - Đặt `RoleChips` và `StatusBar` vào cùng **một container nổi duy nhất đặt tại trung tâm đáy màn hình** (`absolute bottom-2 sm:bottom-3 left-1/2 -translate-x-1/2 z-30`), phong cách bo tròn và màu sắc đồng bộ 100% với `Topbar`.
+   - Bố cục theo thứ tự: `[8 Trạm AI] | [Cụm Zoom + - Reset] | [SRE Telemetry & Thời tiết]`. Triệt tiêu hoàn toàn khoảng trống vô nghĩa và không bao giờ bị đè lên nhau.
+3. **Hạ thấp `bubbleOffset` xuống sát nóc trạm ($y = 2.9\text{m}$):**
+   - Đặt `bubbleOffset: [0, 2.9, 0]` cho toàn bộ 8 trạm trong `STATIONS_LAYOUT`. Mũi nhọn bóng thoại cắm thẳng vào nóc trạm của chính nó ($y = 2.45\text{m}$), phần thân bóng thoại nằm gọn gàng ngay phía trên trạm, không bay lên cao che lấp trung tâm đảo hay các trạm lân cận.
+4. **Bỏ `.toFixed(1)` và loại bỏ CSS Transition trên thuộc tính `transform`:**
+   - Ghi trực tiếp tọa độ float `translate3d(${bx}px, ${by}px, 0)` để trình duyệt tận dụng khả năng khử răng cưa và định vị subpixel mượt mà của GPU.
+   - Thay `transition-all duration-300` bằng `transition-colors duration-150` trên các thẻ con.
+
+---
+
 > **Quy tắc vàng cho tương lai:**
 > 1. Mọi đối tượng 3D đặt trên đảo phải tuân theo hệ tọa độ Radial Polar ($R, \theta$) với tâm là Lâu Đài $[0, 0]$.
 > 2. Mọi đường đi của nhân vật phải bám theo các nan hoa đại lộ và vòng xuyến trung tâm, tuyệt đối không tự nối chéo qua góc các phòng.

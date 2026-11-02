@@ -55,6 +55,10 @@ export const Lanterns: React.FC = () => {
       lightsRef.current.forEach((light) => {
         if (light) light.intensity = lightIntensity * flicker;
       });
+    } else {
+      lightsRef.current.forEach((light) => {
+        if (light && light.intensity !== 0) light.intensity = 0;
+      });
     }
   });
 
@@ -104,17 +108,15 @@ export const Lanterns: React.FC = () => {
               />
             </mesh>
 
-            {/* Ánh sáng tỏa ra từ đèn lồng */}
-            {isLit && (
-              <pointLight
-                ref={(el) => {
-                  if (el) lightsRef.current[idx] = el;
-                }}
-                color="#fde047"
-                distance={3.5}
-                intensity={lightIntensity}
-              />
-            )}
+            {/* Ánh sáng tỏa ra từ đèn lồng (luôn mount sẵn trong scene graph với intensity = 0 khi ban ngày để Three.js compile shader từ đầu, không gây giật đơ khi bấm chuyển chu kỳ lần đầu) */}
+            <pointLight
+              ref={(el) => {
+                if (el) lightsRef.current[idx] = el;
+              }}
+              color="#fde047"
+              distance={3.5}
+              intensity={isLit ? lightIntensity : 0}
+            />
           </group>
 
           {/* Vòng đá nhỏ dưới chân cột */}

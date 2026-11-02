@@ -60,10 +60,13 @@ export default function Home() {
       <LiveStreamConsole />
       <DeskCamPiP />
 
-      {/* 3. Bottom HUD Bar: Dock trạm bên trái & Zoom / Telemetry bên phải trên cùng một hàng ngang duy nhất, kẹp biên chống va chạm */}
-      <div className="absolute bottom-2 left-2 right-2 sm:bottom-3 sm:left-3 sm:right-3 z-30 pointer-events-none flex items-center justify-between gap-1.5 sm:gap-2.5">
-        <RoleChips />
-        <StatusBar />
+      {/* 3. Bottom HUD Bar: Dock trạm trung tâm tích hợp Zoom & Telemetry SRE, đồng bộ phong cách Topbar */}
+      <div className="absolute bottom-2 sm:bottom-3 left-1/2 -translate-x-1/2 z-30 pointer-events-none max-w-[calc(100vw-1rem)] sm:max-w-[calc(100vw-2rem)]">
+        <div className="pointer-events-auto flex items-center gap-1.5 sm:gap-2.5 p-1 sm:p-1.5 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-2xl shadow-2xl overflow-x-auto scrollbar-none touch-pan-x">
+          <RoleChips />
+          <div className="w-[1px] h-5 bg-slate-700/80 shrink-0 hidden sm:block" />
+          <StatusBar />
+        </div>
       </div>
 
       {/* Interactive Modals */}

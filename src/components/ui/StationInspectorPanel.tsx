@@ -649,37 +649,45 @@ export const StationInspectorPanel: React.FC = () => {
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                         Danh sách rủi ro phát hiện ({securityData.vulnerabilities.length}):
                       </span>
-                      {securityData.vulnerabilities.map((vuln: any, idx: number) => (
-                        <div
-                          key={idx}
-                          className="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800 text-xs space-y-1"
-                        >
-                          <div className="flex items-center justify-between gap-1 text-[10px]">
-                            <span className="font-bold text-rose-300 font-mono">
-                              {vuln.id || 'CVE-UNKNOWN'}
-                            </span>
-                            <span
-                              className={`px-1.5 py-0.2 rounded font-bold uppercase text-[9px] ${
-                                vuln.severity === 'CRITICAL' || vuln.severity === 'HIGH'
-                                  ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                              }`}
-                            >
-                              {vuln.severity || 'HIGH'}
-                            </span>
-                          </div>
-                          {vuln.location && (
-                            <p className="text-[10px] text-cyan-400 font-mono">{vuln.location}</p>
-                          )}
-                          <p className="text-slate-300 font-sans leading-relaxed">{vuln.issue}</p>
-                          {vuln.remediation && (
-                            <div className="p-1.5 rounded bg-slate-950 border border-slate-800 text-[10px] text-slate-300 font-sans">
-                              <span className="font-bold text-emerald-400">Khắc phục: </span>
-                              {vuln.remediation}
+                      {securityData.vulnerabilities.map((vuln: any, idx: number) => {
+                        const vulnId = typeof vuln?.id === 'string' ? vuln.id : `CVE-${idx + 1}`;
+                        const vulnSeverity = typeof vuln?.severity === 'string' ? vuln.severity : 'HIGH';
+                        const vulnLocation = typeof vuln?.location === 'string' ? vuln.location : '';
+                        const vulnIssue = typeof vuln?.issue === 'string' ? vuln.issue : typeof vuln?.issue === 'object' ? JSON.stringify(vuln.issue) : String(vuln?.issue ?? '');
+                        const vulnRemediation = typeof vuln?.remediation === 'string' ? vuln.remediation : typeof vuln?.remediation === 'object' ? JSON.stringify(vuln.remediation) : String(vuln?.remediation ?? '');
+
+                        return (
+                          <div
+                            key={idx}
+                            className="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800 text-xs space-y-1"
+                          >
+                            <div className="flex items-center justify-between gap-1 text-[10px]">
+                              <span className="font-bold text-rose-300 font-mono">
+                                {vulnId}
+                              </span>
+                              <span
+                                className={`px-1.5 py-0.2 rounded font-bold uppercase text-[9px] ${
+                                  vulnSeverity === 'CRITICAL' || vulnSeverity === 'HIGH'
+                                    ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                                    : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                                }`}
+                              >
+                                {vulnSeverity}
+                              </span>
                             </div>
-                          )}
-                        </div>
-                      ))}
+                            {vulnLocation && (
+                              <p className="text-[10px] text-cyan-400 font-mono">{vulnLocation}</p>
+                            )}
+                            <p className="text-slate-300 font-sans leading-relaxed">{vulnIssue}</p>
+                            {vulnRemediation && (
+                              <div className="p-1.5 rounded bg-slate-950 border border-slate-800 text-[10px] text-slate-300 font-sans">
+                                <span className="font-bold text-emerald-400">Khắc phục: </span>
+                                {vulnRemediation}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="p-3 rounded-xl bg-slate-900/40 border border-slate-800 text-center text-xs text-slate-400">
@@ -788,33 +796,41 @@ export const StationInspectorPanel: React.FC = () => {
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                         Kế hoạch User Stories ({orchestratorData.userStories.length} stories):
                       </span>
-                      {orchestratorData.userStories.map((story: any, idx: number) => (
-                        <div
-                          key={idx}
-                          className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs space-y-1"
-                        >
-                          <div className="flex items-center justify-between gap-1 text-[10px]">
-                            <span className="font-bold text-purple-300 font-mono">
-                              {story.id || `US-${idx + 1}`}
-                            </span>
-                            <div className="flex items-center gap-1">
-                              <span className="px-1.5 py-0.2 rounded bg-purple-900/60 text-purple-300 border border-purple-700/60 font-bold">
-                                {story.priority || 'P0'}
+                      {orchestratorData.userStories.map((story: any, idx: number) => {
+                        const storyId = typeof story?.id === 'string' ? story.id : `US-${idx + 1}`;
+                        const storyPriority = typeof story?.priority === 'string' ? story.priority : 'P0';
+                        const storyPoints = story?.storyPoints ? String(story.storyPoints) : '3';
+                        const storyTitle = typeof story?.title === 'string' ? story.title : typeof story?.title === 'object' ? JSON.stringify(story.title) : String(story?.title ?? '');
+                        const storyGate = typeof story?.acceptanceGate === 'string' ? story.acceptanceGate : typeof story?.acceptanceGate === 'object' ? JSON.stringify(story.acceptanceGate) : String(story?.acceptanceGate ?? '');
+
+                        return (
+                          <div
+                            key={idx}
+                            className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs space-y-1"
+                          >
+                            <div className="flex items-center justify-between gap-1 text-[10px]">
+                              <span className="font-bold text-purple-300 font-mono">
+                                {storyId}
                               </span>
-                              <span className="px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 border border-slate-700">
-                                {story.storyPoints ? `${story.storyPoints} pts` : '3 pts'}
-                              </span>
+                              <div className="flex items-center gap-1">
+                                <span className="px-1.5 py-0.2 rounded bg-purple-900/60 text-purple-300 border border-purple-700/60 font-bold">
+                                  {storyPriority}
+                                </span>
+                                <span className="px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                                  {storyPoints} pts
+                                </span>
+                              </div>
                             </div>
+                            <p className="font-semibold text-white leading-snug">{storyTitle}</p>
+                            {storyGate && (
+                              <p className="text-[10px] text-slate-400 font-sans">
+                                <span className="text-emerald-400 font-bold">Nghiệm thu: </span>
+                                {storyGate}
+                              </p>
+                            )}
                           </div>
-                          <p className="font-semibold text-white leading-snug">{story.title}</p>
-                          {story.acceptanceGate && (
-                            <p className="text-[10px] text-slate-400 font-sans">
-                              <span className="text-emerald-400 font-bold">Nghiệm thu: </span>
-                              {story.acceptanceGate}
-                            </p>
-                          )}
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>

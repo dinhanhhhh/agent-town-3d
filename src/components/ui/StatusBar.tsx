@@ -105,38 +105,40 @@ export const StatusBar: React.FC = () => {
   }, [latencyMs]);
 
   return (
-    <footer className="pointer-events-auto flex items-center gap-1 sm:gap-1.5 shrink-0">
+    <footer className="flex items-center gap-1 sm:gap-2 shrink-0">
       {/* Zoom Controls (Chỉ hiển thị trên màn hình có chuột/desktop sm:, ẩn trên mobile vì đã có cảm ứng pinch-to-zoom 2 ngón) */}
-      <div className="hidden sm:flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 bg-slate-900/85 backdrop-blur-md border border-slate-700/80 rounded-xl sm:rounded-2xl shadow-xl">
+      <div className="hidden sm:flex items-center gap-0.5 p-0.5 bg-slate-800/60 border border-slate-700/60 rounded-xl">
         <button
           onClick={zoomIn}
-          className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg sm:rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center transition-colors text-xs sm:text-sm"
+          className="w-6 h-6 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center transition-colors text-xs"
           title="Phóng to"
         >
           +
         </button>
         <button
           onClick={zoomOut}
-          className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg sm:rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center transition-colors text-xs sm:text-sm"
+          className="w-6 h-6 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center transition-colors text-xs"
           title="Thu nhỏ"
         >
           −
         </button>
         <button
           onClick={resetCamera}
-          className="px-1.5 sm:px-2 h-6 sm:h-7 rounded-lg sm:rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold flex items-center justify-center transition-colors text-[10px] sm:text-xs"
+          className="px-2 h-6 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold flex items-center justify-center transition-colors text-[10px]"
           title="Đặt lại góc nhìn"
         >
           Reset
         </button>
       </div>
 
+      <div className="hidden sm:block w-[1px] h-4 bg-slate-700/80 shrink-0" />
+
       {/* APM, Dynamic Weather & Real-Time Clock Telemetry Bar */}
       <div
         onClick={() => {
           openDiagnosticsModal(true);
         }}
-        className="pointer-events-auto cursor-pointer hover:border-cyan-500/80 hover:bg-slate-900/95 transition-all flex items-center gap-1.5 sm:gap-2.5 px-2 sm:px-3.5 py-1 sm:py-1.5 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-xl sm:rounded-2xl shadow-xl text-[10px] sm:text-xs whitespace-nowrap group"
+        className="pointer-events-auto cursor-pointer hover:border-cyan-500/60 hover:bg-slate-800/80 transition-all flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 bg-slate-800/60 border border-slate-700/60 rounded-xl text-[10px] sm:text-xs whitespace-nowrap group"
         title="Bấm để mở Bảng Chẩn đoán SRE & Telemetry Hệ thống (Phím tắt: D)"
       >
         {/* Weather & Real-Time Clock (Responsive across all screens) */}

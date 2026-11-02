@@ -139,49 +139,46 @@ export const Particles: React.FC = () => {
   return (
     <group position={[0, 0, 0]}>
       {/* 1. MƯA BÃO TẢI DIGITAL NEON (KHI CHAOS SURGE BẬT) */}
-      {isChaosRunning && (
-        <instancedMesh
-          ref={rainMeshRef}
-          args={[undefined, undefined, RAIN_COUNT]}
-          castShadow={false}
-          receiveShadow={false}
-        >
-          <cylinderGeometry args={[0.015, 0.015, 0.7, 4]} />
-          <meshBasicMaterial color={0x38bdf8} transparent opacity={0.75} />
-        </instancedMesh>
-      )}
+      <instancedMesh
+        ref={rainMeshRef}
+        args={[undefined, undefined, RAIN_COUNT]}
+        castShadow={false}
+        receiveShadow={false}
+        visible={Boolean(isChaosRunning)}
+      >
+        <cylinderGeometry args={[0.015, 0.015, 0.7, 4]} />
+        <meshBasicMaterial color={0x38bdf8} transparent opacity={0.75} />
+      </instancedMesh>
 
       {/* 2. CÁNH HOA ANH ĐÀO SAKURA (BAN NGÀY & HOÀNG HÔN KHI KHÔNG CÓ BÃO) */}
-      {!isChaosRunning && !isNight && (
-        <instancedMesh
-          ref={petalsMeshRef}
-          args={[undefined, undefined, PETAL_COUNT]}
-          castShadow={false}
-          receiveShadow={false}
-        >
-          <planeGeometry args={[0.18, 0.24]} />
-          <meshStandardMaterial
-            color={resolvedTheme === 'sunset' ? 0xfecdd3 : 0xfbcfe8}
-            side={THREE.DoubleSide}
-            roughness={0.4}
-            transparent
-            opacity={0.88}
-          />
-        </instancedMesh>
-      )}
+      <instancedMesh
+        ref={petalsMeshRef}
+        args={[undefined, undefined, PETAL_COUNT]}
+        castShadow={false}
+        receiveShadow={false}
+        visible={!isChaosRunning && !isNight}
+      >
+        <planeGeometry args={[0.18, 0.24]} />
+        <meshStandardMaterial
+          color={resolvedTheme === 'sunset' ? 0xfecdd3 : 0xfbcfe8}
+          side={THREE.DoubleSide}
+          roughness={0.4}
+          transparent
+          opacity={0.88}
+        />
+      </instancedMesh>
 
       {/* 3. ĐOM ĐÓM VÀNG LẤP LÁNH (BAN ĐÊM KHI KHÔNG CÓ BÃO) */}
-      {!isChaosRunning && isNight && (
-        <instancedMesh
-          ref={firefliesMeshRef}
-          args={[undefined, undefined, FIREFLY_COUNT]}
-          castShadow={false}
-          receiveShadow={false}
-        >
-          <sphereGeometry args={[0.075, 8, 8]} />
-          <meshBasicMaterial color={0xfde047} transparent opacity={0.9} />
-        </instancedMesh>
-      )}
+      <instancedMesh
+        ref={firefliesMeshRef}
+        args={[undefined, undefined, FIREFLY_COUNT]}
+        castShadow={false}
+        receiveShadow={false}
+        visible={!isChaosRunning && isNight}
+      >
+        <sphereGeometry args={[0.075, 8, 8]} />
+        <meshBasicMaterial color={0xfde047} transparent opacity={0.9} />
+      </instancedMesh>
     </group>
   );
 };

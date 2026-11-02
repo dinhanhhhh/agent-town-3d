@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Island } from './Island';
 import { Castle } from './Castle';
@@ -83,21 +83,22 @@ const CourierTicker: React.FC = () => {
   return null;
 };
 
-export const TownScene: React.FC = () => {
-  const containerRef = React.useRef<HTMLDivElement>(null);
-  const couriers = useTownStore((s) => s.couriers);
-  const resolvedTheme = useTownStore((s) => s.resolvedTheme);
-  const otherRoles = STAGE_ORDER.filter((r) => r !== 'orchestrator') as AgentRole[];
+const GL_CONFIG = {
+  toneMapping: THREE.ACESFilmicToneMapping,
+  antialias: true,
+  alpha: true,
+  preserveDrawingBuffer: true,
+};
 
-  // Cấu hình bảng màu ánh sáng theo chu kỳ Ngày / Hoàng hôn / Đêm
+const SceneLighting: React.FC = () => {
+  const { gl } = useThree();
+  const resolvedTheme = useTownStore((s) => s.resolvedTheme);
   const isNight = resolvedTheme === 'night';
   const isSunset = resolvedTheme === 'sunset';
 
-  const bgStyle = isNight
-    ? 'radial-gradient(circle at 50% 35%, #1e293b 0%, #0b0f19 75%)'
-    : isSunset
-      ? 'linear-gradient(180deg, #fdba74 0%, #fed7aa 55%, #fde68a 100%)'
-      : 'linear-gradient(180deg, #38bdf8 0%, #7dd3fc 48%, #bae6fd 100%)';
+  React.useEffect(() => {
+    gl.toneMappingExposure = isNight ? 1.3 : isSunset ? 1.08 : 0.96;
+  }, [gl, isNight, isSunset]);
 
   const ambientColor = isNight ? '#1e1b4b' : isSunset ? '#fed7aa' : '#f0f9ff';
   const ambientIntensity = isNight ? 0.38 : isSunset ? 0.72 : 0.65;
@@ -114,11 +115,63 @@ export const TownScene: React.FC = () => {
   const fillIntensity = isNight ? 0.28 : isSunset ? 0.42 : 0.32;
 
   return (
+    <>
+      <ambientLight color={ambientColor} intensity={ambientIntensity} />
+      <hemisphereLight color={hemiSky} groundColor={hemiGround} intensity={hemiIntensity} />
+      <directionalLight
+        position={sunPos}
+        intensity={sunIntensity}
+        color={sunColor}
+        castShadow
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+        shadow-camera-near={0.5}
+        shadow-camera-far={120}
+        shadow-camera-left={-24}
+        shadow-camera-right={24}
+        shadow-camera-top={24}
+        shadow-camera-bottom={-24}
+        shadow-bias={-0.0008}
+      />
+      <directionalLight position={[-20, 15, -15]} intensity={fillIntensity} color={fillColor} />
+    </>
+  );
+};
+
+export const TownScene: React.FC = () => {
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const couriers = useTownStore((s) => s.couriers);
+  const resolvedTheme = useTownStore((s) => s.resolvedTheme);
+  const otherRoles = STAGE_ORDER.filter((r) => r !== 'orchestrator') as AgentRole[];
+
+  const isNight = resolvedTheme === 'night';
+  const isSunset = resolvedTheme === 'sunset';
+
+  return (
     <div
       ref={containerRef}
-      className="w-full h-full relative select-none transition-all duration-700"
-      style={{ background: bgStyle }}
+      className="w-full h-full relative select-none overflow-hidden"
     >
+      {/* 3 Lớp Bầu Trời Cross-Fade chuyển cảnh mượt 60fps trên GPU qua opacity, không làm đơ trình duyệt */}
+      <div
+        className={`absolute inset-0 transition-opacity duration-700 ease-in-out pointer-events-none ${
+          !isNight && !isSunset ? 'opacity-100' : 'opacity-0'
+        }`}
+        style={{ background: 'linear-gradient(180deg, #38bdf8 0%, #7dd3fc 48%, #bae6fd 100%)' }}
+      />
+      <div
+        className={`absolute inset-0 transition-opacity duration-700 ease-in-out pointer-events-none ${
+          isSunset ? 'opacity-100' : 'opacity-0'
+        }`}
+        style={{ background: 'linear-gradient(180deg, #fdba74 0%, #fed7aa 55%, #fde68a 100%)' }}
+      />
+      <div
+        className={`absolute inset-0 transition-opacity duration-700 ease-in-out pointer-events-none ${
+          isNight ? 'opacity-100' : 'opacity-0'
+        }`}
+        style={{ background: 'radial-gradient(circle at 50% 35%, #1e293b 0%, #0b0f19 75%)' }}
+      />
+
       <Canvas
         eventSource={containerRef}
         orthographic
@@ -129,45 +182,12 @@ export const TownScene: React.FC = () => {
           near: 0.1,
           far: 1000,
         }}
-        gl={{
-          toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: isNight ? 1.3 : isSunset ? 1.08 : 0.96,
-          antialias: true,
-          alpha: true,
-          preserveDrawingBuffer: true,
-        }}
+        gl={GL_CONFIG}
         dpr={[1, 2]}
-        className="w-full h-full"
+        className="w-full h-full relative z-10"
       >
-        {/* Ánh sáng môi trường dịu nhẹ */}
-        <ambientLight color={ambientColor} intensity={ambientIntensity} />
-
-        {/* Ánh sáng bán cầu mô phỏng bầu trời và phản chiếu mặt đất */}
-        <hemisphereLight
-          color={hemiSky}
-          groundColor={hemiGround}
-          intensity={hemiIntensity}
-        />
-
-        {/* Nguồn sáng chính mặt trời / mặt trăng */}
-        <directionalLight
-          position={sunPos}
-          intensity={sunIntensity}
-          color={sunColor}
-          castShadow
-          shadow-mapSize-width={2048}
-          shadow-mapSize-height={2048}
-          shadow-camera-near={0.5}
-          shadow-camera-far={120}
-          shadow-camera-left={-24}
-          shadow-camera-right={24}
-          shadow-camera-top={24}
-          shadow-camera-bottom={-24}
-          shadow-bias={-0.0008}
-        />
-
-        {/* Nguồn sáng phụ fill light */}
-        <directionalLight position={[-20, 15, -15]} intensity={fillIntensity} color={fillColor} />
+        {/* Hệ thống ánh sáng Ngày / Hoàng hôn / Đêm */}
+        <SceneLighting />
 
         {/* Nguồn chớp sấm sét động khi bão tải Chaos Surge */}
         <ChaosLightningStorm />
